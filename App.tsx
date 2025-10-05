@@ -1,6 +1,4 @@
-// Fix: Implement the full App component, which was previously missing.
-// This resolves the error in index.tsx about App.tsx not being a module.
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import AddMatchForm from './components/AddMatchForm';
@@ -10,29 +8,38 @@ import Settings from './components/Settings';
 import RealtimeTracker from './components/RealtimeTracker';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useSpreadsheet } from './hooks/useSpreadsheet';
+import { useSheetData } from './hooks/useSheetData';
 import type { Match, AutocompleteData } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 const App: React.FC = () => {
+    const { data, loading: isLoadingData, error: dataError, refetch: refetchSheetData } = useSheetData();
     const [myTeamName, setMyTeamName] = useLocalStorage<string>('myTeamName', 'My Team');
-    const [matches, setMatches] = useLocalStorage<Match[]>('matches', []);
-    const [players, setPlayers] = useLocalStorage<string[]>('players', []);
+    const [matches, setMatches] = useState<Match[]>([]);
+    const [players, setPlayers] = useState<string[]>([]);
     const [activeMatch, setActiveMatch] = useLocalStorage<Match | null>('activeMatch', null);
     
     const [activeTab, setActiveTab] = useState('dashboard');
 
     const { writeToSheet, loading: isExporting, error: exportError, success: exportSuccess } = useSpreadsheet();
 
+    useEffect(() => {
+        if (data) {
+            setMatches(data.matches);
+            setPlayers(data.players);
+        }
+    }, [data]);
+    
     const handleAddMatch = (matchData: Omit<Match, 'id'>) => {
         const newMatch: Match = { ...matchData, id: uuidv4() };
-        setMatches(prevMatches => [...prevMatches, newMatch].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        const updatedMatches = [...matches, newMatch].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Immediately update UI for better UX
+        setMatches(updatedMatches);
+        // Then, write to sheet and refetch to confirm
+        writeToSheet([newMatch]).then(() => {
+            refetchSheetData();
+        });
         setActiveTab('match-list');
-    };
-
-    const handleDeleteMatch = (matchId: string) => {
-        if (window.confirm('この試合を削除してもよろしいですか？')) {
-            setMatches(prevMatches => prevMatches.filter(m => m.id !== matchId));
-        }
     };
 
     const handleStartMatch = (opponentTeam: string, venue: string, matchType: '公式' | 'TM', tournamentName?: string) => {
@@ -58,8 +65,15 @@ const App: React.FC = () => {
 
     const handleEndMatch = () => {
         if (activeMatch) {
-            setMatches(prev => [activeMatch, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            const endedMatch = activeMatch;
+            const updatedMatches = [endedMatch, ...matches].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+             // Immediately update UI
+            setMatches(updatedMatches);
             setActiveMatch(null);
+            // Write to sheet and refetch all data
+            writeToSheet([endedMatch]).then(() => {
+                refetchSheetData();
+            });
             setActiveTab('match-list');
         }
     };
@@ -69,7 +83,10 @@ const App: React.FC = () => {
             alert('エクスポートする試合がありません。');
             return;
         }
-        writeToSheet(matches);
+        writeToSheet(matches).then(() => {
+            // After a mass export, refetch to get the canonical state from the sheet
+            refetchSheetData();
+        });
     };
 
     const autocompleteData = useMemo<AutocompleteData>(() => {
@@ -78,7 +95,27 @@ const App: React.FC = () => {
         return { venues, opponents };
     }, [matches, myTeamName]);
     
+    const TabButton = ({ tabId, label }: { tabId: string, label: string }) => (
+        <button
+            onClick={() => setActiveTab(tabId)}
+            className={`px-3 sm:px-4 py-2 text-sm sm:text-base font-medium rounded-md transition-colors duration-200 ${
+                activeTab === tabId
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+        >
+            {label}
+        </button>
+    );
+
     const renderTabContent = () => {
+        if (isLoadingData) {
+            return <div className="text-center p-10 bg-white dark:bg-gray-800 rounded-lg shadow">データを読み込んでいます...</div>;
+        }
+        if (dataError) {
+            return <div className="text-center p-10 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg shadow">{dataError}</div>;
+        }
+
         switch (activeTab) {
             case 'dashboard':
                 return <Dashboard matches={matches} myTeamName={myTeamName} />;
@@ -88,7 +125,6 @@ const App: React.FC = () => {
                 return <MatchList 
                             matches={matches} 
                             myTeamName={myTeamName} 
-                            onDeleteMatch={handleDeleteMatch}
                             onExportToSheet={handleExportToSheet}
                             isExporting={isExporting}
                             exportError={exportError}
@@ -105,27 +141,13 @@ const App: React.FC = () => {
                             onEndMatch={handleEndMatch}
                         />;
             case 'players':
-                return <PlayerManagement players={players} setPlayers={setPlayers} />;
+                return <PlayerManagement players={players} />;
             case 'settings':
-                // Fix: Pass the `players` array to the Settings component, as it's required for data export.
-                return <Settings myTeamName={myTeamName} setMyTeamName={setMyTeamName} setMatches={setMatches} setPlayers={setPlayers} matches={matches} players={players} />;
+                return <Settings myTeamName={myTeamName} setMyTeamName={setMyTeamName} matches={matches} players={players} />;
             default:
                 return null;
         }
     };
-
-    const TabButton = ({ tabId, label }: { tabId: string, label: string }) => (
-        <button
-            onClick={() => setActiveTab(tabId)}
-            className={`px-3 sm:px-4 py-2 text-sm sm:text-base font-medium rounded-md transition-colors duration-200 ${
-                activeTab === tabId
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-        >
-            {label}
-        </button>
-    );
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans">
