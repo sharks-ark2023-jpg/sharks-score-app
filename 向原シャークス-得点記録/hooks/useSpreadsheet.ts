@@ -34,11 +34,13 @@ export const useSpreadsheet = (): UseSpreadsheetReturn => {
             }
             
             setSuccess(result.message || 'シートへの書き込みに成功しました。');
+            setTimeout(() => setSuccess(null), 5000); // 5秒後に成功メッセージをクリア
 
         } catch (e) {
             console.error("Error writing to sheet:", e);
             const errorMessage = e instanceof Error ? e.message : "不明なエラーが発生しました。";
             setError(`書き込みに失敗しました: ${errorMessage}`);
+            setTimeout(() => setError(null), 5000); // 5秒後にエラーメッセージをクリア
         } finally {
             setLoading(false);
         }

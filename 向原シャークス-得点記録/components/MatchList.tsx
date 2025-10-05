@@ -1,18 +1,16 @@
-// Fix: Implement the full MatchList component, which was previously missing.
 import React from 'react';
 import type { Match } from '../types';
 
 interface MatchListProps {
     matches: Match[];
     myTeamName: string;
-    onDeleteMatch: (matchId: string) => void;
     onExportToSheet: () => void;
     isExporting: boolean;
     exportError: string | null;
     exportSuccess: string | null;
 }
 
-const MatchList: React.FC<MatchListProps> = ({ matches, myTeamName, onDeleteMatch, onExportToSheet, isExporting, exportError, exportSuccess }) => {
+const MatchList: React.FC<MatchListProps> = ({ matches, myTeamName, onExportToSheet, isExporting, exportError, exportSuccess }) => {
 
     const getMatchResult = (match: Match) => {
         const isHome = match.homeTeam === myTeamName;
@@ -54,13 +52,16 @@ const MatchList: React.FC<MatchListProps> = ({ matches, myTeamName, onDeleteMatc
     return (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">試合一覧</h3>
+                <div>
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">試合一覧</h3>
+                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">試合の編集や削除は、共有されているGoogleスプレッドシートで直接行ってください。</p>
+                </div>
                 <button
                     onClick={onExportToSheet}
                     disabled={isExporting}
                     className="w-full sm:w-auto bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                    {isExporting ? 'エクスポート中...' : '共有シートにエクスポート'}
+                    {isExporting ? '記録中...' : '共有シートに記録'}
                 </button>
             </div>
             
@@ -70,7 +71,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, myTeamName, onDeleteMatc
                 {matches.map(match => {
                     const result = getMatchResult(match);
                     return (
-                        <div key={match.id} className="p-4 border dark:border-gray-700 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-shadow hover:shadow-lg">
+                        <div key={match.id} className="p-4 border dark:border-gray-700 rounded-lg flex items-start justify-between gap-4 transition-shadow hover:shadow-lg">
                             <div className="flex-grow">
                                 <div className="flex items-center gap-3 mb-2">
                                     <span className={`w-8 h-8 flex items-center justify-center font-bold text-lg rounded-full ${getResultColor(result)}`}>
@@ -92,13 +93,6 @@ const MatchList: React.FC<MatchListProps> = ({ matches, myTeamName, onDeleteMatc
                                      </div>
                                 )}
                             </div>
-                            <button 
-                                onClick={() => onDeleteMatch(match.id)} 
-                                className="ml-auto sm:ml-0 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 text-xs rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
-                                aria-label={`${match.date}の試合を削除`}
-                            >
-                                削除
-                            </button>
                         </div>
                     );
                 })}
