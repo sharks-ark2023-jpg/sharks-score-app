@@ -1,0 +1,9 @@
+{
+  "name": "mukohara-sharks-tracker",
+  "version": "1.0.0",
+  "description": "サッカーチーム「向原シャークス」の試合結果をリアルタイムで記録するための専用アプリケーションです。",
+  "dependencies": {
+    "googleapis": "^140.0.1"
+  },
+  "scripts": {}
+}
