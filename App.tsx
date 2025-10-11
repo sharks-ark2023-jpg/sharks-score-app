@@ -31,7 +31,7 @@ const App: React.FC = () => {
             setSenshuList(senshuList);
         } catch (err) {
             setError('Googleスプレッドシートからのデータ取得に失敗しました。ローカルにキャッシュされたデータを表示しています。接続とAPI設定を確認してください。');
-            console.error(err);
+            console.error('データ取得エラー:', err);
         } finally {
             setYomikomiChuu(false);
         }
@@ -55,7 +55,7 @@ const App: React.FC = () => {
             alert('Googleスプレッドシートとの同期に成功しました！');
         } catch (err) {
             setError('Googleスプレッドシートとのデータ同期に失敗しました。データはローカルに保存されています。');
-            console.error(err);
+            console.error('データ同期エラー:', err);
             alert('Googleスプレッドシートとのデータ同期に失敗しました。後でもう一度お試しください。');
         } finally {
             setDoukiChuu(false);
