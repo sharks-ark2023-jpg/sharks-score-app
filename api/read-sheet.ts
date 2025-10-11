@@ -24,8 +24,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const matchRows = await matchesSheet.getRows();
     const matches = matchRows.map(row => row.toObject());
 
-    const playerRows = await playersSheet.getRows();
-    const players = playerRows.map(row => row.get('選手名')).filter(Boolean);
+    // 選手一覧の読み込み方法をヘッダーに依存しないように変更
+    await playersSheet.loadCells('A1:A'); // A列全体をロード
+    const players: string[] = [];
+    for (let i = 0; i < playersSheet.rowCount; i++) {
+        const cell = playersSheet.getCell(i, 0); // (row, column) -> A列
+        if (cell.value) {
+            players.push(cell.value.toString());
+        }
+    }
 
 
     // フロントエンドの期待する形式に変換

@@ -36,8 +36,6 @@ const Dashboard: React.FC<DashboardProps> = ({ shiaiList, teamName }) => {
         }
     });
 
-    const points = stats.wins * 3 + stats.draws * 1;
-    const goalDifference = stats.goalsFor - stats.goalsAgainst;
     const winRate = stats.played > 0 ? ((stats.wins / stats.played) * 100).toFixed(1) : '0.0';
 
     const allScorers = shiaiList.flatMap(shiai => shiai.tokutenshaList);
@@ -62,10 +60,8 @@ const Dashboard: React.FC<DashboardProps> = ({ shiaiList, teamName }) => {
 
             <section>
                 <h2 className="text-xl font-semibold mb-4">チーム成績 ({teamName})</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <StatCard title="試合数" value={stats.played} />
-                    <StatCard title="勝点" value={points} />
-                    <StatCard title="得失点差" value={goalDifference > 0 ? `+${goalDifference}` : goalDifference} />
                     <StatCard title="勝率" value={`${winRate}%`} />
                     <div className="col-span-2 grid grid-cols-3 gap-2 bg-secondary p-4 rounded-lg shadow-md text-center">
                         <div><h3 className="text-sm font-medium text-text-secondary">勝利</h3><p className="text-2xl font-semibold text-green-400">{stats.wins}</p></div>
