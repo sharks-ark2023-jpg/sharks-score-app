@@ -1,99 +1,104 @@
-// Fix: Implement the full Dashboard component, which was previously missing.
-import React, { useMemo } from 'react';
-import type { Match, TeamStats } from '../types';
-import ScorersList from './ScorersList';
+import React from 'react';
+import { Shiai, Tokutensha } from '../types';
 
 interface DashboardProps {
-    matches: Match[];
-    myTeamName: string;
+    shiaiList: Shiai[];
+    teamName: string;
 }
 
-const calculateTeamStats = (matches: Match[], myTeamName: string): TeamStats => {
-    return matches.reduce<TeamStats>((stats, match) => {
-        const isMyTeamMatch = match.homeTeam === myTeamName || match.awayTeam === myTeamName;
-        if (!isMyTeamMatch) return stats;
+const Dashboard: React.FC<DashboardProps> = ({ shiaiList, teamName }) => {
+    const stats = {
+        played: shiaiList.length,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+    };
 
-        const isHome = match.homeTeam === myTeamName;
-        const myScore = isHome ? match.homeScore : match.awayScore;
-        const opponentScore = isHome ? match.awayScore : match.homeScore;
-
-        stats.played += 1;
-        stats.goalsFor += myScore;
-        stats.goalsAgainst += opponentScore;
-
-        if (myScore > opponentScore) {
-            stats.wins += 1;
-            stats.points += 3;
-        } else if (myScore < opponentScore) {
-            stats.losses += 1;
-        } else {
-            stats.draws += 1;
-            stats.points += 1;
-        }
+    shiaiList.forEach(shiai => {
+        const isHome = shiai.homeTeam === teamName;
+        const homeScore = shiai.homeScore;
+        const awayScore = shiai.awayScore;
         
-        stats.goalDifference = stats.goalsFor - stats.goalsAgainst;
+        if (isHome) {
+            stats.goalsFor += homeScore;
+            stats.goalsAgainst += awayScore;
+            if (homeScore > awayScore) stats.wins++;
+            else if (homeScore < awayScore) stats.losses++;
+            else stats.draws++;
+        } else { // ホームでなければアウェイチームが自チームと仮定
+            stats.goalsFor += awayScore;
+            stats.goalsAgainst += homeScore;
+            if (awayScore > homeScore) stats.wins++;
+            else if (awayScore < homeScore) stats.losses++;
+            else stats.draws++;
+        }
+    });
 
-        return stats;
-
-    }, { played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 });
-};
-
-const StatCard: React.FC<{ label: string; value: string | number; className?: string }> = ({ label, value, className }) => (
-    <div className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center ${className}`}>
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-        <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
-    </div>
-);
-
-
-const Dashboard: React.FC<DashboardProps> = ({ matches, myTeamName }) => {
-    const stats = useMemo(() => calculateTeamStats(matches, myTeamName), [matches, myTeamName]);
+    const points = stats.wins * 3 + stats.draws * 1;
+    const goalDifference = stats.goalsFor - stats.goalsAgainst;
     const winRate = stats.played > 0 ? ((stats.wins / stats.played) * 100).toFixed(1) : '0.0';
 
-    if (!myTeamName || myTeamName === 'My Team') {
-        return (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">ようこそ！</h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                    まずは「設定」タブからあなたのチーム名を設定してください。
-                </p>
-            </div>
-        );
-    }
+    const allScorers = shiaiList.flatMap(shiai => shiai.tokutenshaList);
+    const scorerRanking: Tokutensha[] = Object.values(
+        allScorers.reduce((acc, { senshu, tokutenSuu }) => {
+            acc[senshu] = acc[senshu] || { senshu, tokutenSuu: 0 };
+            acc[senshu].tokutenSuu += tokutenSuu;
+            return acc;
+        }, {} as Record<string, Tokutensha>)
+    ).sort((a, b) => b.tokutenSuu - a.tokutenSuu).slice(0, 10);
+
+    const StatCard: React.FC<{ title: string; value: string | number; className?: string }> = ({ title, value, className }) => (
+        <div className={`bg-secondary p-4 rounded-lg shadow-md text-center ${className}`}>
+            <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
+            <p className="mt-1 text-3xl font-semibold text-text-primary">{value}</p>
+        </div>
+    );
     
-    if (matches.length === 0) {
-        return (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">{myTeamName}</h2>
-                 <p className="text-gray-600 dark:text-gray-400">
-                    まだ試合データがありません。「試合記録」または「リアルタイム記録」から試合を追加してください。
-                </p>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">{myTeamName} の戦績</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard label="試合数" value={stats.played} />
-                    <StatCard label="勝点" value={stats.points} />
-                    <StatCard label="勝率" value={`${winRate}%`} />
-                    <StatCard label="得失点差" value={stats.goalDifference > 0 ? `+${stats.goalDifference}` : stats.goalDifference} />
-                </div>
-                <div className="mt-6 text-center text-lg text-gray-700 dark:text-gray-300">
-                    <span className="font-bold text-green-600 dark:text-green-400">{stats.wins}</span>勝 - 
-                    <span className="font-bold text-gray-600 dark:text-gray-400">{stats.draws}</span>分 - 
-                    <span className="font-bold text-red-600 dark:text-red-400">{stats.losses}</span>敗
-                </div>
-                 <div className="mt-4 text-center text-lg text-gray-700 dark:text-gray-300">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">{stats.goalsFor}</span>得点 - 
-                    <span className="font-bold">{stats.goalsAgainst}</span>失点
-                </div>
-            </div>
+        <div className="space-y-8">
+            <h1 className="text-3xl font-bold text-highlight">ダッシュボード</h1>
 
-            <ScorersList matches={matches} myTeam={myTeamName} />
+            <section>
+                <h2 className="text-xl font-semibold mb-4">チーム成績 ({teamName})</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+                    <StatCard title="試合数" value={stats.played} />
+                    <StatCard title="勝点" value={points} />
+                    <StatCard title="得失点差" value={goalDifference > 0 ? `+${goalDifference}` : goalDifference} />
+                    <StatCard title="勝率" value={`${winRate}%`} />
+                    <div className="col-span-2 grid grid-cols-3 gap-2 bg-secondary p-4 rounded-lg shadow-md text-center">
+                        <div><h3 className="text-sm font-medium text-text-secondary">勝利</h3><p className="text-2xl font-semibold text-green-400">{stats.wins}</p></div>
+                        <div><h3 className="text-sm font-medium text-text-secondary">引分</h3><p className="text-2xl font-semibold text-yellow-400">{stats.draws}</p></div>
+                        <div><h3 className="text-sm font-medium text-text-secondary">敗戦</h3><p className="text-2xl font-semibold text-red-400">{stats.losses}</p></div>
+                    </div>
+                     <div className="col-span-2 grid grid-cols-2 gap-2 bg-secondary p-4 rounded-lg shadow-md text-center">
+                        <div><h3 className="text-sm font-medium text-text-secondary">総得点</h3><p className="text-2xl font-semibold text-blue-400">{stats.goalsFor}</p></div>
+                        <div><h3 className="text-sm font-medium text-text-secondary">総失点</h3><p className="text-2xl font-semibold text-orange-400">{stats.goalsAgainst}</p></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2 className="text-xl font-semibold mb-4">得点ランキング</h2>
+                 <div className="bg-secondary rounded-lg shadow-md overflow-hidden">
+                    {scorerRanking.length > 0 ? (
+                        <ul className="divide-y divide-accent">
+                            {scorerRanking.map(({ senshu, tokutenSuu }, index) => (
+                                <li key={senshu} className="p-4 flex justify-between items-center">
+                                    <div className="flex items-center">
+                                        <span className={`text-lg font-bold w-8 text-center ${index < 3 ? 'text-highlight' : 'text-text-secondary'}`}>{index + 1}</span>
+                                        <span className="ml-4 text-text-primary font-medium">{senshu}</span>
+                                    </div>
+                                    <span className="text-xl font-bold text-highlight">{tokutenSuu} ゴール</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="p-4 text-center text-text-secondary">まだ得点記録がありません。</p>
+                    )}
+                </div>
+            </section>
         </div>
     );
 };

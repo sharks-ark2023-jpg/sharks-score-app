@@ -1,145 +1,96 @@
 import React, { useState } from 'react';
-import type { Match } from '../types';
-import { useGoogleGenAI } from '../hooks/useGoogleApi';
+import { Link } from 'react-router-dom';
+import { fetchShiaiToSenshu } from '../services/sheetService';
 
 interface SettingsProps {
-    myTeamName: string;
-    setMyTeamName: (name: string) => void;
-    matches: Match[];
-    players: string[];
+    teamName: string;
+    setTeamName: (name: string) => void;
+    zenData: { shiaiList: any[], senshuList: any[] };
 }
 
-const Settings: React.FC<SettingsProps> = ({ myTeamName, setMyTeamName, matches, players }) => {
-    const [teamNameInput, setTeamNameInput] = useState(myTeamName);
-    const { generateSummary, loading, error, summary } = useGoogleGenAI();
-    const [debugInfo, setDebugInfo] = useState<any>(null);
-    const [debugLoading, setDebugLoading] = useState(false);
-    const [debugError, setDebugError] = useState<string | null>(null);
+const Settings: React.FC<SettingsProps> = ({ teamName, setTeamName, zenData }) => {
+    const [currentTeamName, setCurrentTeamName] = useState(teamName);
+    const [apiStatus, setApiStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
     const handleSaveTeamName = () => {
-        if (teamNameInput.trim()) {
-            setMyTeamName(teamNameInput.trim());
-            alert('チーム名を保存しました。');
-        } else {
-            alert('チーム名を入力してください。');
-        }
+        setTeamName(currentTeamName);
+        alert('チーム名を更新しました！');
     };
-    
-    const handleExportJson = () => {
-        const dataStr = JSON.stringify({ myTeamName, matches, players }, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `${myTeamName}_data.json`;
-        
+
+    const handleExport = () => {
+        const dataStr = JSON.stringify(zenData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'soccer_recorder_backup.json';
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
     };
     
-    const handleGenerateSummary = () => {
-        if (matches.length > 0) {
-            generateSummary(matches, myTeamName);
-        } else {
-            alert('要約を生成するには、少なくとも1試合のデータが必要です。');
-        }
-    };
-
-    const handleCheckHealth = async () => {
-        setDebugLoading(true);
-        setDebugInfo(null);
-        setDebugError(null);
+    const testApiSetsuzoku = async () => {
+        setApiStatus('testing');
         try {
-            const res = await fetch('/api/health');
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(`サーバーからエラーが返されました (ステータス: ${res.status})。APIが正しくデプロイされていません。`);
-            }
-            setDebugInfo(data);
-        } catch (err) {
-            console.error(err);
-            setDebugError(err instanceof Error ? err.message : '不明なエラーが発生しました。');
-        } finally {
-            setDebugLoading(false);
+            await fetchShiaiToSenshu();
+            setApiStatus('success');
+        } catch (error) {
+            console.error("APIテスト失敗:", error);
+            setApiStatus('error');
         }
-    };
+    }
+    
+    const getApiStatusHyouji = () => {
+        switch (apiStatus) {
+            case 'testing': return <span className="text-yellow-400">テスト中...</span>;
+            case 'success': return <span className="text-green-400">接続成功！</span>;
+            case 'error': return <span className="text-red-400">接続失敗。コンソールを確認してください。</span>;
+            default: return <span className="text-text-secondary">待機中</span>;
+        }
+    }
 
     return (
-        <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">チーム名設定</h3>
-                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">ここで設定したチーム名は、あなたのブラウザにのみ保存されます。</p>
-                <div className="flex items-end space-x-2">
-                    <div className="flex-grow">
-                        <label htmlFor="team-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">あなたのチーム名</label>
-                        <input
-                            id="team-name"
-                            type="text"
-                            value={teamNameInput}
-                            onChange={(e) => setTeamNameInput(e.target.value)}
-                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <button onClick={handleSaveTeamName} className="bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition-colors">保存</button>
-                </div>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">AIによる戦績レポート</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    記録された試合データをもとに、Gemini AIがチームの強み、弱み、改善点を分析し、レポートを生成します。
-                </p>
-                <button 
-                    onClick={handleGenerateSummary} 
-                    disabled={loading || matches.length === 0}
-                    className="w-full sm:w-auto bg-purple-600 text-white font-bold py-3 px-6 rounded-md hover:bg-purple-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                    {loading ? 'レポート生成中...' : 'レポートを生成'}
-                </button>
-                 {error && <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">{error}</div>}
-                 {summary && (
-                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md border dark:border-gray-600">
-                        <h4 className="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">AI分析レポート</h4>
-                        <p className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{summary}</p>
-                    </div>
-                )}
-            </div>
+        <div className="max-w-2xl mx-auto space-y-8">
+            <h1 className="text-3xl font-bold text-highlight">設定</h1>
 
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">データバックアップ</h3>
-                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">現在の全データをJSONファイルとして、お使いのデバイスにダウンロードします。</p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <button onClick={handleExportJson} className="flex-1 bg-gray-600 text-white font-bold py-3 px-4 rounded-md hover:bg-gray-700 transition-colors">
-                        全データをエクスポート (JSON)
+            <div className="bg-secondary p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold mb-4 text-text-primary">チーム名</h2>
+                <div className="flex space-x-2">
+                    <input
+                        type="text"
+                        value={currentTeamName}
+                        onChange={(e) => setCurrentTeamName(e.target.value)}
+                        className="flex-grow bg-accent border border-gray-600 rounded-md px-3 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-highlight"
+                    />
+                    <button onClick={handleSaveTeamName} className="px-4 py-2 bg-highlight text-white font-semibold rounded-md hover:bg-teal-500 transition-colors">
+                        保存
                     </button>
                 </div>
+                 <p className="text-xs text-text-secondary mt-2">この名前はダッシュボードの統計計算に使用されます。</p>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">デバッグ: サーバー接続テスト</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    データの読み書きがうまくいかない場合、このテストを実行してください。APIサーバーが正しく動作しているか、環境変数が設定されているかを確認できます。
-                </p>
-                <button 
-                    onClick={handleCheckHealth} 
-                    disabled={debugLoading}
-                    className="w-full sm:w-auto bg-yellow-500 text-black font-bold py-3 px-6 rounded-md hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                    {debugLoading ? 'テスト中...' : '接続と設定をテスト'}
+            <div className="bg-secondary p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold mb-4 text-text-primary">データ管理</h2>
+                <p className="text-sm text-text-secondary mb-4">すべての試合と選手のデータをバックアップとしてJSONファイルにエクスポートします。</p>
+                <button onClick={handleExport} className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-500 transition-colors">
+                    全データをエクスポート (.json)
                 </button>
-                {debugError && (
-                    <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
-                        <p className="font-bold">テスト失敗</p>
-                        <p>{debugError}</p>
-                        <p className="mt-2 text-sm">これは、Vercelのプロジェクト設定（Root Directoryなど）が原因でAPIがデプロイされていない可能性が高いです。</p>
-                    </div>
-                )}
-                {debugInfo && (
-                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md border dark:border-gray-600">
-                        <h4 className="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">テスト結果</h4>
-                        <pre className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{JSON.stringify(debugInfo, null, 2)}</pre>
-                    </div>
-                )}
+            </div>
+            
+             <div className="bg-secondary p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold mb-4 text-text-primary">デバッグツール</h2>
+                <div className="flex items-center justify-between">
+                     <p className="text-sm text-text-secondary">Google Sheets APIへの接続をテストします。</p>
+                     <button onClick={testApiSetsuzoku} disabled={apiStatus === 'testing'} className="px-4 py-2 bg-accent text-white font-semibold rounded-md hover:bg-gray-600 disabled:opacity-50 transition-colors">
+                        {apiStatus === 'testing' ? 'テスト中...' : 'テスト実行'}
+                    </button>
+                </div>
+                 <div className="mt-4 p-3 bg-primary rounded-md text-sm">
+                    APIステータス: {getApiStatusHyouji()}
+                </div>
+                <div className="mt-4">
+                     <Link to="/vercel-404-guide" className="text-sm text-highlight hover:underline">
+                        Vercelデプロイで問題が発生していますか？ガイドはこちら
+                    </Link>
+                </div>
             </div>
         </div>
     );

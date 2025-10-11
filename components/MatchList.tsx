@@ -1,101 +1,96 @@
 import React from 'react';
-import type { Match } from '../types';
+import { Shiai, ShiaiShubetsu } from '../types';
+import { UploadIcon } from './icons';
+import LoadingSpinner from './LoadingSpinner';
 
 interface MatchListProps {
-    matches: Match[];
-    myTeamName: string;
-    onExportToSheet: () => void;
-    isExporting: boolean;
-    exportError: string | null;
-    exportSuccess: string | null;
+    shiaiList: Shiai[];
+    shiaiKakikomi: () => Promise<void>;
+    doukiChuu: boolean;
+    teamName: string;
 }
 
-const MatchList: React.FC<MatchListProps> = ({ matches, myTeamName, onExportToSheet, isExporting, exportError, exportSuccess }) => {
+const MatchList: React.FC<MatchListProps> = ({ shiaiList, shiaiKakikomi, doukiChuu, teamName }) => {
 
-    const getMatchResult = (match: Match) => {
-        const isHome = match.homeTeam === myTeamName;
-        const myScore = isHome ? match.homeScore : match.awayScore;
-        const opponentScore = isHome ? match.awayScore : match.homeScore;
+    const getShiaiKekka = (shiai: Shiai) => {
+        const isHome = shiai.homeTeam === teamName;
+        const homeScore = shiai.homeScore;
+        const awayScore = shiai.awayScore;
 
-        if (myScore > opponentScore) return 'W';
-        if (myScore < opponentScore) return 'L';
+        if ((isHome && homeScore > awayScore) || (!isHome && awayScore > homeScore)) return 'W';
+        if ((isHome && homeScore < awayScore) || (!isHome && awayScore < homeScore)) return 'L';
         return 'D';
-    };
-    
-    const getResultColor = (result: 'W' | 'L' | 'D') => {
-        switch(result) {
-            case 'W': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
-            case 'L': return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
-            case 'D': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-        }
     }
 
-    const ExportFeedback = () => {
-        if (exportError) {
-            return <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">{exportError}</div>;
-        }
-        if (exportSuccess) {
-            return <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded" role="alert">{exportSuccess}</div>;
-        }
-        return null;
+    const getKekkaColor = (result: 'W' | 'D' | 'L') => {
+        if (result === 'W') return 'bg-green-500/20 text-green-400 border-green-500';
+        if (result === 'L') return 'bg-red-500/20 text-red-400 border-red-500';
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500';
     }
 
-    if (matches.length === 0) {
-        return (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-                <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">試合一覧</h3>
-                <p className="text-gray-500 dark:text-gray-400">まだ試合が記録されていません。「試合記録」タブから最初の試合を追加してください。</p>
-            </div>
-        );
-    }
-    
+    const sortedShiaiList = [...shiaiList].sort((a, b) => new Date(b.hizuke).getTime() - new Date(a.hizuke).getTime());
+
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">試合一覧</h3>
-                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">試合の編集や削除は、共有されているGoogleスプレッドシートで直接行ってください。</p>
-                </div>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-highlight">試合履歴</h1>
                 <button
-                    onClick={onExportToSheet}
-                    disabled={isExporting}
-                    className="w-full sm:w-auto bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                    onClick={shiaiKakikomi}
+                    disabled={doukiChuu}
+                    className="flex items-center justify-center px-4 py-2 bg-highlight text-white font-semibold rounded-lg shadow-md hover:bg-teal-500 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
                 >
-                    {isExporting ? '記録中...' : '共有シートに記録'}
+                    {doukiChuu ? <LoadingSpinner size="h-5 w-5" /> : <UploadIcon />}
+                    <span className="ml-2">{doukiChuu ? '同期中...' : 'シートへ同期'}</span>
                 </button>
             </div>
             
-            <ExportFeedback />
-
-            <div className="space-y-4 mt-4">
-                {matches.map(match => {
-                    const result = getMatchResult(match);
-                    return (
-                        <div key={match.id} className="p-4 border dark:border-gray-700 rounded-lg flex items-start justify-between gap-4 transition-shadow hover:shadow-lg">
-                            <div className="flex-grow">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className={`w-8 h-8 flex items-center justify-center font-bold text-lg rounded-full ${getResultColor(result)}`}>
-                                        {result}
-                                    </span>
-                                    <div>
-                                        <p className="font-bold text-lg text-gray-900 dark:text-white">
-                                            {match.homeTeam} {match.homeScore} - {match.awayScore} {match.awayTeam}
-                                        </p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {new Date(match.date).toLocaleDateString('ja-JP')} @ {match.venue}
-                                        </p>
+            <div className="bg-secondary rounded-lg shadow-md overflow-x-auto">
+                {sortedShiaiList.length > 0 ? (
+                    <ul className="divide-y divide-accent">
+                        {sortedShiaiList.map(shiai => {
+                            const result = getShiaiKekka(shiai);
+                            const isHome = shiai.homeTeam === teamName;
+                            const scoreDisplay = `${shiai.homeScore} - ${shiai.awayScore}`;
+                            const halfScoreDisplay = shiai.shiaiShubetsu === ShiaiShubetsu.KOSHIKI && shiai.homeZenhanScore !== null
+                                ? ` (前半: ${shiai.homeZenhanScore} - ${shiai.awayZenhanScore})`
+                                : '';
+                            
+                            return (
+                                <li key={shiai.id} className="p-4 hover:bg-accent transition-colors">
+                                    <div className="grid grid-cols-12 gap-4 items-center">
+                                        <div className="col-span-2 md:col-span-1 flex flex-col items-center justify-center">
+                                            <span className={`text-xl font-bold px-2 py-1 rounded-md border ${getKekkaColor(result)}`}>{result}</span>
+                                            <span className="text-xs mt-1 text-text-secondary">{shiai.shiaiShubetsu}</span>
+                                        </div>
+                                        <div className="col-span-10 md:col-span-11">
+                                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                                                <div className="flex-1">
+                                                    <p className={`font-bold text-lg ${isHome ? 'text-text-primary' : 'text-text-secondary'}`}>{shiai.homeTeam}</p>
+                                                    <p className={`font-bold text-lg ${!isHome ? 'text-text-primary' : 'text-text-secondary'}`}>{shiai.awayTeam}</p>
+                                                </div>
+                                                <div className="text-right mt-2 md:mt-0 md:text-center md:mx-4">
+                                                    <p className="text-2xl font-mono tracking-tight font-bold text-highlight">{scoreDisplay}</p>
+                                                    {halfScoreDisplay && <p className="text-xs text-text-secondary">{halfScoreDisplay}</p>}
+                                                </div>
+                                                <div className="flex-1 text-left md:text-right mt-2 md:mt-0">
+                                                    <p className="text-sm text-text-primary">{new Date(shiai.hizuke).toLocaleDateString()}</p>
+                                                    <p className="text-xs text-text-secondary truncate">{shiai.taikaiMei || shiai.kaijo}</p>
+                                                </div>
+                                            </div>
+                                             {shiai.tokutenshaList.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-accent/50 text-xs text-text-secondary">
+                                                    得点者: {shiai.tokutenshaList.map(s => `${s.senshu} (${s.tokutenSuu})`).join(', ')}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                {(match.tournamentName || (match.scorers && match.scorers.length > 0)) && (
-                                     <div className="mt-2 pl-11 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                                        {match.tournamentName && <p><span className="font-semibold">大会:</span> {match.tournamentName} ({match.matchType})</p>}
-                                        {match.homeTeam === myTeamName && match.scorers && match.scorers.length > 0 && <p><span className="font-semibold">得点者:</span> {match.scorers.join(', ')}</p>}
-                                     </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                ) : (
+                    <p className="p-8 text-center text-text-secondary">まだ試合記録がありません。</p>
+                )}
             </div>
         </div>
     );

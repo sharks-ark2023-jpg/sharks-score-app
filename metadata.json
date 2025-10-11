@@ -1,6 +1,5 @@
 {
-  "name": "Mukaihara_Sharks_Score_Tracker",
-  "description": "サッカーチーム「向原シャークス」の試合結果をリアルタイムで記録するための専用アプリケーションです。スコアや得点者を簡単に記録し、管理することができます。",
-  "requestFramePermissions": [],
-  "prompt": ""
+  "name": "サッカー試合記録",
+  "description": "サッカーチームの試合結果を記録・管理するための高機能なWebアプリケーションです。Googleスプレッドシートをデータ永続化に利用し、リアルタイムおよび試合後の記録、詳細な統計、選手管理機能を備えています。",
+  "requestFramePermissions": []
 }
