@@ -1,62 +1,36 @@
-# サッカー記録アプリ - 管理者向け設定ガイド
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-このアプリは、チームの試合結果と選手情報をGoogleスプレッドシートに集約・共有するためのものです。
-チームの誰もが簡単に記録できるよう、認証情報は安全なサーバーサイド（サーバーレス関数）で管理します。
+## Getting Started
 
-管理者は、以下の手順で一度だけ設定を行ってください。
+First, run the development server:
 
-## 必要なもの
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-- Googleアカウント
-- Google Cloud Platform (GCP) プロジェクト
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 設定手順
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### ステップ1: Google Cloud プロジェクトの準備
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-1.  [Google Cloud Console](https://console.cloud.google.com/)にアクセスし、新しいプロジェクトを作成するか、既存のプロジェクトを選択します。
-2.  左側のナビゲーションメニューから **「APIとサービス」 > 「ライブラリ」** を選択します。
-3.  **「Google Sheets API」**を検索し、**「有効にする」**をクリックします。
+## Learn More
 
-### ステップ2: サービスアカウントの作成
+To learn more about Next.js, take a look at the following resources:
 
-サーバーがGoogleスプレッドシートにアクセスするための専用アカウント（サービスアカウント）を作成します。
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-1.  GCPコンソールのナビゲーションメニューから **「APIとサービス」 > 「認証情報」** を選択します。
-2.  **「+ 認証情報を作成」** をクリックし、**「サービスアカウント」** を選択します。
-3.  サービスアカウント名（例: `sheets-writer`）を入力し、「作成して続行」をクリックします。
-4.  ロールの選択は不要です。「続行」をクリックします。
-5.  ユーザーアクセスの許可も不要です。「完了」をクリックします。
-6.  作成されたサービスアカウントのメールアドレス（`...gserviceaccount.com`）をコピーしておきます。これは後で必要になります。
-7.  作成したサービスアカウントをクリックし、「キー」タブを選択します。
-8.  **「鍵を追加」 > 「新しい鍵を作成」** を選択します。
-9.  キーのタイプとして **「JSON」** を選択し、「作成」をクリックします。
-10. `json`形式のキーファイルが自動的にダウンロードされます。このファイルは絶対に公開しないでください。
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-### ステップ3: Googleスプレッドシートの準備と共有設定
+## Deploy on Vercel
 
-1.  記録用に使用するGoogleスプレッドシートを新規作成するか、既存のものを開きます。
-2.  シートのURLから、スプレッドシートIDをコピーしておきます。
-    - 例: `https://docs.google.com/spreadsheets/d/【ここの部分がIDです】/edit`
-3.  **重要:** スプレッドシートに以下の2つのシート（タブ）を作成します。名前は完全に一致させてください。
-    - `試合結果`
-    - `選手一覧`
-4.  `選手一覧`シートのA列に、チームの選手名を1行に1人ずつ入力します。
-5.  右上の **「共有」** ボタンをクリックします。
-6.  「ユーザーやグループを追加」の欄に、**ステップ2-6でコピーしたサービスアカウントのメールアドレス**を貼り付けます。
-7.  役割を **「編集者」** に設定し、「送信」をクリックします。
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-### ステップ4: 環境変数の設定
-
-プロジェクトをデプロイする環境（Vercel, Netlifyなど）で、以下の環境変数を設定します。
-ダウンロードしたJSONキーファイルの内容をテキストエディタで開いて、必要な情報をコピー＆ペーストしてください。
-
--   `GOOGLE_SHEET_ID`: ステップ3-2でコピーしたスプレッドシートのID。
--   `GOOGLE_SHEETS_CLIENT_EMAIL`: JSONファイル内の`client_email`の値。
--   `GOOGLE_SHEETS_PRIVATE_KEY`: JSONファイル内の`private_key`の値。
-
-**重要:** `private_key`は`-----BEGIN PRIVATE KEY-----`から`-----END PRIVATE KEY-----\n`まで、改行も含めてすべてコピーしてください。デプロイ環境によっては、改行文字 `\n` を正しく処理するために、値全体をダブルクォーテーションで囲む必要がある場合があります。
-
----
-
-以上で設定は完了です。チームメンバーはアプリを開くとスプレッドシートの最新データが表示され、「共有シートにエクスポート」ボタンを押すだけで、このスプレッドシートにデータが追記されていきます。
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

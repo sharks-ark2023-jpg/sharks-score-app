@@ -1,0 +1,212 @@
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { JWT } from 'google-auth-library';
+import { Match, GlobalSettings, CommonMaster } from '@/types';
+
+const SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+];
+
+export async function getGoogleSheet(spreadsheetId: string) {
+    const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
+        .split('\\n').join('\n')
+        .replace(/^["']/, '').replace(/["']$/, '');
+
+    if (!serviceAccountEmail || !privateKey) {
+        throw new Error('Google Service Account credentials are not configured');
+    }
+
+    const jwt = new JWT({
+        email: serviceAccountEmail,
+        key: privateKey,
+        scopes: SCOPES,
+    });
+
+    const doc = new GoogleSpreadsheet(spreadsheetId, jwt);
+    await doc.loadInfo();
+    return doc;
+}
+
+export async function getGlobalSettings(): Promise<GlobalSettings | null> {
+    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    if (!commonId) return null;
+    try {
+        const doc = await getGoogleSheet(commonId);
+        const sheet = doc.sheetsByTitle['GlobalSettings'];
+        if (!sheet) return null;
+
+        const rows = await sheet.getRows();
+        if (rows.length === 0) return null;
+
+        const row = rows[0].toObject();
+        return {
+            teamName: row.teamName,
+            teamLogoUrl: row.teamLogoUrl,
+            teamColor: row.teamColor,
+            lastUpdated: row.lastUpdated,
+            lastUpdatedBy: row.lastUpdatedBy,
+        } as GlobalSettings;
+    } catch (err) {
+        console.error('[Sheets] Error fetching GlobalSettings:', err);
+        return null;
+    }
+}
+
+export async function getCommonMasters(): Promise<CommonMaster[]> {
+    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    if (!commonId) return [];
+    try {
+        const doc = await getGoogleSheet(commonId);
+        const sheet = doc.sheetsByTitle['CommonMasters'];
+        if (!sheet) return [];
+
+        const rows = await sheet.getRows();
+        return rows.map(row => {
+            const data = row.toObject();
+            return {
+                masterType: data.masterType,
+                name: data.name,
+                grade: data.grade,
+                createdAt: data.createdAt,
+                lastUsed: data.lastUsed,
+            } as CommonMaster;
+        });
+    } catch (err) {
+        console.error('[Sheets] Error fetching CommonMasters:', err);
+        return [];
+    }
+}
+
+export async function getMatches(spreadsheetId: string, sheetName: string): Promise<Match[]> {
+    const doc = await getGoogleSheet(spreadsheetId);
+    const sheet = doc.sheetsByTitle[sheetName];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows.map(row => {
+        const data = row.toObject();
+        return {
+            matchId: data.matchId,
+            matchDate: data.matchDate,
+            matchType: data.matchType as 'tournament' | 'friendly' || 'friendly',
+            tournamentName: data.tournamentName,
+            opponentName: data.opponentName,
+            venueName: data.venueName,
+            matchFormat: data.matchFormat as 'halves' | 'one_game' || 'halves',
+            ourScore: parseInt(data.ourScore || '0'),
+            opponentScore: parseInt(data.opponentScore || '0'),
+            result: data.result,
+            pkInfo: data.pkInfo ? JSON.parse(data.pkInfo) : undefined,
+            isLive: data.isLive === 'TRUE' || data.isLive === 'true',
+            scorers: data.scorers,
+            mvp: data.mvp,
+            memo: data.memo,
+            lastUpdated: data.lastUpdated,
+            lastUpdatedBy: data.lastUpdatedBy,
+            createdAt: data.createdAt,
+            createdBy: data.createdBy,
+        } as Match;
+    });
+}
+
+export async function upsertMatch(spreadsheetId: string, sheetName: string, match: Match, userEmail: string) {
+    const doc = await getGoogleSheet(spreadsheetId);
+    const sheet = doc.sheetsByTitle[sheetName];
+    if (!sheet) throw new Error(`Sheet ${sheetName} not found`);
+
+    const rows = await sheet.getRows();
+    const existingRow = rows.find(r => r.get('matchId') === match.matchId);
+
+    const dataToSave = {
+        ...match,
+        isLive: match.isLive ? 'TRUE' : 'FALSE',
+        pkInfo: match.pkInfo ? JSON.stringify(match.pkInfo) : '',
+        lastUpdated: new Date().toISOString(),
+        lastUpdatedBy: userEmail,
+    };
+
+    if (existingRow) {
+        // Optimistic locking
+        if (match.lastUpdated && existingRow.get('lastUpdated') !== match.lastUpdated) {
+            throw new Error('CONFLICT');
+        }
+
+        // Update existing row
+        Object.keys(dataToSave).forEach(key => {
+            // @ts-ignore
+            existingRow.set(key, dataToSave[key]);
+        });
+        await existingRow.save();
+    } else {
+        // Add new row
+        await sheet.addRow({
+            ...dataToSave,
+            createdAt: new Date().toISOString(),
+            createdBy: userEmail,
+        });
+    }
+}
+
+export async function updateCommonMaster(name: string, type: 'venue' | 'opponent' | 'player', grade?: string) {
+    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    if (!commonId) return;
+
+    try {
+        const doc = await getGoogleSheet(commonId);
+        const sheet = doc.sheetsByTitle['CommonMasters'];
+        if (!sheet) return;
+
+        const rows = await sheet.getRows();
+        const existingRow = rows.find(r => r.get('name') === name && r.get('masterType') === type && (type !== 'player' || r.get('grade') === grade));
+
+        if (existingRow) {
+            existingRow.set('lastUsed', new Date().toISOString());
+            await existingRow.save();
+        } else {
+            await sheet.addRow({
+                masterType: type,
+                name: name,
+                grade: grade || '',
+                createdAt: new Date().toISOString(),
+                lastUsed: new Date().toISOString(),
+            });
+        }
+    } catch (err) {
+        console.error('[Sheets] Error updating CommonMaster:', err);
+    }
+}
+
+export async function updateGlobalSettings(settings: Partial<GlobalSettings>, userEmail: string) {
+    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    if (!commonId) return;
+
+    try {
+        const doc = await getGoogleSheet(commonId);
+        const sheet = doc.sheetsByTitle['GlobalSettings'];
+        if (!sheet) return;
+
+        const rows = await sheet.getRows();
+        const row = rows[0];
+
+        if (row) {
+            if (settings.teamName) row.set('teamName', settings.teamName);
+            if (settings.teamLogoUrl !== undefined) row.set('teamLogoUrl', settings.teamLogoUrl);
+            if (settings.teamColor) row.set('teamColor', settings.teamColor);
+            row.set('lastUpdated', new Date().toISOString());
+            row.set('lastUpdatedBy', userEmail);
+            await row.save();
+        } else {
+            await sheet.addRow({
+                teamName: settings.teamName || 'SHARKS',
+                teamLogoUrl: settings.teamLogoUrl || '',
+                teamColor: settings.teamColor || '#1e3a8a',
+                lastUpdated: new Date().toISOString(),
+                lastUpdatedBy: userEmail,
+            });
+        }
+    } catch (err) {
+        console.error('[Sheets] Error updating GlobalSettings:', err);
+        throw err;
+    }
+}
