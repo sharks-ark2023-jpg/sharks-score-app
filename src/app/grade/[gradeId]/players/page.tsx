@@ -15,7 +15,9 @@ export default function PlayerManagementPage() {
 
     const [newName, setNewName] = useState('');
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'alert' | 'error', text: string } | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'alert' | 'error', text: string, spreadsheetId?: string } | null>(null);
+
+    const commonSpreadsheetId = (players as any)?.spreadsheetId || fetchError?.spreadsheetId;
 
     const handleAddPlayer = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,6 +41,10 @@ export default function PlayerManagementPage() {
                 if (contentType && contentType.includes('application/json')) {
                     const data = await res.json();
                     errorMsg = data.error || errorMsg;
+                    if (data.spreadsheetId) {
+                        setMessage({ type: 'error', text: `エラー: ${errorMsg}`, spreadsheetId: data.spreadsheetId });
+                        return; // Exit early since we handled message
+                    }
                 } else {
                     const text = await res.text();
                     errorMsg = text.slice(0, 100) || errorMsg;
@@ -91,7 +97,21 @@ export default function PlayerManagementPage() {
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
                     <p className="font-black">⚠️ データ読み込みエラー</p>
                     <p>{fetchError.message}</p>
-                    <p className="mt-2 text-[10px] opacity-70">スプレッドシートIDやシート名("CommonMasters")が正しいか確認してください。</p>
+                    {fetchError.spreadsheetId && (
+                        <div className="mt-3">
+                            <a
+                                href={`https://docs.google.com/spreadsheets/d/${fetchError.spreadsheetId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 bg-white px-3 py-2 rounded-lg border border-red-200 font-black hover:bg-red-100 transition-colors shadow-sm"
+                            >
+                                Google Sheets を開いて確認する
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                            </a>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -123,8 +143,23 @@ export default function PlayerManagementPage() {
                     </button>
                 </form>
                 {message && (
-                    <div className={`mt-6 p-4 rounded-2xl text-sm font-black text-center animate-bounce ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {message.text}
+                    <div className={`mt-6 p-4 rounded-2xl text-sm font-black text-center ${message.type === 'success' ? 'bg-green-100 text-green-800 animate-bounce' : 'bg-red-100 text-red-800'}`}>
+                        <p>{message.text}</p>
+                        {message.spreadsheetId && (
+                            <div className="mt-4">
+                                <a
+                                    href={`https://docs.google.com/spreadsheets/d/${message.spreadsheetId}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border-2 border-red-200 text-xs hover:bg-red-50 transition-all font-black"
+                                >
+                                    Google シートを開く
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </a>
+                            </div>
+                        )}
                     </div>
                 )}
             </section>

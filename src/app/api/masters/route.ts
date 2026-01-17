@@ -21,7 +21,10 @@ export async function GET(req: NextRequest) {
             }
         });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({
+            error: err.message,
+            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+        }, { status: 500 });
     }
 }
 
@@ -40,7 +43,10 @@ export async function POST(req: NextRequest) {
         await updateCommonMaster(name, type, grade);
         return NextResponse.json({ success: true });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({
+            error: err.message,
+            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+        }, { status: 500 });
     }
 }
 
@@ -71,7 +77,7 @@ export async function DELETE(req: NextRequest) {
         const existingRow = rows.find(r =>
             r.get('name') === name &&
             r.get('masterType') === type &&
-            r.get('grade') === grade
+            (type !== 'player' || r.get('grade') === grade)
         );
 
         if (existingRow) {
@@ -81,6 +87,9 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Master not found' }, { status: 404 });
         }
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({
+            error: err.message,
+            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+        }, { status: 500 });
     }
 }
