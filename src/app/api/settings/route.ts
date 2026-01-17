@@ -24,11 +24,19 @@ export async function GET(req: NextRequest) {
     try {
         const [settings, masters] = await Promise.all([
             getGlobalSettings(),
-            getCommonMasters()
+            getCommonMasters().catch(() => []) // Don't crash if Masters fails
         ]);
-        return NextResponse.json({ settings, masters });
+        return NextResponse.json({
+            settings,
+            masters,
+            envCommonId: process.env.COMMON_SPREADSHEET_ID,
+            envGradesConfig: process.env.GRADES_CONFIG
+        });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({
+            error: err.message,
+            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+        }, { status: 500 });
     }
 }
 

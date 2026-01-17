@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getCommonMasters, updateCommonMaster, getGoogleSheet } from '@/lib/sheets';
+import { getCommonMasters, updateCommonMaster, getGoogleSheet, getGlobalSettings } from '@/lib/sheets';
 
 export const dynamic = 'force-dynamic';
+
+async function getSpreadsheetId() {
+    // Try to get from GlobalSettings first, fallback to env
+    try {
+        const settings = await getGlobalSettings();
+        return settings?.commonSpreadsheetId || process.env.COMMON_SPREADSHEET_ID;
+    } catch {
+        return process.env.COMMON_SPREADSHEET_ID;
+    }
+}
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const grade = searchParams.get('grade');
+    const commonId = await getSpreadsheetId();
 
     try {
         const masters = await getCommonMasters();
@@ -23,7 +34,7 @@ export async function GET(req: NextRequest) {
     } catch (err: any) {
         return NextResponse.json({
             error: err.message,
-            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+            spreadsheetId: commonId
         }, { status: 500 });
     }
 }
@@ -33,6 +44,7 @@ export async function POST(req: NextRequest) {
     if (!session || !session.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const commonId = await getSpreadsheetId();
 
     try {
         const { name, type, grade } = await req.json();
@@ -45,7 +57,7 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
         return NextResponse.json({
             error: err.message,
-            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+            spreadsheetId: commonId
         }, { status: 500 });
     }
 }
@@ -55,6 +67,7 @@ export async function DELETE(req: NextRequest) {
     if (!session || !session.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const commonId = await getSpreadsheetId();
 
     const { searchParams } = new URL(req.url);
     const name = searchParams.get('name');
@@ -66,7 +79,6 @@ export async function DELETE(req: NextRequest) {
     }
 
     try {
-        const commonId = process.env.COMMON_SPREADSHEET_ID;
         if (!commonId) throw new Error('Common spreadsheet ID not configured');
 
         const doc = await getGoogleSheet(commonId);
@@ -89,7 +101,7 @@ export async function DELETE(req: NextRequest) {
     } catch (err: any) {
         return NextResponse.json({
             error: err.message,
-            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+            spreadsheetId: commonId
         }, { status: 500 });
     }
 }
