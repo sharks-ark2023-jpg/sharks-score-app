@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { GlobalSettings, CommonMaster } from '@/types';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string) => fetch(url).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) {
+        const err = new Error(data.error || 'Fetch failed');
+        if (data.spreadsheetId) (err as any).spreadsheetId = data.spreadsheetId;
+        throw err;
+    }
+    return data;
+});
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -220,6 +228,9 @@ export default function SettingsPage() {
                     />
                 </div>
             </section>
+            <div className="mt-8 text-center">
+                <p className="text-[10px] text-gray-300 font-mono tracking-widest uppercase">System Update v1.26 - Sync Active</p>
+            </div>
         </main>
     );
 }

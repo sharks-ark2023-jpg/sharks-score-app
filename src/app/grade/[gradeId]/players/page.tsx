@@ -6,7 +6,15 @@ import useSWR from 'swr';
 import { CommonMaster } from '@/types';
 import Link from 'next/link';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string) => fetch(url).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) {
+        const err = new Error(data.error || 'Fetch failed');
+        if (data.spreadsheetId) (err as any).spreadsheetId = data.spreadsheetId;
+        throw err;
+    }
+    return data;
+});
 
 export default function PlayerManagementPage() {
     const { gradeId } = useParams() as { gradeId: string };
