@@ -33,9 +33,9 @@ export async function GET(req: NextRequest) {
         const matches = await getMatches(spreadsheetId, `${grade}_Matches`);
         // Sort by date descending
         matches.sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
-        return NextResponse.json(matches);
+        return NextResponse.json({ matches, spreadsheetId });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err.message, spreadsheetId: getSpreadsheetId(grade) }, { status: 500 });
     }
 }
 

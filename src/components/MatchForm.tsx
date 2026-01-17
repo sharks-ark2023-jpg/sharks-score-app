@@ -69,6 +69,39 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
         });
     };
 
+    const handleQuickScorer = (playerName: string) => {
+        setFormData(prev => {
+            const currentScorers = prev.scorers || '';
+            const parts = currentScorers.split(',').map(s => s.trim()).filter(Boolean);
+            const nameMap: Record<string, number> = {};
+
+            parts.forEach(p => {
+                const match = p.match(/^(.+)\((\d+)\)$/);
+                if (match) {
+                    const name = match[1].trim();
+                    const count = parseInt(match[2]);
+                    nameMap[name] = (nameMap[name] || 0) + count;
+                } else {
+                    nameMap[p] = (nameMap[p] || 0) + 1;
+                }
+            });
+
+            nameMap[playerName] = (nameMap[playerName] || 0) + 1;
+
+            const updatedScorers = Object.entries(nameMap)
+                .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
+                .join(', ');
+
+            const newOurScore = (prev.ourScore || 0) + 1;
+            return {
+                ...prev,
+                ourScore: newOurScore,
+                scorers: updatedScorers,
+                result: calculateResult(newOurScore, prev.opponentScore || 0)
+            };
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -232,6 +265,25 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* Quick Scorer Buttons */}
+                {players.length > 0 && (
+                    <div className="p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">タップで得点を記録 (自チーム)</p>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                            {players.map(player => (
+                                <button
+                                    key={player.name}
+                                    type="button"
+                                    onClick={() => handleQuickScorer(player.name)}
+                                    className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95"
+                                >
+                                    {player.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {mode === 'full' && (
                     <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
