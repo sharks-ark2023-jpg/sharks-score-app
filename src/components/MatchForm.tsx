@@ -30,7 +30,7 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
             isLive: false,
         }
     );
-    const [mode, setMode] = useState<'simple' | 'full'>(initialMatch ? 'full' : 'simple');
+    const [mode, setMode] = useState<'simple' | 'full'>('full');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

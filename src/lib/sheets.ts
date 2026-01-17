@@ -224,9 +224,9 @@ export async function updateGlobalSettings(settings: Partial<GlobalSettings>, us
         const row = rows[0];
 
         if (row) {
-            if (settings.teamName) row.set('teamName', settings.teamName);
+            if (settings.teamName !== undefined) row.set('teamName', settings.teamName);
             if (settings.teamLogoUrl !== undefined) row.set('teamLogoUrl', settings.teamLogoUrl);
-            if (settings.teamColor) row.set('teamColor', settings.teamColor);
+            if (settings.teamColor !== undefined) row.set('teamColor', settings.teamColor);
             if (settings.gradesConfig !== undefined) row.set('gradesConfig', settings.gradesConfig);
             if (settings.commonSpreadsheetId !== undefined) row.set('commonSpreadsheetId', settings.commonSpreadsheetId);
             row.set('lastUpdated', new Date().toISOString());
