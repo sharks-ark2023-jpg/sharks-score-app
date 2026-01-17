@@ -172,12 +172,14 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
 
 export async function updateCommonMaster(name: string, type: 'venue' | 'opponent' | 'player', grade?: string) {
     const commonId = process.env.COMMON_SPREADSHEET_ID;
-    if (!commonId) return;
+    if (!commonId) throw new Error('COMMON_SPREADSHEET_ID is not configured');
 
     try {
         const doc = await getGoogleSheet(commonId);
         const sheet = doc.sheetsByTitle['CommonMasters'];
-        if (!sheet) return;
+        if (!sheet) {
+            throw new Error('Sheet "CommonMasters" not found in the spreadsheet. Please create it with headers: masterType, name, grade, usageCount, createdAt, lastUsed');
+        }
 
         const rows = await sheet.getRows();
         const existingRow = rows.find(r =>
@@ -188,7 +190,6 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
 
         if (existingRow) {
             existingRow.set('lastUsed', new Date().toISOString());
-            // usageCount がある場合はインクリメント
             const currentCount = parseInt(existingRow.get('usageCount') || '0');
             existingRow.set('usageCount', (currentCount + 1).toString());
             await existingRow.save();
@@ -202,8 +203,9 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
                 lastUsed: new Date().toISOString(),
             });
         }
-    } catch (err) {
+    } catch (err: any) {
         console.error('[Sheets] Error updating CommonMaster:', err);
+        throw err;
     }
 }
 

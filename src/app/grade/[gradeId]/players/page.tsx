@@ -31,7 +31,10 @@ export default function PlayerManagementPage() {
                 body: JSON.stringify({ name: newName.trim(), type: 'player', grade: gradeId }),
             });
 
-            if (!res.ok) throw new Error('保存に失敗しました');
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || '保存に失敗しました');
+            }
 
             setMessage({ type: 'success', text: `${newName} さんを追加しました` });
             setNewName('');

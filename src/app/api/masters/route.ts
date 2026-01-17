@@ -15,7 +15,11 @@ export async function GET(req: NextRequest) {
         if (grade) {
             filtered = filtered.filter(m => !m.grade || m.grade === grade);
         }
-        return NextResponse.json(filtered);
+        return NextResponse.json(filtered, {
+            headers: {
+                'Cache-Control': 'no-store, max-age=0',
+            }
+        });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
