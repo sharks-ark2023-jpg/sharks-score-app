@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         matches.sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
         return NextResponse.json({ matches, spreadsheetId });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message, spreadsheetId: getSpreadsheetId(grade) }, { status: 500 });
+        return NextResponse.json({ error: err.message, spreadsheetId }, { status: 500 });
     }
 }
 

@@ -67,7 +67,7 @@ export default function GradeDashboard() {
         );
     }
 
-    const allMatches = Array.isArray(matchesRes?.matches) ? matchesRes!.matches : [];
+    const allMatches = matchesRes?.matches || [];
 
     // Extract available years
     const years = Array.from(new Set(allMatches.map(m => m.matchDate.split('-')[0]))).sort().reverse();

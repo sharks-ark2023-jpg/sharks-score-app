@@ -216,13 +216,13 @@ export default function SettingsPage() {
                     <MasterSection
                         title="対戦相手一覧"
                         type="opponent"
-                        masters={data.masters || []}
+                        masters={data?.masters || []}
                         onDelete={handleDeleteMaster}
                     />
                     <MasterSection
                         title="会場一覧"
                         type="venue"
-                        masters={data.masters || []}
+                        masters={data?.masters || []}
                         onDelete={handleDeleteMaster}
                     />
                 </div>
