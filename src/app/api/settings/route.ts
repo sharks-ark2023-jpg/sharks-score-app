@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getGlobalSettings, getCommonMasters, updateGlobalSettings } from '@/lib/sheets';
 
+export const dynamic = 'force-dynamic';
+
 function getSpreadsheetId(gradeName: string) {
     const config = process.env.GRADES_CONFIG || '';
     const grades = config.split(',').reduce((acc, item) => {

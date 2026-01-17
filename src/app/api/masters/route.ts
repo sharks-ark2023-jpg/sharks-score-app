@@ -3,16 +3,19 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getCommonMasters, updateCommonMaster, getGoogleSheet } from '@/lib/sheets';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const grade = searchParams.get('grade');
 
     try {
         const masters = await getCommonMasters();
+        let filtered = masters;
         if (grade) {
-            return NextResponse.json(masters.filter(m => !m.grade || m.grade === grade));
+            filtered = filtered.filter(m => !m.grade || m.grade === grade);
         }
-        return NextResponse.json(masters);
+        return NextResponse.json(filtered);
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

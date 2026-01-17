@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { GradeConfig } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const config = process.env.GRADES_CONFIG || '';
     const grades: GradeConfig[] = config.split(',').map(item => {
