@@ -11,36 +11,47 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function PlayerManagementPage() {
     const { gradeId } = useParams() as { gradeId: string };
     const router = useRouter();
-    const { data: players, mutate } = useSWR<CommonMaster[]>(`/api/masters?grade=${gradeId}&type=player`, fetcher);
+    const { data: players, error: fetchError, mutate, isLoading } = useSWR<CommonMaster[]>(`/api/masters?grade=${gradeId}`, fetcher);
 
     const [newName, setNewName] = useState('');
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'alert' | 'error', text: string } | null>(null);
 
     const handleAddPlayer = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newName.trim()) return;
+        const nameToAdd = newName.trim();
+        if (!nameToAdd) return;
 
         setSaving(true);
         setMessage(null);
 
         try {
+            console.log('[Players] Adding player:', nameToAdd, 'to grade:', gradeId);
             const res = await fetch('/api/masters', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim(), type: 'player', grade: gradeId }),
+                body: JSON.stringify({ name: nameToAdd, type: 'player', grade: gradeId }),
             });
 
+            const contentType = res.headers.get('content-type');
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || '保存に失敗しました');
+                let errorMsg = `HTTP Error ${res.status}`;
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await res.json();
+                    errorMsg = data.error || errorMsg;
+                } else {
+                    const text = await res.text();
+                    errorMsg = text.slice(0, 100) || errorMsg;
+                }
+                throw new Error(errorMsg);
             }
 
-            setMessage({ type: 'success', text: `${newName} さんを追加しました` });
+            setMessage({ type: 'success', text: `${nameToAdd} さんを追加しました` });
             setNewName('');
-            mutate();
+            await mutate(); // Re-fetch list
         } catch (err: any) {
-            setMessage({ type: 'error', text: err.message });
+            console.error('[Players] Add error:', err);
+            setMessage({ type: 'error', text: `エラー: ${err.message}` });
         } finally {
             setSaving(false);
         }
@@ -48,79 +59,108 @@ export default function PlayerManagementPage() {
 
     const handleDeletePlayer = async (name: string) => {
         if (!confirm(`${name} さんを削除してもよろしいですか？`)) return;
+        setMessage(null);
 
         try {
             const res = await fetch(`/api/masters?name=${encodeURIComponent(name)}&type=player&grade=${gradeId}`, {
                 method: 'DELETE',
             });
 
-            if (!res.ok) throw new Error('削除に失敗しました');
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || '削除に失敗しました');
+            }
 
             setMessage({ type: 'success', text: '削除しました' });
-            mutate();
+            await mutate();
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message });
         }
     };
 
     return (
-        <main className="container mx-auto px-4 py-8 max-w-lg">
+        <main className="container mx-auto px-4 py-8 max-w-lg bg-white min-h-screen">
             <header className="mb-8">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-900">{gradeId} 選手管理</h1>
-                    <Link href={`/grade/${gradeId}`} className="text-sm text-blue-600 hover:underline">← ダッシュボード</Link>
+                    <h1 className="text-2xl font-black text-gray-900">{gradeId} 選手管理</h1>
+                    <Link href={`/grade/${gradeId}`} className="text-sm font-bold text-blue-600 hover:underline">← 戻る</Link>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">得点者選択などの候補に表示される選手を管理します</p>
             </header>
 
-            <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-                <h2 className="text-sm font-bold text-gray-700 mb-4">新規選手追加</h2>
-                <form onSubmit={handleAddPlayer} className="flex gap-2">
+            {fetchError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                    <p className="font-black">⚠️ データ読み込みエラー</p>
+                    <p>{fetchError.message}</p>
+                    <p className="mt-2 text-[10px] opacity-70">スプレッドシートIDやシート名("CommonMasters")が正しいか確認してください。</p>
+                </div>
+            )}
+
+            <section className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 mb-8">
+                <h2 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-4">新規選手登録</h2>
+                <form onSubmit={handleAddPlayer} className="space-y-4">
                     <input
                         type="text"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        placeholder="氏名を入力"
-                        className="flex-grow rounded-lg border-gray-300 bg-gray-50 p-3 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="選手名（例: 佐藤 太郎）"
+                        className="w-full rounded-2xl border-2 border-gray-100 bg-gray-50 p-4 font-bold focus:border-blue-500 focus:ring-0 transition-all text-gray-900"
                         required
                     />
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 disabled:bg-blue-200 transition-all active:scale-95 flex justify-center items-center"
                     >
-                        追加
+                        {saving ? (
+                            <span className="flex items-center gap-2">
+                                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                保存中...
+                            </span>
+                        ) : '登録する'}
                     </button>
                 </form>
                 {message && (
-                    <div className={`mt-4 p-3 rounded-lg text-sm font-bold ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    <div className={`mt-6 p-4 rounded-2xl text-sm font-black text-center animate-bounce ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {message.text}
                     </div>
                 )}
             </section>
 
-            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <h2 className="text-sm font-bold text-gray-700 p-6 border-b">選手一覧 ({players?.filter(p => p.masterType === 'player').length || 0}名)</h2>
-                <ul className="divide-y divide-gray-100">
-                    {players?.filter(p => p.masterType === 'player').map((player) => (
-                        <li key={player.name} className="flex justify-between items-center p-4 hover:bg-gray-50">
-                            <span className="font-medium text-gray-900">{player.name}</span>
+            <section className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b bg-gray-50 flex justify-between items-center">
+                    <h2 className="text-xs font-black uppercase tracking-wider text-gray-400">登録済み選手</h2>
+                    <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">
+                        {players?.filter(p => p.masterType === 'player').length || 0} 名
+                    </span>
+                </div>
+                <ul className="divide-y divide-gray-50">
+                    {isLoading ? (
+                        <li className="p-12 text-center text-gray-300 font-bold animate-pulse italic">読み込み中...</li>
+                    ) : players?.filter(p => p.masterType === 'player').length === 0 ? (
+                        <li className="p-12 text-center text-gray-400 font-bold italic">選手が登録されていません</li>
+                    ) : players?.filter(p => p.masterType === 'player').map((player) => (
+                        <li key={player.name} className="flex justify-between items-center p-5 hover:bg-blue-50 group transition-colors">
+                            <span className="font-bold text-gray-900">{player.name}</span>
                             <button
                                 onClick={() => handleDeletePlayer(player.name)}
-                                className="text-red-500 hover:text-red-700 p-2"
+                                className="text-gray-200 hover:text-red-500 p-2 transition-colors"
                                 title="削除"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </li>
                     ))}
-                    {(!players || players.filter(p => p.masterType === 'player').length === 0) && (
-                        <li className="p-12 text-center text-gray-400">選手が登録されていません</li>
-                    )}
                 </ul>
             </section>
+
+            <div className="mt-12 p-4 bg-gray-100 rounded-2xl text-[10px] font-bold text-gray-400 text-center">
+                DEBUG: {gradeId} | {players ? 'Data Ready' : 'No Data'}
+            </div>
         </main>
     );
 }
