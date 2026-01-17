@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
-import { CommonMaster } from '@/types';
+import { CommonMaster, Match } from '@/types';
 import Link from 'next/link';
 
 const fetcher = (url: string) => fetch(url).then(async (res) => {
@@ -19,6 +19,32 @@ const fetcher = (url: string) => fetch(url).then(async (res) => {
 export default function PlayerManagementPage() {
     const { gradeId } = useParams() as { gradeId: string };
     const { data: players, error: fetchError, mutate, isLoading } = useSWR<CommonMaster[]>(`/api/masters?grade=${gradeId}&type=player`, fetcher);
+    const { data: matchesRes } = useSWR<{ matches: Match[] }>(`/api/matches?grade=${gradeId}`, fetcher);
+
+    // Calculate ranking
+    const ranking = !players || !matchesRes?.matches ? [] : (() => {
+        const counts: Record<string, number> = {};
+        players.forEach(p => counts[p.name] = 0);
+
+        matchesRes.matches.forEach(m => {
+            if (!m.scorers) return;
+            const parts = m.scorers.split(',').map(s => s.trim()).filter(Boolean);
+            parts.forEach(p => {
+                const match = p.match(/^(.+)\((\d+)\)$/);
+                if (match) {
+                    const name = match[1].trim();
+                    const count = parseInt(match[2]);
+                    if (counts[name] !== undefined) counts[name] += count;
+                } else {
+                    if (counts[p] !== undefined) counts[p] += 1;
+                }
+            });
+        });
+
+        return Object.entries(counts)
+            .filter(([_, count]) => count > 0)
+            .sort((a, b) => b[1] - a[1]);
+    })();
 
     const [newName, setNewName] = useState('');
     const [saving, setSaving] = useState(false);
@@ -185,6 +211,35 @@ export default function PlayerManagementPage() {
                     </div>
                 )}
             </section>
+
+            {/* Scoring Ranking */}
+            {ranking.length > 0 && (
+                <section className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex justify-between items-center mb-6 pl-1">
+                        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                            <span className="text-lg">🏆</span> SCORING RANKING
+                        </h2>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-[2.5rem] p-8 shadow-2xl shadow-blue-200">
+                        <div className="space-y-4">
+                            {ranking.slice(0, 5).map(([name, count], index) => (
+                                <div key={name} className="flex items-center justify-between text-white group">
+                                    <div className="flex items-center gap-4">
+                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${index === 0 ? 'bg-yellow-400 text-yellow-900 shadow-lg shadow-yellow-400/20' : index === 1 ? 'bg-gray-300 text-gray-800' : index === 2 ? 'bg-orange-400 text-orange-900' : 'bg-blue-600/50 text-blue-100'}`}>
+                                            {index + 1}
+                                        </span>
+                                        <span className="font-black text-lg tracking-tight group-hover:translate-x-1 transition-transform">{name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl font-black">{count}</span>
+                                        <span className="text-[10px] font-black opacity-50 uppercase tracking-widest">Goals</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <section className="space-y-4">
                 <div className="flex justify-between items-center px-1">

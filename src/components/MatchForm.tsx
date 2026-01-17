@@ -32,6 +32,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         }
     );
     const [mode, setMode] = useState<'simple' | 'full'>('full');
+    const [showAdvanced, setShowAdvanced] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -314,8 +315,32 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </div>
                     </div>
                 )}
+                {/* Advanced Options Toggle */}
+                <div className="pt-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="w-full py-3 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-white hover:border-blue-100 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+                    >
+                        {showAdvanced ? (
+                            <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                                閉じる
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                                試合詳細オプションを表示 (PK・MVP・メモ)
+                            </>
+                        )}
+                    </button>
+                </div>
 
-                {mode === 'full' && (
+                {showAdvanced && mode === 'full' && (
                     <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -373,7 +398,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     placeholder="例: 佐藤(2), 田中"
                 />
 
-                {mode === 'full' && (
+                {showAdvanced && mode === 'full' && (
                     <>
                         <Autocomplete
                             label="MVP"
