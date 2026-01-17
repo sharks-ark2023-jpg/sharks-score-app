@@ -194,8 +194,7 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
                             >
                                 <option value="friendly">練習試合 (Friendly)</option>
-                                <option value="official">公式戦 (Official)</option>
-                                <option value="tournament">大会 (Tournament)</option>
+                                <option value="tournament">公式戦・大会 (Tournament/Official)</option>
                             </select>
                         </label>
                         {formData.matchType === 'tournament' && (
