@@ -12,9 +12,10 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 interface MatchFormProps {
     gradeId: string;
     initialMatch?: Match;
+    onSaved?: () => void;
 }
 
-export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
+export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormProps) {
     const router = useRouter();
     const [formData, setFormData] = useState<Partial<Match>>(
         initialMatch || {
@@ -123,6 +124,7 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                 const data = await res.json();
                 throw new Error(data.error || '保存に失敗しました');
             } else {
+                if (onSaved) onSaved();
                 router.push(`/grade/${gradeId}`);
                 router.refresh();
             }
