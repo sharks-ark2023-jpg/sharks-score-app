@@ -43,12 +43,23 @@ export default function GradeSelector() {
                 <Link
                     key={grade.name}
                     href={`/grade/${grade.name}`}
-                    className="flex items-center justify-between p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                    className="group relative overflow-hidden p-8 bg-white rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col items-center justify-center gap-4 active:scale-95"
                 >
-                    <span className="text-lg font-semibold text-gray-900">{grade.name}</span>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="9 5l7 7-7 7" />
-                    </svg>
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-2 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                        <span className="font-black text-xl">{grade.name.replace(/[^0-9]/g, '') || 'G'}</span>
+                    </div>
+                    <span className="relative font-black text-2xl text-gray-900 tracking-tight group-hover:text-blue-900 transition-colors uppercase">
+                        {grade.name}
+                    </span>
+                    <span className="relative text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-blue-400">
+                        View Dashboard
+                    </span>
+                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                        <svg className="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </div>
                 </Link>
             ))}
         </div>
