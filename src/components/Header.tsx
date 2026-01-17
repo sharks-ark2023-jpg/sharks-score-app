@@ -14,7 +14,7 @@ export default function Header() {
     const gradeId = params?.gradeId as string | undefined;
 
     const { data } = useSWR<{ settings: GlobalSettings }>(
-        gradeId ? `/api/settings?grade=${gradeId}` : null,
+        '/api/settings',
         fetcher
     );
 
