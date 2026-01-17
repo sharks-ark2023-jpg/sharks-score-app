@@ -19,10 +19,20 @@ export default function Header() {
     );
 
     const teamName = data?.settings?.teamName || 'SHARKS';
-    const teamColor = data?.settings?.teamColor || '#1e3a8a'; // Default blue-900
+    const teamColor = data?.settings?.teamColor || '#1e3a8a';
+
+    // Simple luminance check to decide text color (white or dark)
+    const isLightColor = (hex: string) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return (r * 0.299 + g * 0.587 + b * 0.114) > 186;
+    };
+
+    const headerTextColor = isLightColor(teamColor) ? 'text-gray-900' : 'text-white';
 
     return (
-        <header className="text-white shadow-md transition-colors" style={{ backgroundColor: teamColor }}>
+        <header className={`${headerTextColor} shadow-md transition-colors`} style={{ backgroundColor: teamColor }}>
             <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                 <Link href="/" className="flex items-center gap-2 text-xl font-black tracking-tight">
                     {data?.settings?.teamLogoUrl && (

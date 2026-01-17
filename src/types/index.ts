@@ -10,6 +10,7 @@ export interface CommonMaster {
   masterType: 'venue' | 'opponent' | 'player';
   name: string;
   grade?: string; // For player master
+  usageCount?: number;
   createdAt: string;
   lastUsed: string;
 }

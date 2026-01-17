@@ -37,10 +37,13 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{match.matchDate}</span>
                                 {match.isLive && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-red-600 text-white animate-pulse">
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-red-600 text-white animate-pulse">
                                         LIVE
                                     </span>
                                 )}
+                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                    {match.matchFormat === 'halves' ? '前後半' : '1本'}
+                                </span>
                             </div>
                             {match.matchType === 'tournament' && (
                                 <div className="text-[10px] font-bold text-blue-600 truncate max-w-[150px]">
@@ -48,12 +51,19 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                                 </div>
                             )}
                         </div>
-                        <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter ${match.result === 'win' ? 'bg-green-100 text-green-700' :
-                            match.result === 'loss' ? 'bg-red-100 text-red-700' :
-                                'bg-gray-100 text-gray-700'
-                            }`}>
-                            {match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW'}
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                            {match.isLive && match.lastUpdated && (
+                                <span className="text-[9px] font-bold text-red-500">
+                                    更新: {new Date(match.lastUpdated).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            )}
+                            <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter ${match.result === 'win' ? 'bg-green-100 text-green-700' :
+                                match.result === 'loss' ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-700'
+                                }`}>
+                                {match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW'}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-between my-3">

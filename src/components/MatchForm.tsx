@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Match, CommonMaster, GlobalSettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
+import Autocomplete from './Autocomplete';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -172,38 +173,22 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                     </div>
                 </div>
 
-                <label className="block">
-                    <span className="text-sm font-medium text-gray-700">対戦相手</span>
-                    <input
-                        type="text"
-                        name="opponentName"
-                        value={formData.opponentName}
-                        onChange={handleChange}
-                        placeholder="対戦チーム名"
-                        list="opponents-list"
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
-                        required
-                    />
-                    <datalist id="opponents-list">
-                        {opponents.map(o => <option key={o.name} value={o.name} />)}
-                    </datalist>
-                </label>
+                <Autocomplete
+                    label="対戦相手"
+                    value={formData.opponentName || ''}
+                    onChange={(val) => setFormData(p => ({ ...p, opponentName: val }))}
+                    options={opponents}
+                    placeholder="対戦チーム名"
+                    required
+                />
 
-                <label className="block">
-                    <span className="text-sm font-medium text-gray-700">会場</span>
-                    <input
-                        type="text"
-                        name="venueName"
-                        value={formData.venueName}
-                        onChange={handleChange}
-                        placeholder="会場名"
-                        list="venues-list"
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
-                    />
-                    <datalist id="venues-list">
-                        {venues.map(v => <option key={v.name} value={v.name} />)}
-                    </datalist>
-                </label>
+                <Autocomplete
+                    label="会場"
+                    value={formData.venueName || ''}
+                    onChange={(val) => setFormData(p => ({ ...p, venueName: val }))}
+                    options={venues}
+                    placeholder="会場名"
+                />
 
                 <div className="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl">
                     <div className="text-center">
@@ -298,36 +283,23 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                     </label>
                 </div>
 
-                <label className="block">
-                    <span className="text-sm font-medium text-gray-700">得点者 (自チーム)</span>
-                    <input
-                        type="text"
-                        name="scorers"
-                        value={formData.scorers || ''}
-                        onChange={handleChange}
-                        placeholder="例: 佐藤(2), 田中"
-                        list="players-list"
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
-                    />
-                    <datalist id="players-list">
-                        {players.map(p => <option key={p.name} value={p.name} />)}
-                    </datalist>
-                </label>
+                <Autocomplete
+                    label="得点者 (自チーム)"
+                    value={formData.scorers || ''}
+                    onChange={(val) => setFormData(p => ({ ...p, scorers: val }))}
+                    options={players}
+                    placeholder="例: 佐藤(2), 田中"
+                />
 
                 {mode === 'full' && (
                     <>
-                        <label className="block">
-                            <span className="text-sm font-medium text-gray-700">MVP</span>
-                            <input
-                                type="text"
-                                name="mvp"
-                                value={formData.mvp || ''}
-                                onChange={handleChange}
-                                placeholder="選手名を入力"
-                                list="players-list"
-                                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
-                            />
-                        </label>
+                        <Autocomplete
+                            label="MVP"
+                            value={formData.mvp || ''}
+                            onChange={(val) => setFormData(p => ({ ...p, mvp: val }))}
+                            options={players}
+                            placeholder="選手名を選択"
+                        />
 
                         <label className="block">
                             <span className="text-sm font-medium text-gray-700">メモ</span>

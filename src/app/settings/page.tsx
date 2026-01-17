@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { GlobalSettings } from '@/types';
+import { GlobalSettings, CommonMaster } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { data, mutate } = useSWR<{ settings: GlobalSettings }>('/api/settings?grade=U12', fetcher);
+    const { data, mutate } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>('/api/settings?grade=U12', fetcher);
 
     const [formData, setFormData] = useState<Partial<GlobalSettings>>({});
     const [saving, setSaving] = useState(false);
@@ -42,6 +42,22 @@ export default function SettingsPage() {
             setMessage({ type: 'error', text: err.message });
         } finally {
             setSaving(false);
+        }
+    };
+    const handleDeleteMaster = async (name: string, type: string) => {
+        if (!confirm(`${name} を削除しますか？\n(削除しても過去の試合データは消えませんが、入力候補に出なくなります)`)) return;
+
+        try {
+            const res = await fetch(`/api/masters?name=${encodeURIComponent(name)}&type=${type}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) throw new Error('削除に失敗しました');
+
+            setMessage({ type: 'success', text: 'マスタを削除しました' });
+            mutate();
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message });
         }
     };
 
@@ -118,6 +134,58 @@ export default function SettingsPage() {
                     </button>
                 </div>
             </form>
+            <section className="mt-12 space-y-6">
+                <header>
+                    <h2 className="text-xl font-bold text-gray-900">マスタデータ管理</h2>
+                    <p className="text-xs text-gray-500 mt-1">会場名や対戦相手名の表記ゆれを修正・削除できます</p>
+                </header>
+
+                <div className="grid grid-cols-1 gap-6">
+                    <MasterSection
+                        title="対戦相手一覧"
+                        type="opponent"
+                        masters={data.masters || []}
+                        onDelete={handleDeleteMaster}
+                    />
+                    <MasterSection
+                        title="会場一覧"
+                        type="venue"
+                        masters={data.masters || []}
+                        onDelete={handleDeleteMaster}
+                    />
+                </div>
+            </section>
         </main>
+    );
+}
+
+function MasterSection({ title, type, masters, onDelete }: { title: string, type: string, masters: any[], onDelete: (name: string, type: string) => void }) {
+    const filtered = masters.filter(m => m.masterType === type);
+
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <h3 className="text-sm font-bold text-gray-700 p-4 border-b bg-gray-50">{title} ({filtered.length})</h3>
+            <ul className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                {filtered.map(m => (
+                    <li key={m.name} className="flex justify-between items-center p-3 hover:bg-gray-50">
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-900">{m.name}</span>
+                            <span className="text-[10px] text-gray-400">利用回数: {m.usageCount || 0} / 最終: {new Date(m.lastUsed).toLocaleDateString()}</span>
+                        </div>
+                        <button
+                            onClick={() => onDelete(m.name, type)}
+                            className="text-red-400 hover:text-red-600 p-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </li>
+                ))}
+                {filtered.length === 0 && (
+                    <li className="p-8 text-center text-xs text-gray-400">データがありません</li>
+                )}
+            </ul>
+        </div>
     );
 }

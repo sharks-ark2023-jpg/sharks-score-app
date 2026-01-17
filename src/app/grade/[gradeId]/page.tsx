@@ -24,7 +24,7 @@ export default function GradeDashboard() {
     const { data: matches, error, isLoading } = useSWR<Match[]>(
         `/api/matches?grade=${gradeId}`,
         fetcher,
-        { refreshInterval: 30000 }
+        { refreshInterval: 15000 } // Live感を出すため 15秒に短縮
     );
 
     const { data: settingsData } = useSWR<{ settings: GlobalSettings }>(
@@ -66,6 +66,9 @@ export default function GradeDashboard() {
         return yearMatch && typeMatch;
     });
 
+    const liveMatches = allMatches.filter(m => m.isLive);
+    const nonLiveMatches = filteredMatches.filter(m => !m.isLive);
+
     return (
         <main className="flex-grow container mx-auto px-4 py-8 max-w-2xl">
             <header className="flex justify-between items-center mb-6">
@@ -73,13 +76,40 @@ export default function GradeDashboard() {
                     <h1 className="text-2xl font-bold text-gray-900">{teamName} {gradeId}</h1>
                     <Link href="/" className="text-sm text-blue-600 hover:underline">← 学年選択に戻る</Link>
                 </div>
-                <Link
-                    href={`/grade/${gradeId}/match/new`}
-                    className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-sm hover:bg-blue-700 transition-colors text-sm"
-                >
-                    新規記録
-                </Link>
+                <div className="flex gap-2">
+                    <Link
+                        href={`/grade/${gradeId}/players`}
+                        className="px-4 py-2 border border-gray-200 text-gray-600 font-bold rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm flex items-center gap-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        選手管理
+                    </Link>
+                    <Link
+                        href={`/grade/${gradeId}/match/new`}
+                        className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-sm hover:bg-blue-700 transition-colors text-sm"
+                    >
+                        新規記録
+                    </Link>
+                </div>
             </header>
+
+            {/* Live Matches Section */}
+            {liveMatches.length > 0 && (
+                <section className="mb-8">
+                    <h2 className="text-sm font-black text-red-600 flex items-center gap-2 mb-3">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                        </span>
+                        試合中 (リアルタイム速報)
+                    </h2>
+                    <div className="space-y-4">
+                        <MatchList matches={liveMatches} gradeId={gradeId} teamName={teamName} />
+                    </div>
+                </section>
+            )}
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                 <select
@@ -101,7 +131,7 @@ export default function GradeDashboard() {
                 </select>
             </div>
 
-            <MatchList matches={filteredMatches} gradeId={gradeId} teamName={teamName} />
+            <MatchList matches={nonLiveMatches} gradeId={gradeId} teamName={teamName} />
         </main>
     );
 }

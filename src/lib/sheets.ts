@@ -8,10 +8,24 @@ const SCOPES = [
 ];
 
 export async function getGoogleSheet(spreadsheetId: string) {
-    const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
+    let serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    let privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
         .split('\\n').join('\n')
         .replace(/^["']/, '').replace(/["']$/, '');
+
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+        try {
+            let jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+            if (!jsonStr.trim().startsWith('{')) {
+                jsonStr = Buffer.from(jsonStr, 'base64').toString();
+            }
+            const credentials = JSON.parse(jsonStr);
+            serviceAccountEmail = credentials.client_email;
+            privateKey = credentials.private_key;
+        } catch (err) {
+            console.error('[Sheets] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON:', err);
+        }
+    }
 
     if (!serviceAccountEmail || !privateKey) {
         throw new Error('Google Service Account credentials are not configured');
@@ -112,8 +126,12 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
 
 export async function upsertMatch(spreadsheetId: string, sheetName: string, match: Match, userEmail: string) {
     const doc = await getGoogleSheet(spreadsheetId);
-    const sheet = doc.sheetsByTitle[sheetName];
-    if (!sheet) throw new Error(`Sheet ${sheetName} not found`);
+    let sheet = doc.sheetsByTitle[sheetName];
+
+    // シートが存在しない場合は作成を試みる（簡易的な自動作成）
+    if (!sheet) {
+        throw new Error(`Sheet ${sheetName} not found. Please create it first.`);
+    }
 
     const rows = await sheet.getRows();
     const existingRow = rows.find(r => r.get('matchId') === match.matchId);
@@ -127,15 +145,19 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     };
 
     if (existingRow) {
-        // Optimistic locking
-        if (match.lastUpdated && existingRow.get('lastUpdated') !== match.lastUpdated) {
+        // 楽観的ロック: 保存前に lastUpdated を比較
+        const serverLastUpdated = existingRow.get('lastUpdated');
+        if (match.lastUpdated && serverLastUpdated && serverLastUpdated !== match.lastUpdated) {
+            console.warn('[Sheets] Optimistic Locking Conflict:', { client: match.lastUpdated, server: serverLastUpdated });
             throw new Error('CONFLICT');
         }
 
         // Update existing row
         Object.keys(dataToSave).forEach(key => {
-            // @ts-ignore
-            existingRow.set(key, dataToSave[key]);
+            if (key !== 'matchId' && key !== 'createdAt' && key !== 'createdBy') {
+                // @ts-ignore
+                existingRow.set(key, dataToSave[key]);
+            }
         });
         await existingRow.save();
     } else {
@@ -158,16 +180,24 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
         if (!sheet) return;
 
         const rows = await sheet.getRows();
-        const existingRow = rows.find(r => r.get('name') === name && r.get('masterType') === type && (type !== 'player' || r.get('grade') === grade));
+        const existingRow = rows.find(r =>
+            r.get('name') === name &&
+            r.get('masterType') === type &&
+            (type !== 'player' || r.get('grade') === grade)
+        );
 
         if (existingRow) {
             existingRow.set('lastUsed', new Date().toISOString());
+            // usageCount がある場合はインクリメント
+            const currentCount = parseInt(existingRow.get('usageCount') || '0');
+            existingRow.set('usageCount', (currentCount + 1).toString());
             await existingRow.save();
         } else {
             await sheet.addRow({
                 masterType: type,
                 name: name,
                 grade: grade || '',
+                usageCount: '1',
                 createdAt: new Date().toISOString(),
                 lastUsed: new Date().toISOString(),
             });
