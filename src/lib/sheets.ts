@@ -58,6 +58,8 @@ export async function getGlobalSettings(): Promise<GlobalSettings | null> {
             teamName: row.teamName,
             teamLogoUrl: row.teamLogoUrl,
             teamColor: row.teamColor,
+            gradesConfig: row.gradesConfig,
+            commonSpreadsheetId: row.commonSpreadsheetId,
             lastUpdated: row.lastUpdated,
             lastUpdatedBy: row.lastUpdatedBy,
         } as GlobalSettings;
@@ -225,6 +227,8 @@ export async function updateGlobalSettings(settings: Partial<GlobalSettings>, us
             if (settings.teamName) row.set('teamName', settings.teamName);
             if (settings.teamLogoUrl !== undefined) row.set('teamLogoUrl', settings.teamLogoUrl);
             if (settings.teamColor) row.set('teamColor', settings.teamColor);
+            if (settings.gradesConfig !== undefined) row.set('gradesConfig', settings.gradesConfig);
+            if (settings.commonSpreadsheetId !== undefined) row.set('commonSpreadsheetId', settings.commonSpreadsheetId);
             row.set('lastUpdated', new Date().toISOString());
             row.set('lastUpdatedBy', userEmail);
             await row.save();
@@ -233,6 +237,8 @@ export async function updateGlobalSettings(settings: Partial<GlobalSettings>, us
                 teamName: settings.teamName || 'SHARKS',
                 teamLogoUrl: settings.teamLogoUrl || '',
                 teamColor: settings.teamColor || '#1e3a8a',
+                gradesConfig: settings.gradesConfig || '',
+                commonSpreadsheetId: settings.commonSpreadsheetId || '',
                 lastUpdated: new Date().toISOString(),
                 lastUpdatedBy: userEmail,
             });

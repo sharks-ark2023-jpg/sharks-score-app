@@ -108,7 +108,7 @@ export default function SettingsPage() {
                         value={formData.teamLogoUrl || ''}
                         onChange={e => setFormData(p => ({ ...p, teamLogoUrl: e.target.value }))}
                         placeholder="https://example.com/logo.png"
-                        className="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 p-3 focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 p-3 focus:ring-blue-500 focus:border-blue-500 font-medium"
                     />
                     {formData.teamLogoUrl && (
                         <div className="mt-3 flex justify-center p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
@@ -116,6 +116,71 @@ export default function SettingsPage() {
                         </div>
                     )}
                 </label>
+
+                <div className="pt-4 border-t border-gray-100">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-4">スプレッドシート管理</h3>
+
+                    <div className="space-y-4">
+                        <label className="block">
+                            <span className="text-sm font-bold text-gray-700">共通マスタ用 ID</span>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={formData.commonSpreadsheetId || ''}
+                                    onChange={e => setFormData(p => ({ ...p, commonSpreadsheetId: e.target.value }))}
+                                    placeholder="Spreadsheet ID"
+                                    className="flex-grow rounded-lg border-gray-300 bg-gray-50 p-3 focus:ring-blue-500 focus:border-blue-500 font-mono text-xs"
+                                />
+                                {formData.commonSpreadsheetId && (
+                                    <a
+                                        href={`https://docs.google.com/spreadsheets/d/${formData.commonSpreadsheetId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                        title="スプレッドシートを開く"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                )}
+                            </div>
+                        </label>
+
+                        <label className="block">
+                            <span className="text-sm font-bold text-gray-700">学年別 ID 設定</span>
+                            <p className="text-[10px] text-gray-400 mb-1">形式: 学年名:ID,学年名:ID (例: U12:ID1,U11:ID2)</p>
+                            <textarea
+                                value={formData.gradesConfig || ''}
+                                onChange={e => setFormData(p => ({ ...p, gradesConfig: e.target.value }))}
+                                placeholder="U12:spreadsheet_id_xxx"
+                                rows={2}
+                                className="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 p-3 focus:ring-blue-500 focus:border-blue-500 font-mono text-xs"
+                            />
+                        </label>
+
+                        {formData.gradesConfig && formData.gradesConfig.split(',').map((item, i) => {
+                            const [name, id] = item.split(':');
+                            if (!id) return null;
+                            return (
+                                <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <span className="text-xs font-bold text-gray-600">{name} 閲覧リンク</span>
+                                    <a
+                                        href={`https://docs.google.com/spreadsheets/d/${id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-[10px] font-black text-blue-600 hover:underline"
+                                    >
+                                        Google Sheets を開く
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 <div className="pt-4 flex gap-3">
                     <button

@@ -2,6 +2,8 @@ export interface GlobalSettings {
   teamName: string;
   teamLogoUrl?: string;
   teamColor: string;
+  gradesConfig?: string; // e.g. "U12:ID1,U11:ID2"
+  commonSpreadsheetId?: string;
   lastUpdated: string;
   lastUpdatedBy: string;
 }
