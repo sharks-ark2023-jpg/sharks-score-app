@@ -183,11 +183,19 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                             <select
                                 name="matchType"
                                 value={formData.matchType}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    const val = e.target.value as any;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        matchType: val,
+                                        matchFormat: (val === 'official' || val === 'tournament') ? 'halves' : prev.matchFormat
+                                    }));
+                                }}
                                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
                             >
-                                <option value="friendly">フレンドリー</option>
-                                <option value="tournament">大会</option>
+                                <option value="friendly">練習試合 (Friendly)</option>
+                                <option value="official">公式戦 (Official)</option>
+                                <option value="tournament">大会 (Tournament)</option>
                             </select>
                         </label>
                         {formData.matchType === 'tournament' && (
@@ -203,6 +211,27 @@ export default function MatchForm({ gradeId, initialMatch }: MatchFormProps) {
                                 />
                             </label>
                         )}
+                    </div>
+                    <div className={`grid grid-cols-2 gap-4 ${mode === 'simple' ? 'hidden' : 'block'}`}>
+                        <label className="block">
+                            <span className="text-sm font-medium text-gray-700">試合形式</span>
+                            <div className="flex bg-gray-100 p-1 rounded-lg mt-1 gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData(p => ({ ...p, matchFormat: 'halves' }))}
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.matchFormat === 'halves' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
+                                >
+                                    前後半
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData(p => ({ ...p, matchFormat: 'one_game' }))}
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.matchFormat === 'one_game' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
+                                >
+                                    1本
+                                </button>
+                            </div>
+                        </label>
                     </div>
                 </div>
 

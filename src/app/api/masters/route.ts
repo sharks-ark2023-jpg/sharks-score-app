@@ -18,11 +18,15 @@ async function getSpreadsheetId() {
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const grade = searchParams.get('grade');
+    const type = searchParams.get('type');
     const commonId = await getSpreadsheetId();
 
     try {
         const masters = await getCommonMasters();
         let filtered = masters;
+        if (type) {
+            filtered = filtered.filter(m => m.masterType === type);
+        }
         if (grade) {
             filtered = filtered.filter(m => !m.grade || m.grade === grade);
         }

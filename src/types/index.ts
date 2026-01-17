@@ -20,7 +20,7 @@ export interface CommonMaster {
 export interface Match {
   matchId: string;
   matchDate: string;
-  matchType: 'tournament' | 'friendly';
+  matchType: 'tournament' | 'friendly' | 'official';
   tournamentName?: string;
   opponentName: string;
   venueName: string;

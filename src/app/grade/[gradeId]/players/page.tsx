@@ -18,7 +18,7 @@ const fetcher = (url: string) => fetch(url).then(async (res) => {
 
 export default function PlayerManagementPage() {
     const { gradeId } = useParams() as { gradeId: string };
-    const { data: players, error: fetchError, mutate, isLoading } = useSWR<CommonMaster[]>(`/api/masters?grade=${gradeId}`, fetcher);
+    const { data: players, error: fetchError, mutate, isLoading } = useSWR<CommonMaster[]>(`/api/masters?grade=${gradeId}&type=player`, fetcher);
 
     const [newName, setNewName] = useState('');
     const [saving, setSaving] = useState(false);

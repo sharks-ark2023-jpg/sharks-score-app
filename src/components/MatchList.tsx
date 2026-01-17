@@ -45,6 +45,11 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                                     {match.matchFormat === 'halves' ? '前後半' : '1本'}
                                 </span>
                             </div>
+                            {match.matchType === 'official' && (
+                                <div className="text-[10px] font-black text-red-600 flex items-center gap-1 uppercase tracking-wider">
+                                    🏅 Official Match
+                                </div>
+                            )}
                             {match.matchType === 'tournament' && (
                                 <div className="text-[10px] font-bold text-blue-600 truncate max-w-[150px]">
                                     🏆 {match.tournamentName || '大会'}
