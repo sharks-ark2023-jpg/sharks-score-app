@@ -34,12 +34,20 @@ export default function RootLayout({
             {children}
             <footer className="mt-auto py-8 border-t border-gray-50">
               <div className="container mx-auto px-4 text-center">
-                <a
-                  href="/privacy"
-                  className="text-[10px] font-black text-gray-300 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]"
-                >
-                  Privacy Policy
-                </a>
+                <div className="flex justify-center gap-6">
+                  <a
+                    href="/manual"
+                    className="text-[10px] font-black text-gray-300 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]"
+                  >
+                    Manual
+                  </a>
+                  <a
+                    href="/privacy"
+                    className="text-[10px] font-black text-gray-300 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]"
+                  >
+                    Privacy Policy
+                  </a>
+                </div>
               </div>
             </footer>
           </div>
