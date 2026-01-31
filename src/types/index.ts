@@ -26,6 +26,7 @@ export interface Match {
   opponentName: string;
   venueName: string;
   matchFormat: 'halves' | 'one_game';
+  matchDuration?: number;
   ourScore: number;
   ourScore1H?: number;
   ourScore2H?: number;

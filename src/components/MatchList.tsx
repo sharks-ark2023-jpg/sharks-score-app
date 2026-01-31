@@ -48,8 +48,11 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                                         )}
                                     </span>
                                 )}
-                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-1">
                                     {match.matchFormat === 'halves' ? '前後半' : '1本'}
+                                    {match.matchDuration && (
+                                        <span className="border-l border-gray-300 ml-1 pl-1 text-gray-400">{match.matchDuration}分</span>
+                                    )}
                                 </span>
                             </div>
                             {match.matchType === 'tournament' && (

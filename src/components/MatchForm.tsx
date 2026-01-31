@@ -30,6 +30,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             result: 'draw',
             isLive: false,
             matchPhase: 'pre-game',
+            matchDuration: 15,
         }
     );
     const [mode, setMode] = useState<'simple' | 'full'>('full');
@@ -292,6 +293,27 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             </label>
                         )}
                     </div>
+
+                    <div className="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100 mb-2">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${formData.isLive ? 'bg-red-600 animate-pulse' : 'bg-gray-300'}`}></div>
+                            <div>
+                                <span className="text-xs font-black text-gray-700 block uppercase tracking-widest">Live Recording</span>
+                                <span className="text-[10px] text-gray-500 block leading-tight">リアルタイムで得点を記録・公開</span>
+                            </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="isLive"
+                                checked={formData.isLive}
+                                onChange={handleChange}
+                                className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                        </label>
+                    </div>
+
                     <div className={`grid grid-cols-2 gap-4 ${mode === 'simple' ? 'hidden' : 'block'}`}>
                         <label className="block">
                             <span className="text-sm font-medium text-gray-700">試合形式</span>
@@ -310,6 +332,20 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 >
                                     1本
                                 </button>
+                            </div>
+                        </label>
+                        <label className="block">
+                            <span className="text-sm font-medium text-gray-700">試合時間 (分)</span>
+                            <div className="relative mt-1">
+                                <input
+                                    type="number"
+                                    name="matchDuration"
+                                    value={formData.matchDuration || 15}
+                                    onChange={handleChange}
+                                    placeholder="15"
+                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2 pr-10 text-center font-bold"
+                                />
+                                <span className="absolute right-3 top-2 text-[10px] items-center flex h-6 text-gray-400 font-bold uppercase pointer-events-none">min</span>
                             </div>
                         </label>
                     </div>
@@ -353,10 +389,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             {formData.matchPhase === 'pre-game' && (
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: '1H', isLive: true }))}
+                                    onClick={() => setFormData(p => ({ ...p, matchPhase: p.matchFormat === 'one_game' ? '2H' : '1H', isLive: true }))}
                                     className="col-span-2 py-4 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase text-xs tracking-[0.2em]"
                                 >
-                                    前半開始 (Start 1H)
+                                    {formData.matchFormat === 'one_game' ? '試合開始 (Start)' : '前半開始 (Start 1H)'}
                                 </button>
                             )}
                             {formData.matchPhase === '1H' && (
@@ -581,19 +617,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     </div>
                 )}
 
-                <div className="flex items-center justify-between p-4 bg-gray-100 rounded-xl">
-                    <span className="text-sm font-bold text-gray-700">試合中フラグ</span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            name="isLive"
-                            checked={formData.isLive}
-                            onChange={handleChange}
-                            className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                </div>
 
                 <Autocomplete
                     label="得点者 (自チーム)"
@@ -660,21 +683,23 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 )}
             </div>
 
-            {initialMatch && (
-                <div className="pt-4 border-t border-gray-100 flex justify-center">
-                    <button
-                        type="button"
-                        onClick={handleDelete}
-                        disabled={saving}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1 p-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        この試合記録を削除する
-                    </button>
-                </div>
-            )}
-        </form>
+            {
+                initialMatch && (
+                    <div className="pt-4 border-t border-gray-100 flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={saving}
+                            className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1 p-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            この試合記録を削除する
+                        </button>
+                    </div>
+                )
+            }
+        </form >
     );
 }

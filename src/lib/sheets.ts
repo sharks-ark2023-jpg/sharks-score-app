@@ -112,6 +112,7 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             opponentName: data.opponentName,
             venueName: data.venueName,
             matchFormat: data.matchFormat as 'halves' | 'one_game' || 'halves',
+            matchDuration: data.matchDuration ? parseInt(data.matchDuration) : undefined,
             ourScore: parseInt(data.ourScore || '0'),
             ourScore1H: data.ourScore1H ? parseInt(data.ourScore1H) : undefined,
             ourScore2H: data.ourScore2H ? parseInt(data.ourScore2H) : undefined,
@@ -148,7 +149,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     // ヘッダーの確認と追加（不足している列があれば自動で追加）
     const requiredHeaders = [
         'matchId', 'matchDate', 'matchType', 'tournamentName', 'opponentName',
-        'venueName', 'matchFormat',
+        'venueName', 'matchFormat', 'matchDuration',
         'ourScore', 'ourScore1H', 'ourScore2H',
         'opponentScore', 'opponentScore1H', 'opponentScore2H',
         'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'memo',
@@ -183,6 +184,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         lastUpdatedBy: userEmail,
         // undefined のフィールドを空文字にして確実に保存されるようにする
         tournamentName: match.tournamentName || '',
+        matchDuration: match.matchDuration || '',
         ourScore1H: match.ourScore1H ?? '',
         ourScore2H: match.ourScore2H ?? '',
         opponentScore1H: match.opponentScore1H ?? '',
