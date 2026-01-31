@@ -138,12 +138,34 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     const rows = await sheet.getRows();
     const existingRow = rows.find(r => r.get('matchId') === match.matchId);
 
+    // ヘッダーの確認と追加（不足している列があれば自動で追加）
+    const requiredHeaders = [
+        'matchId', 'matchDate', 'matchType', 'tournamentName', 'opponentName',
+        'venueName', 'matchFormat', 'ourScore', 'opponentScore', 'result',
+        'pkInfo', 'isLive', 'scorers', 'mvp', 'memo',
+        'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy'
+    ];
+
+    await sheet.loadHeaderRow();
+    const currentHeaders = sheet.headerValues;
+    const missingHeaders = requiredHeaders.filter(h => !currentHeaders.includes(h));
+
+    if (missingHeaders.length > 0) {
+        console.log(`[Sheets] Adding missing headers to ${sheetName}:`, missingHeaders);
+        await sheet.setHeaderRow([...currentHeaders, ...missingHeaders]);
+    }
+
     const dataToSave = {
         ...match,
         isLive: match.isLive ? 'TRUE' : 'FALSE',
         pkInfo: match.pkInfo ? JSON.stringify(match.pkInfo) : '',
         lastUpdated: new Date().toISOString(),
         lastUpdatedBy: userEmail,
+        // undefined のフィールドを空文字にして確実に保存されるようにする
+        tournamentName: match.tournamentName || '',
+        scorers: match.scorers || '',
+        mvp: match.mvp || '',
+        memo: match.memo || '',
     };
 
     if (existingRow) {

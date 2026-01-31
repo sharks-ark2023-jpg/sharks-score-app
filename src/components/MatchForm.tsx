@@ -187,11 +187,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 name="matchType"
                                 value={formData.matchType}
                                 onChange={(e) => {
-                                    const val = e.target.value as any;
+                                    const val = e.target.value as 'friendly' | 'tournament';
                                     setFormData(prev => ({
                                         ...prev,
                                         matchType: val,
-                                        matchFormat: (val === 'official' || val === 'tournament') ? 'halves' : prev.matchFormat
+                                        matchFormat: val === 'tournament' ? 'halves' : prev.matchFormat
                                     }));
                                 }}
                                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
