@@ -121,6 +121,7 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             result: data.result,
             pkInfo: data.pkInfo ? JSON.parse(data.pkInfo) : undefined,
             isLive: data.isLive === 'TRUE' || data.isLive === 'true',
+            matchPhase: data.matchPhase as any,
             scorers: data.scorers,
             mvp: data.mvp,
             memo: data.memo,
@@ -150,7 +151,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         'venueName', 'matchFormat',
         'ourScore', 'ourScore1H', 'ourScore2H',
         'opponentScore', 'opponentScore1H', 'opponentScore2H',
-        'result', 'pkInfo', 'isLive', 'scorers', 'mvp', 'memo',
+        'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'memo',
         'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy'
     ];
 
@@ -176,6 +177,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     const dataToSave = {
         ...match,
         isLive: match.isLive ? 'TRUE' : 'FALSE',
+        matchPhase: match.matchPhase || '',
         pkInfo: match.pkInfo ? JSON.stringify(match.pkInfo) : '',
         lastUpdated: new Date().toISOString(),
         lastUpdatedBy: userEmail,

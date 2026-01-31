@@ -37,8 +37,15 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{match.matchDate}</span>
                                 {match.isLive && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-red-600 text-white animate-pulse">
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-black bg-red-600 text-white animate-pulse">
                                         LIVE
+                                        {match.matchPhase && match.matchPhase !== 'pre-game' && (
+                                            <span className="border-l border-white/30 ml-1 pl-1">
+                                                {match.matchPhase === '1H' && '前半'}
+                                                {match.matchPhase === 'halftime' && 'HT'}
+                                                {match.matchPhase === '2H' && '後半'}
+                                            </span>
+                                        )}
                                     </span>
                                 )}
                                 <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">

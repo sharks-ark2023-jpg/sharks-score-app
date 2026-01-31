@@ -40,6 +40,7 @@ export interface Match {
     opponentPkScore?: number;
   };
   isLive: boolean;
+  matchPhase?: 'pre-game' | '1H' | 'halftime' | '2H' | 'full-time';
   scorers?: string; // Change to array of player names later?
   mvp?: string;
   memo?: string;
