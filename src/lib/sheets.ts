@@ -83,9 +83,11 @@ export async function getCommonMasters(): Promise<CommonMaster[]> {
             return {
                 masterType: data.masterType,
                 name: data.name,
+                number: data.number,
                 grade: data.grade,
                 createdAt: data.createdAt,
                 lastUsed: data.lastUsed,
+                usageCount: parseInt(data.usageCount || '0'),
             } as CommonMaster;
         });
     } catch (err) {
@@ -217,7 +219,7 @@ export async function deleteMatch(spreadsheetId: string, sheetName: string, matc
     }
 }
 
-export async function updateCommonMaster(name: string, type: 'venue' | 'opponent' | 'player', grade?: string) {
+export async function updateCommonMaster(name: string, type: 'venue' | 'opponent' | 'player', grade?: string, number?: string) {
     const commonId = process.env.COMMON_SPREADSHEET_ID;
     if (!commonId) throw new Error('COMMON_SPREADSHEET_ID is not configured');
 
@@ -225,7 +227,21 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
         const doc = await getGoogleSheet(commonId);
         const sheet = doc.sheetsByTitle['CommonMasters'];
         if (!sheet) {
-            throw new Error('Sheet "CommonMasters" not found in the spreadsheet. Please create it with headers: masterType, name, grade, usageCount, createdAt, lastUsed');
+            throw new Error('Sheet "CommonMasters" not found in the spreadsheet. Please create it with headers: masterType, name, number, grade, usageCount, createdAt, lastUsed');
+        }
+
+        // ヘッダーの確認と追加
+        const requiredHeaders = ['masterType', 'name', 'number', 'grade', 'usageCount', 'createdAt', 'lastUsed'];
+        await sheet.loadHeaderRow();
+        const currentHeaders = sheet.headerValues;
+        const missingHeaders = requiredHeaders.filter(h => !currentHeaders.includes(h));
+
+        if (missingHeaders.length > 0) {
+            const newHeaders = [...currentHeaders, ...missingHeaders];
+            if (sheet.columnCount < newHeaders.length) {
+                await sheet.resize({ rowCount: sheet.rowCount, columnCount: newHeaders.length });
+            }
+            await sheet.setHeaderRow(newHeaders);
         }
 
         const rows = await sheet.getRows();
@@ -239,11 +255,13 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
             existingRow.set('lastUsed', new Date().toISOString());
             const currentCount = parseInt(existingRow.get('usageCount') || '0');
             existingRow.set('usageCount', (currentCount + 1).toString());
+            if (number !== undefined) existingRow.set('number', number);
             await existingRow.save();
         } else {
             await sheet.addRow({
                 masterType: type,
                 name: name,
+                number: number || '',
                 grade: grade || '',
                 usageCount: '1',
                 createdAt: new Date().toISOString(),

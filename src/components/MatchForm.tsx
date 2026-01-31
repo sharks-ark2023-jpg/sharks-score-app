@@ -324,8 +324,13 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     key={player.name}
                                     type="button"
                                     onClick={() => handleQuickScorer(player.name)}
-                                    className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95"
+                                    className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                                 >
+                                    {player.number && (
+                                        <span className="bg-gray-100 px-1 rounded text-[10px] text-gray-500 group-hover:bg-blue-500 group-hover:text-blue-100">
+                                            {player.number}
+                                        </span>
+                                    )}
                                     {player.name}
                                 </button>
                             ))}
@@ -413,6 +418,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     onChange={(val) => setFormData(p => ({ ...p, scorers: val }))}
                     options={players}
                     placeholder="例: 佐藤(2), 田中"
+                    showNumber={true}
                 />
 
                 {showAdvanced && mode === 'full' && (
@@ -423,6 +429,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             onChange={(val) => setFormData(p => ({ ...p, mvp: val }))}
                             options={players}
                             placeholder="選手名を選択"
+                            showNumber={true}
                         />
 
                         <label className="block">

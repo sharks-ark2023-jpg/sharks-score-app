@@ -47,6 +47,7 @@ export default function PlayerManagementPage() {
     })();
 
     const [newName, setNewName] = useState('');
+    const [newNumber, setNewNumber] = useState('');
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'alert' | 'error', text: string, spreadsheetId?: string } | null>(null);
 
@@ -63,6 +64,7 @@ export default function PlayerManagementPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: newName.trim(),
+                    number: newNumber.trim(),
                     type: 'player',
                     grade: gradeId
                 }),
@@ -88,6 +90,7 @@ export default function PlayerManagementPage() {
 
             setMessage({ type: 'success', text: `${newName} を登録しました！` });
             setNewName('');
+            setNewNumber('');
             mutate();
         } catch (err: any) {
             console.error('[Players] Add error:', err);
@@ -162,18 +165,25 @@ export default function PlayerManagementPage() {
                 <form onSubmit={handleAddPlayer} className="space-y-4">
                     <label className="block">
                         <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 ml-1">選手を追加</span>
-                        <div className="flex gap-3 mt-2">
+                        <div className="flex flex-col sm:flex-row gap-3 mt-2">
                             <input
                                 type="text"
                                 value={newName}
                                 onChange={e => setNewName(e.target.value)}
-                                placeholder="例: 日本 太郎"
-                                className="flex-grow rounded-2xl border-2 border-gray-50 bg-gray-50 p-4 font-bold text-gray-900 focus:bg-white focus:border-blue-500 transition-all outline-none"
+                                placeholder="名前 (例: 日本 太郎)"
+                                className="flex-[3] rounded-2xl border-2 border-gray-50 bg-gray-50 p-4 font-bold text-gray-900 focus:bg-white focus:border-blue-500 transition-all outline-none"
+                            />
+                            <input
+                                type="text"
+                                value={newNumber}
+                                onChange={e => setNewNumber(e.target.value)}
+                                placeholder="背番号"
+                                className="flex-1 rounded-2xl border-2 border-gray-50 bg-gray-50 p-4 font-bold text-gray-900 focus:bg-white focus:border-blue-500 transition-all outline-none"
                             />
                             <button
                                 type="submit"
                                 disabled={saving || !newName.trim()}
-                                className="bg-blue-600 text-white p-4 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 disabled:bg-gray-100 transition-all"
+                                className="bg-blue-600 text-white p-4 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 disabled:bg-gray-100 transition-all flex items-center justify-center min-w-[60px]"
                             >
                                 {saving ? (
                                     <svg className="animate-spin h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
@@ -257,7 +267,14 @@ export default function PlayerManagementPage() {
                 <div className="grid grid-cols-1 gap-3">
                     {players?.map((p: any) => (
                         <div key={p.name} className="flex justify-between items-center bg-white p-5 rounded-3xl border-2 border-gray-50 shadow-sm hover:shadow-md transition-all group">
-                            <span className="font-bold text-gray-900">{p.name}</span>
+                            <div className="flex items-center gap-4">
+                                {p.number && (
+                                    <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-black text-gray-500">
+                                        {p.number}
+                                    </span>
+                                )}
+                                <span className="font-bold text-gray-900">{p.name}</span>
+                            </div>
                             <button
                                 onClick={() => handleDeletePlayer(p.name)}
                                 className="opacity-0 group-hover:opacity-100 p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"

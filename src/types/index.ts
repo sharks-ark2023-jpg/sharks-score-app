@@ -11,6 +11,7 @@ export interface GlobalSettings {
 export interface CommonMaster {
   masterType: 'venue' | 'opponent' | 'player';
   name: string;
+  number?: string;
   grade?: string; // For player master
   usageCount?: number;
   createdAt: string;

@@ -5,15 +5,16 @@ import { useState, useRef, useEffect } from 'react';
 interface AutocompleteProps {
     value: string;
     onChange: (value: string) => void;
-    options: { name: string }[];
+    options: { name: string; number?: string }[];
     placeholder?: string;
     label?: string;
     required?: boolean;
+    showNumber?: boolean;
 }
 
-export default function Autocomplete({ value, onChange, options, placeholder, label, required }: AutocompleteProps) {
+export default function Autocomplete({ value, onChange, options, placeholder, label, required, showNumber }: AutocompleteProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [filteredOptions, setFilteredOptions] = useState<{ name: string }[]>([]);
+    const [filteredOptions, setFilteredOptions] = useState<{ name: string; number?: string }[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -56,13 +57,18 @@ export default function Autocomplete({ value, onChange, options, placeholder, la
                     {filteredOptions.map((option, index) => (
                         <li
                             key={index}
-                            className="relative cursor-pointer select-none py-2 px-4 text-gray-900 hover:bg-blue-50 hover:text-blue-900"
+                            className="relative cursor-pointer select-none py-2 px-4 text-gray-900 hover:bg-blue-50 hover:text-blue-900 flex items-center justify-between"
                             onClick={() => {
                                 onChange(option.name);
                                 setIsOpen(false);
                             }}
                         >
-                            {option.name}
+                            <span>{option.name}</span>
+                            {showNumber && option.number && (
+                                <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                    #{option.number}
+                                </span>
+                            )}
                         </li>
                     ))}
                 </ul>

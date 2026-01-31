@@ -51,12 +51,12 @@ export async function POST(req: NextRequest) {
     const commonId = await getSpreadsheetId();
 
     try {
-        const { name, type, grade } = await req.json();
+        const { name, type, grade, number } = await req.json();
         if (!name || !type) {
             return NextResponse.json({ error: 'Name and type are required' }, { status: 400 });
         }
 
-        await updateCommonMaster(name, type, grade);
+        await updateCommonMaster(name, type, grade, number);
         return NextResponse.json({ success: true });
     } catch (err: any) {
         return NextResponse.json({
