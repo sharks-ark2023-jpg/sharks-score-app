@@ -79,6 +79,12 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                                     PK {match.pkInfo.ourPkScore} - {match.pkInfo.opponentPkScore}
                                 </div>
                             )}
+                            {match.matchFormat === 'halves' && (match.ourScore1H !== undefined || match.ourScore2H !== undefined) && (
+                                <div className="text-[8px] font-bold text-gray-400 mt-1 flex gap-2">
+                                    <span>前半: {match.ourScore1H ?? 0}-{match.opponentScore1H ?? 0}</span>
+                                    <span>後半: {match.ourScore2H ?? 0}-{match.opponentScore2H ?? 0}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex-1 text-center font-bold text-sm truncate text-gray-700">{match.opponentName}</div>
                     </div>

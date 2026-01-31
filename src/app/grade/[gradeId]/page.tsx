@@ -73,13 +73,20 @@ export default function GradeDashboard() {
         );
     }
 
+    const getFiscalYear = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // 0-indexed
+        return month >= 4 ? year.toString() : (year - 1).toString();
+    };
+
     const allMatches = matchesRes?.matches || [];
-    const years = Array.from(new Set(allMatches.map(m => m.matchDate.split('-')[0]))).sort().reverse();
+    const years = Array.from(new Set(allMatches.map(m => getFiscalYear(m.matchDate)))).sort().reverse();
     const liveMatches = allMatches.filter(m => m.isLive);
 
     const filteredMatches = allMatches.filter(m => {
-        const matchYear = m.matchDate.split('-')[0];
-        const yearMatch = filterYear === 'all' || matchYear === filterYear;
+        const matchFY = getFiscalYear(m.matchDate);
+        const yearMatch = filterYear === 'all' || matchFY === filterYear;
         const typeMatch = filterType === 'all' || m.matchType === filterType;
         return yearMatch && typeMatch;
     });

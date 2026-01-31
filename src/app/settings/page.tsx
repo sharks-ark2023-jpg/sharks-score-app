@@ -183,7 +183,7 @@ export default function SettingsPage() {
                                 連携が失敗する場合は、対象シートに <span className="text-blue-600 underline">CommonMasters</span> という名前のタブを作成し、1行目に以下のヘッダーを記述してください：
                             </p>
                             <code className="block bg-white p-3 rounded-xl border border-gray-200 text-[9px] font-black text-blue-600 break-all leading-relaxed">
-                                masterType, name, grade, usageCount, createdAt, lastUsed
+                                teamName, teamLogoUrl, teamColor, gradesConfig, commonSpreadsheetId, lastUpdated, lastUpdatedBy
                             </code>
                         </div>
                     </div>

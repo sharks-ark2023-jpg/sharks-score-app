@@ -113,7 +113,11 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             venueName: data.venueName,
             matchFormat: data.matchFormat as 'halves' | 'one_game' || 'halves',
             ourScore: parseInt(data.ourScore || '0'),
+            ourScore1H: data.ourScore1H ? parseInt(data.ourScore1H) : undefined,
+            ourScore2H: data.ourScore2H ? parseInt(data.ourScore2H) : undefined,
             opponentScore: parseInt(data.opponentScore || '0'),
+            opponentScore1H: data.opponentScore1H ? parseInt(data.opponentScore1H) : undefined,
+            opponentScore2H: data.opponentScore2H ? parseInt(data.opponentScore2H) : undefined,
             result: data.result,
             pkInfo: data.pkInfo ? JSON.parse(data.pkInfo) : undefined,
             isLive: data.isLive === 'TRUE' || data.isLive === 'true',
@@ -143,8 +147,10 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     // ヘッダーの確認と追加（不足している列があれば自動で追加）
     const requiredHeaders = [
         'matchId', 'matchDate', 'matchType', 'tournamentName', 'opponentName',
-        'venueName', 'matchFormat', 'ourScore', 'opponentScore', 'result',
-        'pkInfo', 'isLive', 'scorers', 'mvp', 'memo',
+        'venueName', 'matchFormat',
+        'ourScore', 'ourScore1H', 'ourScore2H',
+        'opponentScore', 'opponentScore1H', 'opponentScore2H',
+        'result', 'pkInfo', 'isLive', 'scorers', 'mvp', 'memo',
         'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy'
     ];
 
@@ -175,6 +181,10 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         lastUpdatedBy: userEmail,
         // undefined のフィールドを空文字にして確実に保存されるようにする
         tournamentName: match.tournamentName || '',
+        ourScore1H: match.ourScore1H ?? '',
+        ourScore2H: match.ourScore2H ?? '',
+        opponentScore1H: match.opponentScore1H ?? '',
+        opponentScore2H: match.opponentScore2H ?? '',
         scorers: match.scorers || '',
         mvp: match.mvp || '',
         memo: match.memo || '',
@@ -280,8 +290,26 @@ export async function updateGlobalSettings(settings: Partial<GlobalSettings>, us
 
     try {
         const doc = await getGoogleSheet(commonId);
-        const sheet = doc.sheetsByTitle['GlobalSettings'];
-        if (!sheet) return;
+        let sheet = doc.sheetsByTitle['GlobalSettings'];
+
+        // シートが存在しない場合は作成
+        if (!sheet) {
+            sheet = await doc.addSheet({ title: 'GlobalSettings', headerValues: ['teamName', 'teamLogoUrl', 'teamColor', 'gradesConfig', 'commonSpreadsheetId', 'lastUpdated', 'lastUpdatedBy'] });
+        }
+
+        // ヘッダーの同期
+        const requiredHeaders = ['teamName', 'teamLogoUrl', 'teamColor', 'gradesConfig', 'commonSpreadsheetId', 'lastUpdated', 'lastUpdatedBy'];
+        await sheet.loadHeaderRow();
+        const currentHeaders = sheet.headerValues;
+        const missingHeaders = requiredHeaders.filter(h => !currentHeaders.includes(h));
+
+        if (missingHeaders.length > 0) {
+            const newHeaders = [...currentHeaders, ...missingHeaders];
+            if (sheet.columnCount < newHeaders.length) {
+                await sheet.resize({ rowCount: sheet.rowCount, columnCount: newHeaders.length });
+            }
+            await sheet.setHeaderRow(newHeaders);
+        }
 
         const rows = await sheet.getRows();
         const row = rows[0];

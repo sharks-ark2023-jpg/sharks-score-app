@@ -27,7 +27,11 @@ export interface Match {
   venueName: string;
   matchFormat: 'halves' | 'one_game';
   ourScore: number;
-  opponentScore: number; // lostPoints also
+  ourScore1H?: number;
+  ourScore2H?: number;
+  opponentScore: number;
+  opponentScore1H?: number;
+  opponentScore2H?: number;
   result: 'win' | 'loss' | 'draw';
   pkInfo?: {
     isPk: boolean;

@@ -64,7 +64,16 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
         setFormData(prev => {
             const updated = { ...prev, [name]: newValue };
-            if (name === 'ourScore' || name === 'opponentScore') {
+
+            // 前後半入力時の合計計算
+            if (name === 'ourScore1H' || name === 'ourScore2H') {
+                updated.ourScore = (updated.ourScore1H || 0) + (updated.ourScore2H || 0);
+            }
+            if (name === 'opponentScore1H' || name === 'opponentScore2H') {
+                updated.opponentScore = (updated.opponentScore1H || 0) + (updated.opponentScore2H || 0);
+            }
+
+            if (name === 'ourScore' || name === 'opponentScore' || name === 'ourScore1H' || name === 'ourScore2H' || name === 'opponentScore1H' || name === 'opponentScore2H') {
                 updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
             }
             return updated;
@@ -270,6 +279,61 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     options={venues}
                     placeholder="会場名"
                 />
+
+                {formData.matchFormat === 'halves' && mode === 'full' && (
+                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                        <div className="space-y-3">
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">前半 (1st Half)</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <label className="block">
+                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">SHARKS</span>
+                                    <input
+                                        type="number"
+                                        name="ourScore1H"
+                                        value={formData.ourScore1H || 0}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">相手</span>
+                                    <input
+                                        type="number"
+                                        name="opponentScore1H"
+                                        value={formData.opponentScore1H || 0}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">後半 (2nd Half)</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <label className="block">
+                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">SHARKS</span>
+                                    <input
+                                        type="number"
+                                        name="ourScore2H"
+                                        value={formData.ourScore2H || 0}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">相手</span>
+                                    <input
+                                        type="number"
+                                        name="opponentScore2H"
+                                        value={formData.opponentScore2H || 0}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl">
                     <div className="text-center">
