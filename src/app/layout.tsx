@@ -32,6 +32,16 @@ export default function RootLayout({
           <div className="min-h-screen flex flex-col bg-white">
             <Header />
             {children}
+            <footer className="mt-auto py-8 border-t border-gray-50">
+              <div className="container mx-auto px-4 text-center">
+                <a
+                  href="/privacy"
+                  className="text-[10px] font-black text-gray-300 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]"
+                >
+                  Privacy Policy
+                </a>
+              </div>
+            </footer>
           </div>
         </NextAuthSessionProvider>
       </body>
