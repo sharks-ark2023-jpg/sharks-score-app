@@ -151,8 +151,18 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     const missingHeaders = requiredHeaders.filter(h => !currentHeaders.includes(h));
 
     if (missingHeaders.length > 0) {
+        const newHeaders = [...currentHeaders, ...missingHeaders];
         console.log(`[Sheets] Adding missing headers to ${sheetName}:`, missingHeaders);
-        await sheet.setHeaderRow([...currentHeaders, ...missingHeaders]);
+
+        // 列数が足りない場合はリサイズ
+        if (sheet.columnCount < newHeaders.length) {
+            await sheet.resize({
+                rowCount: sheet.rowCount,
+                columnCount: newHeaders.length
+            });
+        }
+
+        await sheet.setHeaderRow(newHeaders);
     }
 
     const dataToSave = {
