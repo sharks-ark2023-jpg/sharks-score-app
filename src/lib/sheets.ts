@@ -128,8 +128,9 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             memo: data.memo,
             lastUpdated: data.lastUpdated,
             lastUpdatedBy: data.lastUpdatedBy,
-            createdAt: data.createdAt,
             createdBy: data.createdBy,
+            editingBy: data.editingBy,
+            editingExpires: data.editingExpires,
         } as Match;
     });
 }
@@ -153,7 +154,8 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         'ourScore', 'ourScore1H', 'ourScore2H',
         'opponentScore', 'opponentScore1H', 'opponentScore2H',
         'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'memo',
-        'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy'
+        'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy',
+        'editingBy', 'editingExpires'
     ];
 
     await sheet.loadHeaderRow();
@@ -217,6 +219,20 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
             createdAt: new Date().toISOString(),
             createdBy: userEmail,
         });
+    }
+}
+
+export async function updateMatchLock(spreadsheetId: string, sheetName: string, matchId: string, email: string | null, expiresAt: string | null) {
+    const doc = await getGoogleSheet(spreadsheetId);
+    const sheet = doc.sheetsByTitle[sheetName];
+    if (!sheet) return;
+
+    const rows = await sheet.getRows();
+    const row = rows.find(r => r.get('matchId') === matchId);
+    if (row) {
+        row.set('editingBy', email || '');
+        row.set('editingExpires', expiresAt || '');
+        await row.save();
     }
 }
 

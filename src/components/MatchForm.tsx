@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Match, CommonMaster, GlobalSettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import Autocomplete from './Autocomplete';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -37,6 +37,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [lockInfo, setLockInfo] = useState<{ locked: boolean, lockedBy?: string } | null>(null);
+    const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
         `/api/settings?grade=${gradeId}`,
@@ -52,6 +54,51 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const venues = data?.masters?.filter(m => m.masterType === 'venue') || [];
     const opponents = data?.masters?.filter(m => m.masterType === 'opponent') || [];
     const players = data?.masters?.filter(m => m.masterType === 'player' && (!m.grade || m.grade === gradeId)) || [];
+
+    useEffect(() => {
+        if (!initialMatch) return;
+
+        const acquireLock = async () => {
+            try {
+                const res = await fetch('/api/matches/lock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        grade: gradeId,
+                        matchId: initialMatch.matchId,
+                        action: 'acquire'
+                    })
+                });
+                const data = await res.json();
+                if (res.status === 423) {
+                    setLockInfo({ locked: true, lockedBy: data.lockedBy });
+                } else if (res.ok) {
+                    setLockInfo({ locked: false });
+                    // Start refresh timer
+                    if (lockTimerRef.current) clearInterval(lockTimerRef.current);
+                    lockTimerRef.current = setInterval(acquireLock, 45000); // 45s refresh for 60s lock
+                }
+            } catch (err) {
+                console.error('Lock error:', err);
+            }
+        };
+
+        acquireLock();
+
+        return () => {
+            if (lockTimerRef.current) clearInterval(lockTimerRef.current);
+            // Release lock
+            fetch('/api/matches/lock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    grade: gradeId,
+                    matchId: initialMatch.matchId,
+                    action: 'release'
+                })
+            }).catch(console.error);
+        };
+    }, [gradeId, initialMatch]);
 
     const calculateResult = (our: number, opponent: number): 'win' | 'loss' | 'draw' => {
         if (our > opponent) return 'win';
@@ -215,8 +262,31 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         }
     };
 
+    if (lockInfo?.locked) {
+        return (
+            <div className="max-w-lg mx-auto bg-orange-50 p-8 rounded-[2rem] border border-orange-200 text-center shadow-xl">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h2 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-widest">Editing Locked</h2>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                    現在、<span className="font-bold text-orange-700">{lockInfo.lockedBy}</span> さんがこの試合を編集しています。<br />
+                    二重更新を防ぐため、編集がロックされています。
+                </p>
+                <button
+                    onClick={() => router.back()}
+                    className="w-full py-4 bg-white border-2 border-gray-200 text-gray-400 font-black rounded-2xl hover:bg-gray-50 transition-all uppercase text-[10px] tracking-widest"
+                >
+                    戻る
+                </button>
+            </div>
+        );
+    }
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
             <div className="flex justify-between items-center border-b pb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                     {initialMatch ? '試合記録を編集' : '新規試合を記録'}
@@ -378,9 +448,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             </h3>
                             <span className="text-[10px] font-black text-gray-400 bg-white px-2 py-1 rounded-full border border-red-100 uppercase tracking-widest">
                                 {formData.matchPhase === 'pre-game' && '試合前'}
-                                {formData.matchPhase === '1H' && '前半進行中'}
+                                {formData.matchPhase === '1H' && (formData.matchFormat === 'one_game' ? '進行中' : '前半進行中')}
                                 {formData.matchPhase === 'halftime' && 'ハーフタイム'}
-                                {formData.matchPhase === '2H' && '後半進行中'}
+                                {formData.matchPhase === '2H' && (formData.matchFormat === 'one_game' ? '進行中' : '後半進行中')}
                                 {formData.matchPhase === 'full-time' && '試合終了'}
                             </span>
                         </div>
@@ -389,22 +459,32 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             {formData.matchPhase === 'pre-game' && (
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: p.matchFormat === 'one_game' ? '2H' : '1H', isLive: true }))}
+                                    onClick={() => setFormData(p => ({ ...p, matchPhase: '1H', isLive: true }))}
                                     className="col-span-2 py-4 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase text-xs tracking-[0.2em]"
                                 >
                                     {formData.matchFormat === 'one_game' ? '試合開始 (Start)' : '前半開始 (Start 1H)'}
                                 </button>
                             )}
                             {formData.matchPhase === '1H' && (
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: 'halftime' }))}
-                                    className="col-span-2 py-4 bg-orange-500 text-white font-black rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all uppercase text-xs tracking-[0.2em]"
-                                >
-                                    前半終了 (HT)
-                                </button>
+                                formData.matchFormat === 'one_game' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, matchPhase: 'full-time', isLive: false }))}
+                                        className="col-span-2 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-lg shadow-gray-200 hover:bg-black transition-all uppercase text-xs tracking-[0.2em]"
+                                    >
+                                        試合終了 (End Match)
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, matchPhase: 'halftime' }))}
+                                        className="col-span-2 py-4 bg-orange-500 text-white font-black rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all uppercase text-xs tracking-[0.2em]"
+                                    >
+                                        前半終了 (HT)
+                                    </button>
+                                )
                             )}
-                            {formData.matchPhase === 'halftime' && (
+                            {formData.matchPhase === 'halftime' && formData.matchFormat !== 'one_game' && (
                                 <button
                                     type="button"
                                     onClick={() => setFormData(p => ({ ...p, matchPhase: '2H' }))}
@@ -413,7 +493,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     後半開始 (Start 2H)
                                 </button>
                             )}
-                            {formData.matchPhase === '2H' && (
+                            {formData.matchPhase === '2H' && formData.matchFormat !== 'one_game' && (
                                 <button
                                     type="button"
                                     onClick={() => setFormData(p => ({ ...p, matchPhase: 'full-time', isLive: false }))}
@@ -425,10 +505,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             {formData.matchPhase === 'full-time' && (
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: '2H', isLive: true }))}
+                                    onClick={() => setFormData(p => ({ ...p, matchPhase: p.matchFormat === 'one_game' ? '1H' : '2H', isLive: true }))}
                                     className="col-span-2 py-3 border-2 border-gray-200 text-gray-400 font-bold rounded-2xl hover:bg-gray-50 transition-all text-[10px] tracking-widest"
                                 >
-                                    入力ミス？後半に戻る
+                                    入力ミス？試合中に戻る
                                 </button>
                             )}
                         </div>

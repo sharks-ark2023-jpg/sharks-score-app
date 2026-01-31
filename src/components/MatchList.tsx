@@ -41,9 +41,13 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                                         LIVE
                                         {match.matchPhase && match.matchPhase !== 'pre-game' && (
                                             <span className="border-l border-white/30 ml-1 pl-1">
-                                                {match.matchPhase === '1H' && '前半'}
-                                                {match.matchPhase === 'halftime' && 'HT'}
-                                                {match.matchPhase === '2H' && '後半'}
+                                                {match.matchFormat === 'one_game' ? '進行中' : (
+                                                    <>
+                                                        {match.matchPhase === '1H' && '前半'}
+                                                        {match.matchPhase === 'halftime' && 'HT'}
+                                                        {match.matchPhase === '2H' && '後半'}
+                                                    </>
+                                                )}
                                             </span>
                                         )}
                                     </span>
@@ -67,12 +71,14 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                                     更新: {new Date(match.lastUpdated).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             )}
-                            <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter ${match.result === 'win' ? 'bg-green-100 text-green-700' :
-                                match.result === 'loss' ? 'bg-red-100 text-red-700' :
-                                    'bg-gray-100 text-gray-700'
-                                }`}>
-                                {match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW'}
-                            </span>
+                            {!match.isLive && (
+                                <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter ${match.result === 'win' ? 'bg-green-100 text-green-700' :
+                                    match.result === 'loss' ? 'bg-red-100 text-red-700' :
+                                        'bg-gray-100 text-gray-700'
+                                    }`}>
+                                    {match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW'}
+                                </span>
+                            )}
                         </div>
                     </div>
 

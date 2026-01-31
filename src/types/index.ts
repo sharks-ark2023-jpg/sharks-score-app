@@ -49,6 +49,8 @@ export interface Match {
   lastUpdatedBy: string;
   createdAt: string;
   createdBy: string;
+  editingBy?: string;
+  editingExpires?: string; // ISO string
 }
 
 export interface GradeConfig {
