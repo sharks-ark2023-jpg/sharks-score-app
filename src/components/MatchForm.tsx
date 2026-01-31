@@ -106,40 +106,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         });
     };
 
-    const toggleMember = (playerName: string, field: 'startingLineup' | 'participation') => {
-        setFormData(prev => {
-            const current = (prev[field] || '').split(',').map(s => s.trim()).filter(Boolean);
-            const exists = current.includes(playerName);
-            let next: string[];
-            if (exists) {
-                next = current.filter(n => n !== playerName);
-            } else {
-                next = [...current, playerName];
-            }
-
-            const updated = { ...prev, [field]: next.join(', ') };
-
-            // スタメンにチェックを入れたら、出場にも自動でチェックを入れる
-            if (field === 'startingLineup' && !exists) {
-                const currentPlayed = (prev.participation || '').split(',').map(s => s.trim()).filter(Boolean);
-                if (!currentPlayed.includes(playerName)) {
-                    updated.participation = [...currentPlayed, playerName].join(', ');
-                }
-            }
-
-            return updated;
-        });
-    };
-
-    const copyLastMatchMembers = () => {
-        if (!matchesData?.matches?.length) return;
-        const lastMatch = matchesData.matches[0]; // matches API returns newest first
-        setFormData(prev => ({
-            ...prev,
-            startingLineup: lastMatch.startingLineup || '',
-            participation: lastMatch.participation || '',
-        }));
-    };
 
     const handleQuickScorer = (playerName: string) => {
         // 先にスコアを加算
@@ -196,8 +162,31 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 throw new Error(data.error || '保存に失敗しました');
             } else {
                 if (onSaved) onSaved();
+
                 if (!stayOnPage) {
-                    router.push(`/grade/${gradeId}`);
+                    if (!initialMatch && confirm('保存しました。同じ対戦相手・会場で次の試合を記録しますか？')) {
+                        // 継続入力モード：スコアやIDをリセットして対戦相手・会場を維持
+                        setFormData(prev => ({
+                            ...prev,
+                            matchId: uuidv4(),
+                            ourScore: 0,
+                            ourScore1H: 0,
+                            ourScore2H: 0,
+                            opponentScore: 0,
+                            opponentScore1H: 0,
+                            opponentScore2H: 0,
+                            result: 'draw',
+                            isLive: false,
+                            matchPhase: 'pre-game',
+                            scorers: '',
+                            mvp: '',
+                            memo: '',
+                            pkInfo: undefined,
+                        }));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        router.push(`/grade/${gradeId}`);
+                    }
                 }
                 router.refresh();
             }
@@ -615,70 +604,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     showNumber={true}
                 />
 
-                {/* Lineup & Participation */}
-                {mode === 'full' && (
-                    <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                                Lineup & Attendance
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={copyLastMatchMembers}
-                                className="text-[9px] font-black text-blue-600 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm hover:bg-blue-600 hover:text-white transition-all uppercase tracking-widest"
-                            >
-                                前回と同じメンバー
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-gray-50 border-b border-gray-100">
-                                    <tr>
-                                        <th className="px-4 py-2 font-black text-gray-400 text-[9px] uppercase tracking-widest text-center">スタメン</th>
-                                        <th className="px-4 py-2 font-black text-gray-400 text-[9px] uppercase tracking-widest text-center">出場</th>
-                                        <th className="px-4 py-2 font-black text-gray-400 text-[9px] uppercase tracking-widest">選手</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {players.map(p => {
-                                        const isStart = (formData.startingLineup || '').split(',').map(s => s.trim()).includes(p.name);
-                                        const isPlayed = (formData.participation || '').split(',').map(s => s.trim()).includes(p.name);
-                                        return (
-                                            <tr key={p.name} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-3 text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isStart}
-                                                        onChange={() => toggleMember(p.name, 'startingLineup')}
-                                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isPlayed}
-                                                        onChange={() => toggleMember(p.name, 'participation')}
-                                                        className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        {p.number && <span className="text-[10px] font-mono text-gray-400 w-5">#{p.number}</span>}
-                                                        <span className="font-bold text-gray-700">{p.name}</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
 
                 {showAdvanced && mode === 'full' && (
                     <>

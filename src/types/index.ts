@@ -43,8 +43,6 @@ export interface Match {
   matchPhase?: 'pre-game' | '1H' | 'halftime' | '2H' | 'full-time';
   scorers?: string;
   mvp?: string;
-  startingLineup?: string;
-  participation?: string;
   memo?: string;
   lastUpdated: string;
   lastUpdatedBy: string;
