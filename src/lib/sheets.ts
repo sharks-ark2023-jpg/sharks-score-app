@@ -124,6 +124,8 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             matchPhase: data.matchPhase as any,
             scorers: data.scorers,
             mvp: data.mvp,
+            startingLineup: data.startingLineup,
+            participation: data.participation,
             memo: data.memo,
             lastUpdated: data.lastUpdated,
             lastUpdatedBy: data.lastUpdatedBy,
@@ -151,7 +153,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         'venueName', 'matchFormat',
         'ourScore', 'ourScore1H', 'ourScore2H',
         'opponentScore', 'opponentScore1H', 'opponentScore2H',
-        'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'memo',
+        'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'startingLineup', 'participation', 'memo',
         'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy'
     ];
 
@@ -189,6 +191,8 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         opponentScore2H: match.opponentScore2H ?? '',
         scorers: match.scorers || '',
         mvp: match.mvp || '',
+        startingLineup: match.startingLineup || '',
+        participation: match.participation || '',
         memo: match.memo || '',
     };
 

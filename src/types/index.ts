@@ -41,8 +41,10 @@ export interface Match {
   };
   isLive: boolean;
   matchPhase?: 'pre-game' | '1H' | 'halftime' | '2H' | 'full-time';
-  scorers?: string; // Change to array of player names later?
+  scorers?: string;
   mvp?: string;
+  startingLineup?: string;
+  participation?: string;
   memo?: string;
   lastUpdated: string;
   lastUpdatedBy: string;
