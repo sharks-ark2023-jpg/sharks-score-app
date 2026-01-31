@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getMatches, upsertMatch, updateCommonMaster } from '@/lib/sheets';
+import { getMatches, upsertMatch, updateCommonMaster, deleteMatch } from '@/lib/sheets';
 import { Match } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +72,33 @@ export async function POST(req: NextRequest) {
         if (err.message === 'CONFLICT') {
             return NextResponse.json({ error: 'Conflict' }, { status: 409 });
         }
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const grade = searchParams.get('grade');
+    const matchId = searchParams.get('matchId');
+
+    if (!grade || !matchId) {
+        return NextResponse.json({ error: 'Grade and matchId are required' }, { status: 400 });
+    }
+
+    const spreadsheetId = getSpreadsheetId(grade);
+    if (!spreadsheetId) {
+        return NextResponse.json({ error: 'Spreadsheet not found for grade' }, { status: 404 });
+    }
+
+    try {
+        await deleteMatch(spreadsheetId, `${grade}_Matches`, matchId);
+        return NextResponse.json({ success: true });
+    } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

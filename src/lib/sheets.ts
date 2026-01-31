@@ -204,6 +204,19 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
     }
 }
 
+
+export async function deleteMatch(spreadsheetId: string, sheetName: string, matchId: string) {
+    const doc = await getGoogleSheet(spreadsheetId);
+    const sheet = doc.sheetsByTitle[sheetName];
+    if (!sheet) return;
+
+    const rows = await sheet.getRows();
+    const rowToDelete = rows.find(r => r.get('matchId') === matchId);
+    if (rowToDelete) {
+        await rowToDelete.delete();
+    }
+}
+
 export async function updateCommonMaster(name: string, type: 'venue' | 'opponent' | 'player', grade?: string) {
     const commonId = process.env.COMMON_SPREADSHEET_ID;
     if (!commonId) throw new Error('COMMON_SPREADSHEET_ID is not configured');

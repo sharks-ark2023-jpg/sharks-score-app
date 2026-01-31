@@ -136,6 +136,23 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         }
     };
 
+    const handleDelete = async () => {
+        if (!initialMatch?.matchId || !confirm('この試合記録を削除してもよろしいですか？')) return;
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/matches?grade=${gradeId}&matchId=${initialMatch.matchId}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) throw new Error('削除に失敗しました');
+            if (onSaved) onSaved();
+            router.push(`/grade/${gradeId}`);
+            router.refresh();
+        } catch (err: any) {
+            setError(err.message);
+            setSaving(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <div className="flex justify-between items-center border-b pb-4">
@@ -438,6 +455,22 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     {saving ? '保存中...' : '保存する'}
                 </button>
             </div>
+
+            {initialMatch && (
+                <div className="pt-4 border-t border-gray-100 flex justify-center">
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={saving}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1 p-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        この試合記録を削除する
+                    </button>
+                </div>
+            )}
         </form>
     );
 }
