@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
 
     try {
         const matches = await getMatches(spreadsheetId, `${grade}_Matches`);
-        // Sort by date descending
-        matches.sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
+        // 入力順（新しいものが上、古いものが下）にするために配列を逆順にする
+        matches.reverse();
         return NextResponse.json({ matches, spreadsheetId });
     } catch (err: any) {
         return NextResponse.json({ error: err.message, spreadsheetId }, { status: 500 });
