@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
+import NextAuthSessionProvider from "@/components/SessionProvider";
+import Header from "@/components/Header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
   subsets: ["latin"],
+  variable: "--font-outfit",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
   title: "SHARKS SCORE APP | 少年サッカー試合記録・速報",
-  description: "SHARKSの試合スコアをリアルタイムで記録・共有するためのアプリです。",
+  description: "SHARKSの試合スコアをリアルタイムで記録・共有するための共有アプリです。",
 };
 
-import NextAuthSessionProvider from "@/components/SessionProvider";
-import Header from "@/components/Header";
+
 
 export default function RootLayout({
   children,
@@ -27,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className="antialiased bg-white text-gray-900 min-h-screen">
+      <body className={`${inter.variable} ${outfit.variable} antialiased font-sans bg-white text-gray-900 min-h-screen`}>
         <NextAuthSessionProvider>
           <div className="min-h-screen flex flex-col bg-white">
             <Header />

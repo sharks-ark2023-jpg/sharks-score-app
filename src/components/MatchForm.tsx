@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Match, CommonMaster, GlobalSettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR, { mutate } from 'swr';
 import Autocomplete from './Autocomplete';
+import Modal from './Modal';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -38,6 +39,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lockInfo, setLockInfo] = useState<{ locked: boolean, lockedBy?: string } | null>(null);
+    const [isScorerModalOpen, setIsScorerModalOpen] = useState(false);
+    const [scorerSearch, setScorerSearch] = useState('');
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
@@ -570,44 +573,52 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl">
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
                     <div className="text-center">
-                        <span className="text-xs font-bold text-blue-800">{teamName}</span>
-                        <div className="flex items-center justify-center gap-2 mt-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{teamName}</span>
+                        <div className="flex items-center justify-center gap-3">
                             <button
                                 type="button"
                                 onClick={() => incrementScore('our', -1)}
-                                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-blue-600 font-bold active:scale-95 transition-transform"
+                                className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
                             >
-                                -
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
                             </button>
-                            <span className="text-3xl font-black w-12 text-blue-900">{formData.ourScore}</span>
+                            <span className="text-5xl font-black w-16 text-slate-900 tabular-nums">{formData.ourScore}</span>
                             <button
                                 type="button"
-                                onClick={() => incrementScore('our', 1)}
-                                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-blue-600 font-bold active:scale-95 transition-transform"
+                                onClick={() => setIsScorerModalOpen(true)}
+                                className="w-12 h-12 rounded-2xl bg-blue-600 shadow-lg shadow-blue-100 flex items-center justify-center text-white hover:bg-blue-700 transition-all active:scale-95"
                             >
-                                +
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
                             </button>
                         </div>
                     </div>
-                    <div className="text-center">
-                        <span className="text-xs font-bold text-gray-800">相手</span>
-                        <div className="flex items-center justify-center gap-2 mt-1">
+                    <div className="text-center border-l border-slate-100">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">OPPONENT</span>
+                        <div className="flex items-center justify-center gap-3">
                             <button
                                 type="button"
                                 onClick={() => incrementScore('opponent', -1)}
-                                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 font-bold active:scale-95 transition-transform"
+                                className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
                             >
-                                -
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
                             </button>
-                            <span className="text-3xl font-black w-12 text-gray-900">{formData.opponentScore}</span>
+                            <span className="text-5xl font-black w-16 text-slate-900 tabular-nums">{formData.opponentScore}</span>
                             <button
                                 type="button"
                                 onClick={() => incrementScore('opponent', 1)}
-                                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 font-bold active:scale-95 transition-transform"
+                                className="w-12 h-12 rounded-2xl bg-slate-900 shadow-lg shadow-slate-200 flex items-center justify-center text-white hover:bg-black transition-all active:scale-95"
                             >
-                                +
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -780,6 +791,73 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     </div>
                 )
             }
+            {/* Scorer Selection Modal */}
+            <Modal
+                isOpen={isScorerModalOpen}
+                onClose={() => setIsScorerModalOpen(false)}
+                title="得点者を選択"
+            >
+                <div className="space-y-6">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="選手名で検索・手入力"
+                            value={scorerSearch}
+                            onChange={(e) => setScorerSearch(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all pr-10"
+                        />
+                        {scorerSearch && (
+                            <button
+                                onClick={() => {
+                                    handleQuickScorer(scorerSearch);
+                                    setScorerSearch('');
+                                    setIsScorerModalOpen(false);
+                                }}
+                                className="absolute right-2 top-2 p-1.5 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition-colors"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {players
+                            .filter(p => !scorerSearch || p.name.includes(scorerSearch))
+                            .map(player => (
+                                <button
+                                    key={player.name}
+                                    type="button"
+                                    onClick={() => {
+                                        handleQuickScorer(player.name);
+                                        setIsScorerModalOpen(false);
+                                        setScorerSearch('');
+                                    }}
+                                    className="p-3 bg-white border border-slate-100 rounded-2xl text-left hover:border-blue-500 hover:bg-blue-50 transition-all group active:scale-95"
+                                >
+                                    <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5 group-hover:text-blue-400">
+                                        #{player.number || '--'}
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-700">
+                                        {player.name}
+                                    </div>
+                                </button>
+                            ))}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                handleQuickScorer('不明');
+                                setIsScorerModalOpen(false);
+                                setScorerSearch('');
+                            }}
+                            className="p-3 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-center text-[10px] font-black text-slate-400 hover:bg-slate-100 transition-all active:scale-95 uppercase tracking-widest"
+                        >
+                            Unknown
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </form >
     );
 }
