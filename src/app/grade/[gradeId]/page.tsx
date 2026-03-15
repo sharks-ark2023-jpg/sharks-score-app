@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Match, GlobalSettings } from '@/types';
 import MatchList from '@/components/MatchList';
 import MatchForm from '@/components/MatchForm';
+import Modal from '@/components/Modal';
 import Link from 'next/link';
 import useSWR from 'swr';
 
@@ -24,6 +25,10 @@ export default function GradeDashboard() {
     const isLoggedIn = !!session;
     const [filterType, setFilterType] = useState<string>('all');
     const [activeTab, setActiveTab] = useState<'history' | 'input' | 'players'>('history');
+    const [isBandModalOpen, setIsBandModalOpen] = useState(false);
+    const [bandDate, setBandDate] = useState('');
+    const [bandText, setBandText] = useState('');
+    const [copied, setCopied] = useState(false);
 
     const { data: matchesRes, error, isLoading, mutate } = useSWR<{ matches: Match[], spreadsheetId: string }>(
         `/api/matches?grade=${gradeId}`,
@@ -102,6 +107,64 @@ export default function GradeDashboard() {
 
     const hasArchive = allMatches.some(m => !isActiveMonth(m.matchDate));
 
+    const parseScorers = (scorers: string): string => {
+        if (!scorers) return '';
+        return scorers.split(',').map(s => {
+            const t = s.trim();
+            const m = t.match(/^(.+)\((\d+)\)$/);
+            return m ? `${m[1].trim()}×${m[2]}` : t;
+        }).filter(Boolean).join(' ');
+    };
+
+    const generateBandText = (date: string): string => {
+        const dayMatches = allMatches.filter(m => m.matchDate === date);
+        if (dayMatches.length === 0) return '（この日の試合記録がありません）';
+        const first = dayMatches[0];
+        const d = new Date(date + 'T00:00:00');
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        const dateStr = `${d.getMonth() + 1}月${d.getDate()}日(${weekdays[d.getDay()]})`;
+        const eventName = first.matchType === 'tournament' && first.tournamentName ? first.tournamentName : 'フレンドリー';
+        const formatStr = first.matchFormat === 'halves' ? '前後半' : `${first.matchDuration ?? 15}分１本`;
+        const nums = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+        const matchLines = dayMatches.map((m, i) => {
+            const num = nums[i] || `(${i + 1})`;
+            const sym = m.result === 'win' ? '○' : m.result === 'loss' ? '●' : '△';
+            const score = `${m.ourScore}-${m.opponentScore}`;
+            const scorerStr = parseScorers(m.scorers || '');
+            const names = scorerStr ? scorerStr.split(' ').filter(Boolean) : [];
+            if (names.length === 0) return `${num}${sym}${score}`;
+            if (names.length <= 3) return `${num}${sym}${score}　${scorerStr}`;
+            return `${num}${sym}${score}\n　${scorerStr}`;
+        }).join('\n');
+        const lines = ['【試合結果】', gradeId, `${dateStr} ${eventName}`];
+        if (first.venueName) lines.push(`@${first.venueName}`);
+        lines.push(formatStr, matchLines, '', '〇〇コーチ、〇〇コーチご指導ありがとうございました。', '〇〇父、審判ありがとうございました。', '保護者の皆様、引率、撮影、応援のご協力ありがとうございました。', '', `${gradeId}マネ　〇〇、〇〇`, '#試合結果');
+        return lines.join('\n');
+    };
+
+    const openBandModal = () => {
+        const today = new Date().toISOString().split('T')[0];
+        setBandDate(today);
+        setBandText(generateBandText(today));
+        setIsBandModalOpen(true);
+        setCopied(false);
+    };
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(bandText);
+        } catch {
+            const el = document.createElement('textarea');
+            el.value = bandText;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <main className="flex-grow container mx-auto px-4 py-6 max-w-lg">
             <header className="mb-6 flex items-center justify-between">
@@ -179,6 +242,12 @@ export default function GradeDashboard() {
                             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Recent Matches</h2>
                         </div>
                         <div className="flex gap-2">
+                            <button
+                                onClick={openBandModal}
+                                className="text-[9px] font-black border-2 border-gray-100 rounded-full px-3 py-1.5 bg-white text-gray-600 hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all outline-none whitespace-nowrap"
+                            >
+                                BAND書き出し
+                            </button>
                             <select
                                 value={filterType}
                                 onChange={(e) => setFilterType(e.target.value)}
@@ -251,6 +320,36 @@ export default function GradeDashboard() {
                     </div>
                 </section>
             )}
+
+            {/* BAND書き出しモーダル */}
+            <Modal isOpen={isBandModalOpen} onClose={() => setIsBandModalOpen(false)} title="BAND書き出し">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">日付</label>
+                        <input
+                            type="date"
+                            value={bandDate}
+                            onChange={(e) => {
+                                setBandDate(e.target.value);
+                                setBandText(generateBandText(e.target.value));
+                                setCopied(false);
+                            }}
+                            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-blue-400"
+                        />
+                    </div>
+                    <textarea
+                        value={bandText}
+                        onChange={(e) => setBandText(e.target.value)}
+                        className="w-full h-80 border border-gray-100 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:border-blue-300 bg-gray-50"
+                    />
+                    <button
+                        onClick={handleCopy}
+                        className={`w-full py-4 font-black rounded-2xl text-xs uppercase tracking-widest transition-all active:scale-95 ${copied ? 'bg-green-500 text-white shadow-lg shadow-green-100' : 'bg-gray-900 text-white hover:bg-black shadow-xl shadow-gray-200'}`}
+                    >
+                        {copied ? '✓ コピーしました' : '📋 コピー'}
+                    </button>
+                </div>
+            </Modal>
 
             {/* Connection Status Section */}
             <footer className="mt-16 pt-8 border-t border-gray-50">
