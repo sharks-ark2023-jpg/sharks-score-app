@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getGlobalSettings, getCommonMasters, updateGlobalSettings } from '@/lib/sheets';
+import { getCached, setCached, invalidateCache } from '@/lib/cache';
+
+const SETTINGS_CACHE_KEY = 'settings:global';
+const SETTINGS_TTL = 30_000;
 
 export const dynamic = 'force-dynamic';
 
@@ -22,13 +26,17 @@ export async function GET(req: NextRequest) {
     // grade is optional for settings if we only want global ones, 
     // but the app currently uses it to find the spreadsheet context.
     try {
-        const [settings, masters] = await Promise.all([
-            getGlobalSettings(),
-            getCommonMasters().catch(() => []) // Don't crash if Masters fails
-        ]);
+        let cached = getCached<{ settings: unknown; masters: unknown }>(SETTINGS_CACHE_KEY);
+        if (!cached) {
+            const [settings, masters] = await Promise.all([
+                getGlobalSettings(),
+                getCommonMasters().catch(() => [])
+            ]);
+            cached = { settings, masters };
+            setCached(SETTINGS_CACHE_KEY, cached, SETTINGS_TTL);
+        }
         return NextResponse.json({
-            settings,
-            masters,
+            ...cached,
             envCommonId: process.env.COMMON_SPREADSHEET_ID,
             envGradesConfig: process.env.GRADES_CONFIG
         });
@@ -49,6 +57,7 @@ export async function POST(req: NextRequest) {
     try {
         const settings = await req.json();
         await updateGlobalSettings(settings, session.user.email);
+        invalidateCache(SETTINGS_CACHE_KEY);
         return NextResponse.json({ success: true });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });

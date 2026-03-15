@@ -15,7 +15,8 @@ export default function Header() {
 
     const { data } = useSWR<{ settings: GlobalSettings }>(
         '/api/settings',
-        fetcher
+        fetcher,
+        { revalidateOnFocus: false, dedupingInterval: 30_000 }
     );
 
     const teamName = data?.settings?.teamName || 'SHARKS';

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Match, GlobalSettings } from '@/types';
 import MatchList from '@/components/MatchList';
 import MatchForm from '@/components/MatchForm';
@@ -19,7 +20,8 @@ const fetcher = async (url: string) => {
 
 export default function GradeDashboard() {
     const { gradeId } = useParams() as { gradeId: string };
-    const [filterYear, setFilterYear] = useState<string>('all');
+    const { data: session } = useSession();
+    const isLoggedIn = !!session;
     const [filterType, setFilterType] = useState<string>('all');
     const [activeTab, setActiveTab] = useState<'history' | 'input' | 'players'>('history');
 
@@ -73,23 +75,32 @@ export default function GradeDashboard() {
         );
     }
 
-    const getFiscalYear = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1; // 0-indexed
-        return month >= 4 ? year.toString() : (year - 1).toString();
-    };
-
     const allMatches = matchesRes?.matches || [];
-    const years = Array.from(new Set(allMatches.map(m => getFiscalYear(m.matchDate)))).sort().reverse();
     const liveMatches = allMatches.filter(m => m.isLive);
 
-    const filteredMatches = allMatches.filter(m => {
-        const matchFY = getFiscalYear(m.matchDate);
-        const yearMatch = filterYear === 'all' || matchFY === filterYear;
+    // アクティブ期間: 当月 + (15日以前なら前月も含む)
+    const isActiveMonth = (dateStr: string) => {
+        const now = new Date();
+        const d = new Date(dateStr);
+        const currentYM = now.getFullYear() * 100 + (now.getMonth() + 1);
+        const matchYM = d.getFullYear() * 100 + (d.getMonth() + 1);
+        if (matchYM === currentYM) return true;
+        if (now.getDate() <= 15) {
+            const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const prevYM = prev.getFullYear() * 100 + (prev.getMonth() + 1);
+            if (matchYM === prevYM) return true;
+        }
+        return false;
+    };
+
+    const activeMatches = allMatches.filter(m => isActiveMonth(m.matchDate));
+
+    const filteredMatches = activeMatches.filter(m => {
         const typeMatch = filterType === 'all' || m.matchType === filterType;
-        return yearMatch && typeMatch;
+        return typeMatch;
     });
+
+    const hasArchive = allMatches.some(m => !isActiveMonth(m.matchDate));
 
     return (
         <main className="flex-grow container mx-auto px-4 py-6 max-w-lg">
@@ -109,28 +120,31 @@ export default function GradeDashboard() {
 
             {/* Tab Switcher */}
             <nav className="flex bg-gray-100 p-1 rounded-2xl mb-8 gap-1 shadow-inner">
-                <button
-                    onClick={() => setActiveTab('input')}
-                    className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === 'input' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                    試合入力
-                </button>
+                {isLoggedIn && (
+                    <button
+                        onClick={() => setActiveTab('input')}
+                        className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === 'input' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        試合入力
+                    </button>
+                )}
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === 'history' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     試合履歴
                 </button>
-                <button
-                    onClick={() => setActiveTab('players')}
-                    className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === 'players' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                    選手管理
-                </button>
+                {isLoggedIn && (
+                    <button
+                        onClick={() => setActiveTab('players')}
+                        className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === 'players' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        選手管理
+                    </button>
+                )}
             </nav>
 
-            {activeTab === 'input' && (
-                <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section className={activeTab !== 'input' ? 'hidden' : 'animate-in fade-in slide-in-from-bottom-4 duration-500'}>
                     <div className="mb-6 flex items-center justify-between px-1">
                         <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
@@ -143,8 +157,7 @@ export default function GradeDashboard() {
                             setActiveTab('history');
                         }} />
                     </div>
-                </section>
-            )}
+            </section>
 
             {activeTab === 'history' && (
                 <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -163,23 +176,15 @@ export default function GradeDashboard() {
 
                     <div className="flex justify-between items-center mb-6 pl-1 gap-2">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Game Logs</h2>
+                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Recent Matches</h2>
                         </div>
                         <div className="flex gap-2">
                             <select
-                                value={filterYear}
-                                onChange={(e) => setFilterYear(e.target.value)}
-                                className="text-[9px] font-black border-2 border-gray-50 rounded-full px-3 py-1.5 bg-gray-50 text-gray-400 focus:bg-white focus:border-blue-500 transition-all outline-none"
-                            >
-                                <option value="all">ALL YEARS</option>
-                                {years.map(y => <option key={y} value={y}>{y}年度</option>)}
-                            </select>
-                            <select
                                 value={filterType}
                                 onChange={(e) => setFilterType(e.target.value)}
-                                className="text-[9px] font-black border-2 border-gray-50 rounded-full px-3 py-1.5 bg-gray-50 text-gray-400 focus:bg-white focus:border-blue-500 transition-all outline-none"
+                                className="text-[9px] font-black border-2 border-gray-50 rounded-full px-3 py-1.5 bg-gray-50 text-gray-500 focus:bg-white focus:border-blue-500 transition-all outline-none"
                             >
-                                <option value="all">TYPES</option>
+                                <option value="all">ALL TYPES</option>
                                 <option value="friendly">FRIENDLY</option>
                                 <option value="tournament">OFFICIAL</option>
                             </select>
@@ -198,6 +203,20 @@ export default function GradeDashboard() {
                         </div>
                     ) : (
                         <MatchList matches={filteredMatches.filter(m => !m.isLive)} gradeId={gradeId} teamName={teamName} />
+                    )}
+
+                    {hasArchive && (
+                        <div className="mt-8 text-center">
+                            <Link
+                                href={`/grade/${gradeId}/archive`}
+                                className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                                過去の試合を見る
+                            </Link>
+                        </div>
                     )}
                 </section>
             )}

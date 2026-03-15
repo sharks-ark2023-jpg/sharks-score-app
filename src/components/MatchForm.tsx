@@ -41,6 +41,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [lockInfo, setLockInfo] = useState<{ locked: boolean, lockedBy?: string } | null>(null);
     const [isScorerModalOpen, setIsScorerModalOpen] = useState(false);
     const [scorerSearch, setScorerSearch] = useState('');
+    const [selectedScorer, setSelectedScorer] = useState<string | null>(null);
+    const [lastGoalSnapshot, setLastGoalSnapshot] = useState<Partial<Match> | null>(null);
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
@@ -158,52 +160,64 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     };
 
 
-    const handleQuickScorer = (playerName: string) => {
-        // 先にスコアを加算
-        incrementScore('our', 1);
+    const computeGoalData = (playerName: string, current: Partial<Match>): Partial<Match> => {
+        const phase = current.matchPhase;
+        const updated = { ...current };
+        updated.ourScore = Math.max(0, (current.ourScore || 0) + 1);
+        if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + 1);
+        if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + 1);
+        updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
 
-        setFormData(prev => {
-            const currentScorers = prev.scorers || '';
-            const parts = currentScorers.split(',').map(s => s.trim()).filter(Boolean);
-            const nameMap: Record<string, number> = {};
-
-            parts.forEach(p => {
-                const match = p.match(/^(.+)\((\d+)\)$/);
-                if (match) {
-                    const name = match[1].trim();
-                    const count = parseInt(match[2]);
-                    nameMap[name] = (nameMap[name] || 0) + count;
-                } else {
-                    nameMap[p] = (nameMap[p] || 0) + 1;
-                }
-            });
-
-            nameMap[playerName] = (nameMap[playerName] || 0) + 1;
-
-            const updatedScorers = Object.entries(nameMap)
-                .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
-                .join(', ');
-
-            return {
-                ...prev,
-                scorers: updatedScorers
-            };
+        const parts = (current.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
+        const nameMap: Record<string, number> = {};
+        parts.forEach(p => {
+            const m = p.match(/^(.+)\((\d+)\)$/);
+            if (m) { nameMap[m[1].trim()] = (nameMap[m[1].trim()] || 0) + parseInt(m[2]); }
+            else { nameMap[p] = (nameMap[p] || 0) + 1; }
         });
+        nameMap[playerName] = (nameMap[playerName] || 0) + 1;
+        updated.scorers = Object.entries(nameMap)
+            .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
+            .join(', ');
+        return updated;
     };
 
-    const handleSubmit = async (e: React.FormEvent, stayOnPage: boolean = false) => {
-        if (e) e.preventDefault();
+    const handleQuickScorer = (playerName: string) => {
+        setLastGoalSnapshot(formData);
+        setFormData(prev => computeGoalData(playerName, prev));
+    };
+
+    const handleUndoGoal = async () => {
+        if (!lastGoalSnapshot) return;
+        const snapshot = lastGoalSnapshot;
+        setFormData(snapshot);
+        setLastGoalSnapshot(null);
+        if (snapshot.isLive) {
+            await doSave(snapshot, true);
+        }
+    };
+
+    const handleRecordGoal = async () => {
+        if (!selectedScorer) return;
+        setLastGoalSnapshot(formData);
+        const newData = computeGoalData(selectedScorer, formData);
+        setFormData(newData);
+        setSelectedScorer(null);
+        setIsScorerModalOpen(false);
+        setScorerSearch('');
+        if (formData.isLive) {
+            await doSave(newData, true);
+        }
+    };
+
+    const doSave = async (dataToSave: Partial<Match>, stayOnPage: boolean = false) => {
         setSaving(true);
         setError(null);
-
         try {
             const res = await fetch('/api/matches', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    grade: gradeId,
-                    match: formData,
-                }),
+                body: JSON.stringify({ grade: gradeId, match: dataToSave }),
             });
 
             if (res.status === 409) {
@@ -212,11 +226,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 const data = await res.json();
                 throw new Error(data.error || '保存に失敗しました');
             } else {
-                if (onSaved) onSaved();
-
                 if (!stayOnPage) {
-                    if (!initialMatch && confirm('保存しました。同じ対戦相手・会場で次の試合を記録しますか？')) {
-                        // 継続入力モード：スコアやIDをリセットして対戦相手・会場を維持
+                    // Fix: confirm前にonSavedを呼ばない（タブ切替でコンポーネントが破棄されるのを防ぐ）
+                    const continueMatch = !initialMatch && confirm('保存しました。同じ対戦相手・会場で次の試合を記録しますか？');
+                    if (continueMatch) {
                         setFormData(prev => ({
                             ...prev,
                             matchId: uuidv4(),
@@ -236,8 +249,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         }));
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
-                        router.push(`/grade/${gradeId}`);
+                        if (onSaved) onSaved();
+                        else router.push(`/grade/${gradeId}`);
                     }
+                } else {
+                    if (onSaved) onSaved();
                 }
                 router.refresh();
             }
@@ -246,6 +262,23 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent, stayOnPage: boolean = false) => {
+        if (e) e.preventDefault();
+        // Fix: 試合中フェーズのまま保存しようとした場合に確認
+        const phase = formData.matchPhase;
+        if (!formData.isLive && phase !== 'full-time' && phase !== 'pre-game') {
+            if (!confirm('試合がまだ終了していません。このまま保存しますか？（試合履歴に表示されます）')) return;
+        }
+        await doSave(formData, stayOnPage);
+    };
+
+    // Fix: 試合終了ボタンで状態更新＋即時保存
+    const handleEndMatch = async () => {
+        const finalData = { ...formData, matchPhase: 'full-time' as const, isLive: false };
+        setFormData(finalData);
+        await doSave(finalData, false);
     };
 
     const handleDelete = async () => {
@@ -348,8 +381,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 }}
                                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
                             >
-                                <option value="friendly">練習試合 (Friendly)</option>
-                                <option value="tournament">公式戦・大会 (Tournament/Official)</option>
+                                <option value="friendly">練習試合</option>
+                                <option value="tournament">公式戦・大会</option>
                             </select>
                         </label>
                         {formData.matchType === 'tournament' && (
@@ -472,10 +505,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 formData.matchFormat === 'one_game' ? (
                                     <button
                                         type="button"
-                                        onClick={() => setFormData(p => ({ ...p, matchPhase: 'full-time', isLive: false }))}
+                                        onClick={handleEndMatch}
                                         className="col-span-2 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-lg shadow-gray-200 hover:bg-black transition-all uppercase text-xs tracking-[0.2em]"
                                     >
-                                        試合終了 (End Match)
+                                        試合終了・保存 (End Match)
                                     </button>
                                 ) : (
                                     <button
@@ -499,10 +532,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             {formData.matchPhase === '2H' && formData.matchFormat !== 'one_game' && (
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: 'full-time', isLive: false }))}
+                                    onClick={handleEndMatch}
                                     className="col-span-2 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-lg shadow-gray-200 hover:bg-black transition-all uppercase text-xs tracking-[0.2em]"
                                 >
-                                    試合終了 (End Match)
+                                    試合終了・保存 (End Match)
                                 </button>
                             )}
                             {formData.matchPhase === 'full-time' && (
@@ -599,7 +632,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </div>
                     </div>
                     <div className="text-center border-l border-slate-100">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">OPPONENT</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">対戦相手</span>
                         <div className="flex items-center justify-center gap-3">
                             <button
                                 type="button"
@@ -647,6 +680,22 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </div>
                     </div>
                 )}
+                {/* Undo Goal Button */}
+                {lastGoalSnapshot !== null && (
+                    <div className="flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleUndoGoal}
+                            className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black rounded-2xl hover:bg-amber-100 transition-all active:scale-95 uppercase tracking-widest"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            直前の得点を取り消す
+                        </button>
+                    </div>
+                )}
+
                 {/* Advanced Options Toggle */}
                 <div className="pt-2">
                     <button
@@ -794,29 +843,25 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             {/* Scorer Selection Modal */}
             <Modal
                 isOpen={isScorerModalOpen}
-                onClose={() => setIsScorerModalOpen(false)}
+                onClose={() => { setIsScorerModalOpen(false); setSelectedScorer(null); setScorerSearch(''); }}
                 title="得点者を選択"
             >
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="relative">
                         <input
                             type="text"
                             placeholder="選手名で検索・手入力"
                             value={scorerSearch}
                             onChange={(e) => setScorerSearch(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all pr-10"
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                         />
                         {scorerSearch && (
                             <button
-                                onClick={() => {
-                                    handleQuickScorer(scorerSearch);
-                                    setScorerSearch('');
-                                    setIsScorerModalOpen(false);
-                                }}
-                                className="absolute right-2 top-2 p-1.5 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition-colors"
+                                onClick={() => setSelectedScorer(scorerSearch)}
+                                className="absolute right-2 top-2 p-1.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-blue-100 transition-colors"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </button>
                         )}
@@ -829,33 +874,41 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 <button
                                     key={player.name}
                                     type="button"
-                                    onClick={() => {
-                                        handleQuickScorer(player.name);
-                                        setIsScorerModalOpen(false);
-                                        setScorerSearch('');
-                                    }}
-                                    className="p-3 bg-white border border-slate-100 rounded-2xl text-left hover:border-blue-500 hover:bg-blue-50 transition-all group active:scale-95"
+                                    onClick={() => setSelectedScorer(player.name)}
+                                    className={`p-3 border rounded-2xl text-left transition-all active:scale-95 ${selectedScorer === player.name ? 'border-blue-500 bg-blue-50' : 'bg-white border-slate-100 hover:border-blue-300 hover:bg-blue-50'}`}
                                 >
-                                    <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5 group-hover:text-blue-400">
+                                    <div className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${selectedScorer === player.name ? 'text-blue-400' : 'text-slate-300'}`}>
                                         #{player.number || '--'}
                                     </div>
-                                    <div className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-700">
+                                    <div className={`text-xs font-bold truncate ${selectedScorer === player.name ? 'text-blue-700' : 'text-slate-700'}`}>
                                         {player.name}
                                     </div>
                                 </button>
                             ))}
                         <button
                             type="button"
-                            onClick={() => {
-                                handleQuickScorer('不明');
-                                setIsScorerModalOpen(false);
-                                setScorerSearch('');
-                            }}
-                            className="p-3 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-center text-[10px] font-black text-slate-400 hover:bg-slate-100 transition-all active:scale-95 uppercase tracking-widest"
+                            onClick={() => setSelectedScorer('不明')}
+                            className={`p-3 border border-dashed rounded-2xl text-center text-[10px] font-black transition-all active:scale-95 uppercase tracking-widest ${selectedScorer === '不明' ? 'border-blue-400 bg-blue-50 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
                         >
-                            Unknown
+                            不明
                         </button>
                     </div>
+
+                    {selectedScorer && (
+                        <div className="pt-2 border-t border-slate-100">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">
+                                選択中: <span className="text-blue-600">{selectedScorer}</span>
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleRecordGoal}
+                                disabled={saving}
+                                className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 disabled:bg-blue-300 transition-all uppercase text-xs tracking-[0.2em]"
+                            >
+                                {saving ? '保存中...' : `⚽ ${selectedScorer} の得点を記録${formData.isLive ? '・保存' : ''}`}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </Modal>
         </form >

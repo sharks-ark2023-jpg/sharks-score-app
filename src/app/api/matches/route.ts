@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getMatches, upsertMatch, updateCommonMaster, deleteMatch } from '@/lib/sheets';
 import { Match } from '@/types';
+import { getCached, setCached, invalidateCache } from '@/lib/cache';
+
+const MATCHES_TTL = 15_000;
 
 export const dynamic = 'force-dynamic';
 
@@ -29,11 +32,16 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Spreadsheet not found for grade' }, { status: 404 });
     }
 
+    const cacheKey = `matches:${grade}`;
     try {
-        const matches = await getMatches(spreadsheetId, `${grade}_Matches`);
-        // 入力順（新しいものが上、古いものが下）にするために配列を逆順にする
-        matches.reverse();
-        return NextResponse.json({ matches, spreadsheetId });
+        let cached = getCached<{ matches: unknown; spreadsheetId: string }>(cacheKey);
+        if (!cached) {
+            const matches = await getMatches(spreadsheetId, `${grade}_Matches`);
+            matches.reverse();
+            cached = { matches, spreadsheetId };
+            setCached(cacheKey, cached, MATCHES_TTL);
+        }
+        return NextResponse.json(cached);
     } catch (err: any) {
         return NextResponse.json({ error: err.message, spreadsheetId }, { status: 500 });
     }
@@ -58,6 +66,7 @@ export async function POST(req: NextRequest) {
 
     try {
         await upsertMatch(spreadsheetId, `${grade}_Matches`, match, session.user.email);
+        invalidateCache(`matches:${grade}`);
 
         // マスターデータへの同期（非同期で実行）
         if (match.opponentName) {
@@ -97,6 +106,7 @@ export async function DELETE(req: NextRequest) {
 
     try {
         await deleteMatch(spreadsheetId, `${grade}_Matches`, matchId);
+        invalidateCache(`matches:${grade}`);
         return NextResponse.json({ success: true });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });

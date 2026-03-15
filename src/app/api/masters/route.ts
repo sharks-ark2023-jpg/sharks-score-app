@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getCommonMasters, updateCommonMaster, getGoogleSheet, getGlobalSettings } from '@/lib/sheets';
+import { getCached, setCached, invalidateCache } from '@/lib/cache';
+
+const MASTERS_CACHE_KEY = 'masters:common';
+const MASTERS_TTL = 30_000;
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +26,11 @@ export async function GET(req: NextRequest) {
     const commonId = await getSpreadsheetId();
 
     try {
-        const masters = await getCommonMasters();
+        let masters = getCached<Awaited<ReturnType<typeof getCommonMasters>>>(MASTERS_CACHE_KEY);
+        if (!masters) {
+            masters = await getCommonMasters();
+            setCached(MASTERS_CACHE_KEY, masters, MASTERS_TTL);
+        }
         let filtered = masters;
         if (type) {
             filtered = filtered.filter(m => m.masterType === type);
@@ -30,11 +38,7 @@ export async function GET(req: NextRequest) {
         if (grade) {
             filtered = filtered.filter(m => !m.grade || m.grade === grade);
         }
-        return NextResponse.json(filtered, {
-            headers: {
-                'Cache-Control': 'no-store, max-age=0',
-            }
-        });
+        return NextResponse.json(filtered);
     } catch (err: any) {
         return NextResponse.json({
             error: err.message,
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
         }
 
         await updateCommonMaster(name, type, grade, number);
+        invalidateCache(MASTERS_CACHE_KEY);
         return NextResponse.json({ success: true });
     } catch (err: any) {
         return NextResponse.json({
