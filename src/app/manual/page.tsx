@@ -199,6 +199,49 @@ export default function ManualPage() {
                         </div>
                     </div>
                 </section>
+
+                {/* Section 7: BAND書き出し */}
+                <section>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-100">
+                            07
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">BAND書き出し</h2>
+                    </div>
+
+                    <div className="space-y-4 ml-4 border-l-2 border-gray-50 pl-6">
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            試合履歴タブの「BAND書き出し」ボタンを押すと、その日の試合結果をBANDやLINEに貼り付けやすい形式で書き出せます。
+                        </p>
+                        <div>
+                            <h3 className="font-bold text-gray-800 mb-2">● 使い方</h3>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li className="flex gap-2"><span className="font-bold text-indigo-600 shrink-0">①</span>試合履歴タブの右上「BAND書き出し」ボタンをタップ</li>
+                                <li className="flex gap-2"><span className="font-bold text-indigo-600 shrink-0">②</span>日付を選択すると、その日の試合が自動でフォーマット整形される</li>
+                                <li className="flex gap-2"><span className="font-bold text-indigo-600 shrink-0">③</span>テキストエリアでコーチ名・審判名・マネ名などを直接書き換える</li>
+                                <li className="flex gap-2"><span className="font-bold text-indigo-600 shrink-0">④</span>「📋 コピー」ボタンを押してBANDやLINEに貼り付ける</li>
+                            </ul>
+                        </div>
+                        <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                            <h4 className="text-xs font-black text-indigo-700 uppercase tracking-widest mb-2">書き出し例</h4>
+                            <pre className="text-xs text-indigo-800 leading-relaxed whitespace-pre-wrap font-mono">{`【試合結果】
+5年
+3月14日(土) フレンドリー
+@金町中学校
+15分１本
+①○2-1　いたる あおと
+②△1-1　けい
+③○8-1
+　あおと いたる×4 けい×2
+
+〇〇コーチご指導ありがとうございました。
+保護者の皆様、ありがとうございました。
+
+5年マネ　〇〇
+#試合結果`}</pre>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div className="mt-16 pt-8 border-t border-gray-100 text-center">
