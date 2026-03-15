@@ -117,7 +117,7 @@ export default function GradeDashboard() {
     };
 
     const generateBandText = (date: string): string => {
-        const dayMatches = allMatches.filter(m => m.matchDate === date);
+        const dayMatches = allMatches.filter(m => m.matchDate === date).slice().reverse();
         if (dayMatches.length === 0) return '（この日の試合記録がありません）';
         const first = dayMatches[0];
         const d = new Date(date + 'T00:00:00');
