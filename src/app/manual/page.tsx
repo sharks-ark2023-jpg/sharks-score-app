@@ -100,8 +100,21 @@ export default function ManualPage() {
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● 得点記録</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">
-                                ライブ中に「⚽ 得点を記録」ボタンを押すと、選手一覧が表示されます。
-                                得点した選手を選んで「⚽ 得点を記録・保存」ボタンを押すと、スコアが+1されてスプレッドシートに即時保存されます。
+                                得点の記録方法は2つあります。
+                            </p>
+                            <ul className="mt-2 space-y-2 text-sm text-gray-600">
+                                <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">①</span>画面に並んだ選手名ボタンをタップすると、その選手の得点としてスコアが即時+1されます（クイック記録）。</li>
+                                <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">②</span>「⚽ 得点を記録」ボタンを押すとモーダルが開き、選手を検索・選択して記録できます。</li>
+                            </ul>
+                            <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                                どちらの方法でも、ライブ中は自動でスプレッドシートに即時保存されます。
+                            </p>
+                        </div>
+                        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                            <h4 className="text-xs font-black text-amber-700 uppercase tracking-widest mb-1">↩ 得点を取り消すには</h4>
+                            <p className="text-xs text-amber-600 leading-relaxed">
+                                誤って得点を記録した場合は、すぐ下に表示される「直前の得点を取り消す」ボタンを押してください。
+                                直前の1件のみ取り消し可能です。ライブ中は取り消し後に自動保存されます。
                             </p>
                         </div>
                         <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
@@ -155,6 +168,33 @@ export default function ManualPage() {
                             <p className="text-sm text-gray-600 leading-relaxed">
                                 全てのデータはGoogleスプレッドシートに保存されています。
                                 学年ごとに異なるスプレッドシートIDを指定することが可能です。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section 6: ログインと閲覧 */}
+                <section>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-green-100">
+                            06
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">ログインと閲覧</h2>
+                    </div>
+
+                    <div className="space-y-4 ml-4 border-l-2 border-gray-50 pl-6">
+                        <div>
+                            <h3 className="font-bold text-gray-800 mb-2">● ログインが必要な操作</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                試合の入力・編集はGoogleアカウントでのログインが必要です。
+                                未ログインの場合、編集ページにアクセスするとサインイン画面へ移動します。
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-800 mb-2">● ログイン不要で閲覧できる情報</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                試合結果（スコア・得点者・対戦相手等）は、ログインなしで閲覧可能です。
+                                保護者や選手向けにURLを共有することで、試合結果を確認してもらえます。
                             </p>
                         </div>
                     </div>

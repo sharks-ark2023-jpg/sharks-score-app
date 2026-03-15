@@ -49,7 +49,22 @@ export default function PrivacyPolicyPage() {
                 </section>
 
                 <section>
-                    <h2 className="text-lg font-bold text-gray-900 mb-3 border-l-4 border-blue-600 pl-3">5. お問い合わせ先</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3 border-l-4 border-blue-600 pl-3">5. 公開される情報について</h2>
+                    <p className="text-sm">
+                        試合結果に含まれる以下の情報は、ログイン不要の閲覧ページにて一般に公開されます。
+                    </p>
+                    <ul className="list-disc list-inside mt-2 text-sm ml-2 space-y-1">
+                        <li>試合スコア・日付・対戦相手・会場</li>
+                        <li>得点者として登録された選手名</li>
+                        <li>試合形式・大会名・MVP等の付帯情報</li>
+                    </ul>
+                    <p className="mt-2 text-sm">
+                        選手名の登録にあたっては、公開を前提とした情報のみ入力するようご注意ください。
+                    </p>
+                </section>
+
+                <section>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3 border-l-4 border-blue-600 pl-3">6. お問い合わせ先</h2>
                     <p className="text-sm">
                         プライバシーポリシーに関するお問い合わせは、以下までご連絡ください。
                     </p>
