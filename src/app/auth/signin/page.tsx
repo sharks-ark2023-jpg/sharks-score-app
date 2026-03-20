@@ -1,8 +1,13 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function SignInPage() {
+function SignInForm() {
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl') || '/';
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
             <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl space-y-8">
@@ -13,7 +18,7 @@ export default function SignInPage() {
 
                 <div className="space-y-4">
                     <button
-                        onClick={() => signIn('google', { callbackUrl: '/' })}
+                        onClick={() => signIn('google', { callbackUrl })}
                         className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
                         Googleでログイン
@@ -25,5 +30,13 @@ export default function SignInPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SignInPage() {
+    return (
+        <Suspense>
+            <SignInForm />
+        </Suspense>
     );
 }
