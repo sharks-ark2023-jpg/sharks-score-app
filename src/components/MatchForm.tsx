@@ -34,7 +34,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             matchDuration: 15,
         }
     );
-    const [mode, setMode] = useState<'simple' | 'full'>('full');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -327,22 +326,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 <h2 className="text-xl font-bold text-gray-900">
                     {initialMatch ? '試合記録を編集' : '新規試合を記録'}
                 </h2>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <button
-                        type="button"
-                        onClick={() => setMode('simple')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${mode === 'simple' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
-                    >
-                        簡易
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setMode('full')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${mode === 'full' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
-                    >
-                        通常
-                    </button>
-                </div>
             </div>
 
             {error && (
@@ -352,7 +335,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             )}
 
             <div className="grid grid-cols-1 gap-4">
-                <div className={`grid grid-cols-1 gap-4 ${mode === 'simple' ? 'hidden' : 'block'}`}>
+                <div className="grid grid-cols-1 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium text-gray-700">試合日</span>
                         <input
@@ -420,7 +403,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </label>
                     </div>
 
-                    <div className={`grid grid-cols-2 gap-4 ${mode === 'simple' ? 'hidden' : 'block'}`}>
+                    <div className="grid grid-cols-2 gap-4">
                         <label className="block">
                             <span className="text-sm font-medium text-gray-700">試合形式</span>
                             <div className="flex bg-gray-100 p-1 rounded-lg mt-1 gap-1">
@@ -475,8 +458,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 />
 
                 {/* Live Match Control */}
-                {mode === 'full' && (
-                    <div className="bg-red-50 p-5 rounded-[2rem] border border-red-100 space-y-4">
+                <div className="bg-red-50 p-5 rounded-[2rem] border border-red-100 space-y-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${formData.isLive ? 'bg-red-600 animate-ping' : 'bg-gray-300'}`}></span>
@@ -548,10 +530,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 </button>
                             )}
                         </div>
-                    </div>
-                )}
+                </div>
 
-                {formData.matchFormat === 'halves' && mode === 'full' && (
+                {formData.matchFormat === 'halves' && (
                     <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
                         <div className="space-y-3">
                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">前半 (1st Half)</p>
@@ -721,7 +702,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     </button>
                 </div>
 
-                {showAdvanced && mode === 'full' && (
+                {showAdvanced && (
                     <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -768,7 +749,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 />
 
 
-                {showAdvanced && mode === 'full' && (
+                {showAdvanced && (
                     <>
                         <Autocomplete
                             label="MVP"
