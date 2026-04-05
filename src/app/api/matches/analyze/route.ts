@@ -74,7 +74,7 @@ ${matchInfo}
 振り返りコメント:`;
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
         const result = await model.generateContent(prompt);
         const analysis = result.response.text();
 
