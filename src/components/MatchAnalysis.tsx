@@ -10,7 +10,7 @@ interface MatchAnalysisProps {
 
 export default function MatchAnalysis({ gradeId, match }: MatchAnalysisProps) {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [analysis, setAnalysis] = useState<string | null>(null);
+    const [analysis, setAnalysis] = useState<string | null>(match.analysis ?? null);
     const [error, setError] = useState<string | null>(null);
 
     const handleAnalyze = async () => {
@@ -71,10 +71,11 @@ export default function MatchAnalysis({ gradeId, match }: MatchAnalysisProps) {
                 <div className="bg-white rounded-xl p-4 border border-blue-100">
                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{analysis}</p>
                     <button
-                        onClick={() => setAnalysis(null)}
-                        className="mt-3 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                        onClick={handleAnalyze}
+                        disabled={isAnalyzing}
+                        className="mt-3 text-xs font-bold text-blue-600 hover:text-blue-700 disabled:text-blue-300 transition-colors"
                     >
-                        別の分析を見る →
+                        {isAnalyzing ? '分析中...' : '再分析する →'}
                     </button>
                 </div>
             )}

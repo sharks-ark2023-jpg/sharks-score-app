@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.1.2 — 2026-04-05
+
+### 機能追加
+
+- **AI分析結果の永続化** (`src/app/api/matches/analyze/route.ts`, `src/components/MatchAnalysis.tsx`, `src/lib/sheets.ts`, `src/types/index.ts`)
+  - 分析結果を Google Sheets の `analysis` 列に保存するよう変更
+  - ページを閉じて再度開いても分析結果が表示される
+  - 再分析時は上書き（「再分析する →」ボタンに変更）
+
+---
+
 ## v1.1.1 — 2026-04-05
 
 ### バグ修正

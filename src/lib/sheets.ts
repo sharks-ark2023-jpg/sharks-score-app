@@ -131,6 +131,7 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             createdBy: data.createdBy,
             editingBy: data.editingBy,
             editingExpires: data.editingExpires,
+            analysis: data.analysis || undefined,
         } as Match;
     });
 }
@@ -155,7 +156,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         'opponentScore', 'opponentScore1H', 'opponentScore2H',
         'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'memo',
         'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy',
-        'editingBy', 'editingExpires'
+        'editingBy', 'editingExpires', 'analysis'
     ];
 
     await sheet.loadHeaderRow();
@@ -194,6 +195,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         scorers: match.scorers || '',
         mvp: match.mvp || '',
         memo: match.memo || '',
+        analysis: match.analysis || '',
     };
 
     if (existingRow) {

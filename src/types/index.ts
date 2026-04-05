@@ -51,6 +51,7 @@ export interface Match {
   createdBy: string;
   editingBy?: string;
   editingExpires?: string; // ISO string
+  analysis?: string;
 }
 
 export interface GradeConfig {

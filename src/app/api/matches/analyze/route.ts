@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getMatches } from '@/lib/sheets';
+import { getMatches, upsertMatch } from '@/lib/sheets';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 function getSpreadsheetId(gradeName: string) {
@@ -77,6 +77,10 @@ ${matchInfo}
         const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
         const result = await model.generateContent(prompt);
         const analysis = result.response.text();
+
+        // 分析結果をSheetsに保存（上書き）
+        const updatedMatch = { ...match, analysis };
+        await upsertMatch(spreadsheetId, `${grade}_Matches`, updatedMatch, session.user?.email ?? 'system');
 
         return NextResponse.json({ analysis });
     } catch (error: any) {
