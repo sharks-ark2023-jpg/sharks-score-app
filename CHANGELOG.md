@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.1 — 2026-04-05
+
+### バグ修正
+- **AI分析のモデル修正** (`src/app/api/matches/analyze/route.ts`)
+  - `gemini-1.5-flash` → `gemini-2.0-flash` に変更
+  - 無料 API キーで利用可能なモデルに修正
+
+---
+
 ## v1.1.0 — 2026-04-05
 
 ### 機能追加
