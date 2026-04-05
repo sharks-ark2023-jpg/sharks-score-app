@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import MatchAnalysis from '@/components/MatchAnalysis';
 
 function getSpreadsheetId(gradeName: string) {
     const config = process.env.GRADES_CONFIG || '';
@@ -142,6 +143,11 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                             <p className="text-xs text-slate-500 italic leading-relaxed">"{match.memo}"</p>
                         </div>
                     )}
+                </div>
+
+                {/* AI Analysis */}
+                <div className="px-6 py-6 border-t border-slate-50">
+                    <MatchAnalysis gradeId={gradeId} match={match} />
                 </div>
             </div>
         </main>

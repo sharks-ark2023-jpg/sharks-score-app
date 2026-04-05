@@ -42,7 +42,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [scorerSearch, setScorerSearch] = useState('');
     const [selectedScorer, setSelectedScorer] = useState<string | null>(null);
     const [lastGoalSnapshot, setLastGoalSnapshot] = useState<Partial<Match> | null>(null);
+    const [savedToast, setSavedToast] = useState(false);
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
         `/api/settings?grade=${gradeId}`,
@@ -191,9 +193,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         const snapshot = lastGoalSnapshot;
         setFormData(snapshot);
         setLastGoalSnapshot(null);
-        if (snapshot.isLive) {
-            await doSave(snapshot, true);
-        }
+        await doSave(snapshot, true);
     };
 
     const handleRecordGoal = async () => {
@@ -204,9 +204,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         setSelectedScorer(null);
         setIsScorerModalOpen(false);
         setScorerSearch('');
-        if (formData.isLive) {
-            await doSave(newData, true);
-        }
+        await doSave(newData, true);
     };
 
     const doSave = async (dataToSave: Partial<Match>, stayOnPage: boolean = false) => {
@@ -225,6 +223,13 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 const data = await res.json();
                 throw new Error(data.error || '保存に失敗しました');
             } else {
+                // Show save toast when auto-saving (stayOnPage = true)
+                if (stayOnPage) {
+                    setSavedToast(true);
+                    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                    toastTimerRef.current = setTimeout(() => setSavedToast(false), 2000);
+                }
+
                 if (!stayOnPage) {
                     // Fix: confirm前にonSavedを呼ばない（タブ切替でコンポーネントが破棄されるのを防ぐ）
                     const continueMatch = !initialMatch && confirm('保存しました。同じ対戦相手・会場で次の試合を記録しますか？');
@@ -788,20 +793,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         disabled={saving}
                         className="flex-[2] px-4 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 disabled:bg-blue-300 transition-all uppercase text-[10px] tracking-widest"
                     >
-                        {saving ? 'SAVING...' : formData.isLive ? '試合を保存して戻る' : '試合記録を保存'}
+                        {saving ? 'SAVING...' : formData.isLive ? '試合終了して保存' : '試合記録を保存'}
                     </button>
                 </div>
-
-                {formData.isLive && (
-                    <button
-                        type="button"
-                        onClick={(e) => handleSubmit(e as any, true)}
-                        disabled={saving}
-                        className="w-full py-4 bg-white border-2 border-blue-600 text-blue-600 font-black rounded-2xl shadow-lg shadow-blue-50 hover:bg-blue-50 transition-all uppercase text-[10px] tracking-[0.2em]"
-                    >
-                        {saving ? 'UPDATING...' : '途中保存 (現在のスコアを公開)'}
-                    </button>
-                )}
             </div>
 
             {
@@ -892,6 +886,16 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     )}
                 </div>
             </Modal>
+
+            {/* Save Toast Notification */}
+            {savedToast && (
+                <div className="fixed bottom-6 right-6 bg-green-600 text-white px-4 py-3 rounded-2xl shadow-lg shadow-green-200 text-sm font-bold flex items-center gap-2 animate-pulse">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                    </svg>
+                    保存済み ✓
+                </div>
+            )}
         </form >
     );
 }

@@ -9,6 +9,7 @@ import MatchForm from '@/components/MatchForm';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
 import useSWR from 'swr';
+import { calcTopScorers } from '@/lib/scoring';
 
 const fetcher = async (url: string) => {
     const res = await fetch(url);
@@ -236,6 +237,32 @@ export default function GradeDashboard() {
                             <MatchList matches={liveMatches} gradeId={gradeId} teamName={teamName} />
                         </div>
                     )}
+
+                    {/* TOP SCORERS Section */}
+                    {(() => {
+                        const topScorers = calcTopScorers(allMatches, undefined, 5);
+                        return topScorers.length > 0 && (
+                            <div className="mb-10 bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2rem] p-6 border border-orange-100 shadow-sm">
+                                <h2 className="text-[10px] font-black text-orange-600 mb-4 uppercase tracking-widest flex items-center gap-2">
+                                    <span className="text-lg">🏆</span> TOP SCORERS
+                                </h2>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                    {topScorers.map((scorer, idx) => (
+                                        <div key={`${scorer.name}-${idx}`} className="bg-white rounded-xl p-4 text-center shadow-sm border border-orange-100">
+                                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                                {idx === 0 && '1st'}
+                                                {idx === 1 && '2nd'}
+                                                {idx === 2 && '3rd'}
+                                                {idx >= 3 && `${idx + 1}th`}
+                                            </div>
+                                            <div className="text-base font-black text-orange-600">{scorer.goals}</div>
+                                            <div className="text-[9px] text-gray-600 font-bold truncate mt-1">{scorer.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     <div className="flex justify-between items-center mb-6 pl-1 gap-2">
                         <div className="flex items-center gap-2">

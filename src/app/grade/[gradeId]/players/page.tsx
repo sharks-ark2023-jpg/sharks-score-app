@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import { CommonMaster, Match } from '@/types';
 import Link from 'next/link';
+import { calcTopScorers } from '@/lib/scoring';
 
 const fetcher = (url: string) => fetch(url).then(async (res) => {
     const data = await res.json();
@@ -22,29 +23,10 @@ export default function PlayerManagementPage() {
     const { data: matchesRes } = useSWR<{ matches: Match[] }>(`/api/matches?grade=${gradeId}`, fetcher);
 
     // Calculate ranking
-    const ranking = !players || !matchesRes?.matches ? [] : (() => {
-        const counts: Record<string, number> = {};
-        players.forEach(p => counts[p.name] = 0);
-
-        matchesRes.matches.forEach(m => {
-            if (!m.scorers) return;
-            const parts = m.scorers.split(',').map(s => s.trim()).filter(Boolean);
-            parts.forEach(p => {
-                const match = p.match(/^(.+)\((\d+)\)$/);
-                if (match) {
-                    const name = match[1].trim();
-                    const count = parseInt(match[2]);
-                    if (counts[name] !== undefined) counts[name] += count;
-                } else {
-                    if (counts[p] !== undefined) counts[p] += 1;
-                }
-            });
-        });
-
-        return Object.entries(counts)
-            .filter(([_, count]) => count > 0)
-            .sort((a, b) => b[1] - a[1]);
-    })();
+    const ranking = !players || !matchesRes?.matches ? [] : calcTopScorers(
+        matchesRes.matches,
+        players.map(p => p.name)
+    ).map(scorer => [scorer.name, scorer.goals] as [string, number]);
 
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');

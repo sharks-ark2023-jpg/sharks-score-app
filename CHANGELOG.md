@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.1.0 — 2026-04-05
+
+### 機能追加
+
+- **自動保存（常時）** (`src/components/MatchForm.tsx`)
+  - 得点入力・取消時に常に自動保存されるよう拡張（ライブ中以外でも）
+  - 自動保存成功時に「保存済み ✓」トースト表示（2秒で消える）
+  - `handleRecordGoal` と `handleUndoGoal` の `isLive` 条件を削除
+
+- **保存ボタン整理** (`src/components/MatchForm.tsx`)
+  - 「途中保存 (現在のスコアを公開)」ボタンを削除（自動保存と重複するため）
+  - `isLive=true` 時のボタンラベルを「試合終了して保存」に変更（動作を明確化）
+
+- **得点ランキング表示機能強化** 
+  - 新規ユーティリティ `src/lib/scoring.ts` を作成（`calcTopScorers` 関数）
+    - 試合データから得点ランキングを計算する共通関数
+    - `playerNames` でフィルタ、`limit` で件数制限可能
+  - ダッシュボード試合履歴タブに「TOP SCORERS」セクション追加 (`src/app/grade/[gradeId]/page.tsx`)
+    - 上位5名をカード形式で表示（スマホに最適化）
+  - 選手管理ページのランキング計算を `scoring.ts` に移行 (`src/app/grade/[gradeId]/players/page.tsx`)
+
+- **AI試合分析機能** (Gemini API 無料枠使用)
+  - 新規API: `src/app/api/matches/analyze/route.ts`
+    - 試合データを受け取り Gemini 1.5 Flash で分析
+    - 試合の振り返り・良かった点・改善点を日本語（150～200字）で生成
+    - 事前に GEMINI_API_KEY を Vercel 環境変数に設定が必要
+  - 新規コンポーネント `src/components/MatchAnalysis.tsx` (Client Component)
+    - 試合詳細ページに「AI で試合を分析」ボタンを配置
+    - クリックで分析結果をカード内に表示
+  - 試合詳細ページに統合 (`src/app/grade/[gradeId]/match/[matchId]/view/page.tsx`)
+
+### 依存パッケージ追加
+- `@google/generative-ai` 版本は npm install で自動取得
+
+---
+
 ## v1.0.4 — 2026-03-26
 
 ### 機能削除
