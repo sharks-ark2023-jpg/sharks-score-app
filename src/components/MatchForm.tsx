@@ -139,7 +139,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         if (type === 'checkbox') {
             newValue = (e.target as HTMLInputElement).checked;
         } else if (type === 'number') {
-            newValue = parseInt(value || '0');
+            newValue = value === '' ? '' : parseInt(value);
         }
 
         setFormData(prev => {

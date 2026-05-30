@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.1 — 2026-05-30
+
+### バグ修正
+- **proxy.ts 化によるサーバーエラーを修正** (`middleware.ts`)
+  - Next.js 16 で proxy.ts に移行したが本番エラーが発生したため middleware.ts に戻す
+- **試合時間の「0」が消えない問題を修正** (`MatchForm.tsx`)
+  - `parseInt(value || '0')` → `value === '' ? '' : parseInt(value)` に変更
+
+---
+
 ## v1.2.0 — 2026-05-30
 
 ### バグ修正
