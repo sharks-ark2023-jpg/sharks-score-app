@@ -293,34 +293,51 @@ export default function StatsPage() {
                             No Score Data
                         </p>
                     ) : (
-                        <div className="space-y-3">
-                            {topScorers.map(({ name, goals }, index) => (
-                                <div key={name} className="flex items-center gap-4">
-                                    {/* 順位バッジ */}
-                                    <span
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
-                                            index === 0
-                                                ? 'bg-amber-400 text-amber-900'
-                                                : index === 1
-                                                    ? 'bg-slate-300 text-slate-700'
-                                                    : index === 2
-                                                        ? 'bg-orange-300 text-orange-900'
-                                                        : 'bg-slate-100 text-slate-400'
-                                        }`}
-                                    >
-                                        {index + 1}
-                                    </span>
+                        <div className="space-y-0.5 border border-slate-100/60 rounded-2xl overflow-hidden bg-slate-50/30 shadow-inner">
+                            {(() => {
+                                let lastGoals = -1;
+                                let currentRank = 0;
+                                let skipCount = 0;
 
-                                    {/* 選手名 */}
-                                    <span className="flex-1 font-black text-slate-800 text-sm truncate">{name}</span>
+                                return topScorers.map(({ name, goals }, index) => {
+                                    if (goals !== lastGoals) {
+                                        currentRank += 1 + skipCount;
+                                        skipCount = 0;
+                                        lastGoals = goals;
+                                    } else {
+                                        skipCount++;
+                                    }
 
-                                    {/* 得点数 */}
-                                    <div className="flex items-baseline gap-1 shrink-0">
-                                        <span className="font-bebas font-black text-3xl leading-none text-slate-800">{goals}</span>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">goals</span>
-                                    </div>
-                                </div>
-                            ))}
+                                    const isTop3 = currentRank <= 3;
+                                    const rankStyle = currentRank === 1
+                                        ? 'text-slate-950 font-extrabold text-lg'
+                                        : currentRank === 2
+                                            ? 'text-slate-850 font-extrabold text-base'
+                                            : currentRank === 3
+                                                ? 'text-slate-750 font-extrabold text-sm'
+                                                : 'text-slate-400 font-bold text-xs';
+
+                                    return (
+                                        <div key={name} className="flex items-center gap-5 px-5 py-3.5 bg-white border-b border-slate-50 last:border-0 hover:bg-slate-50/30 transition-colors">
+                                            {/* 順位 */}
+                                            <span className={`w-6 text-center shrink-0 ${rankStyle}`}>
+                                                {currentRank}
+                                            </span>
+
+                                            {/* 選手名 */}
+                                            <span className={`flex-1 text-slate-800 text-sm truncate ${isTop3 ? 'font-black' : 'font-bold'}`}>
+                                                {name}
+                                            </span>
+
+                                            {/* 得点数 */}
+                                            <div className="flex items-baseline shrink-0">
+                                                <span className="font-bebas font-black text-2xl leading-none text-slate-900">{goals}</span>
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">goals</span>
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     )}
                 </section>

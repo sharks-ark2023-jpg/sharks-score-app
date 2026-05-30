@@ -492,21 +492,17 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
                 {/* ========== ライブ中UI（1H / halftime / 2H / full-time） ========== */}
                 {formData.matchPhase !== 'pre-game' && (
-                    <div className="space-y-3">
-                        {/* ライブヘッダー */}
-                        <div className="flex items-center justify-between px-4 py-3 bg-red-50 rounded-2xl border border-red-100">
+                    <div className="space-y-4">
+                        {/* ライブヘッダー (カンプ②) */}
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-[#002D1E] rounded-xl text-white shadow-md border border-[#004D33]/30">
                             {/* LIVE インジケーター */}
                             <div className="flex items-center gap-2 min-w-0">
-                                <span className="relative flex h-3 w-3 flex-shrink-0">
+                                <span className="relative flex h-2 w-2 flex-shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
                                 </span>
-                                <span className="text-red-600 font-black text-sm tracking-widest uppercase">LIVE</span>
-                            </div>
-
-                            {/* フェーズ表示（中央） */}
-                            <div className="flex-1 text-center">
-                                <span className="text-[11px] font-black text-gray-600 uppercase tracking-widest">
+                                <span className="text-red-500 font-black text-xs tracking-wider uppercase">● LIVE</span>
+                                <span className="text-slate-300 font-bold text-xs">
                                     {formData.matchPhase === '1H' && (formData.matchFormat === 'one_game' ? '進行中' : '前半')}
                                     {formData.matchPhase === 'halftime' && 'ハーフタイム'}
                                     {formData.matchPhase === '2H' && '後半'}
@@ -514,13 +510,13 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 </span>
                             </div>
 
-                            {/* フェーズアクションボタン（右） */}
+                            {/* フェーズアクションボタン */}
                             <div className="min-w-0">
                                 {formData.matchPhase === '1H' && formData.matchFormat !== 'one_game' && (
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, matchPhase: 'halftime' }))}
-                                        className="px-3 py-1.5 bg-orange-500 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-orange-600 transition-all active:scale-95 whitespace-nowrap"
+                                        className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
                                         前半終了
                                     </button>
@@ -529,7 +525,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <button
                                         type="button"
                                         onClick={handleEndMatch}
-                                        className="px-3 py-1.5 bg-gray-700 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-gray-800 transition-all active:scale-95 whitespace-nowrap"
+                                        className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
                                         試合終了
                                     </button>
@@ -538,7 +534,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, matchPhase: '2H' }))}
-                                        className="px-3 py-1.5 bg-red-600 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-red-700 transition-all active:scale-95 whitespace-nowrap"
+                                        className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
                                         後半開始
                                     </button>
@@ -547,7 +543,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <button
                                         type="button"
                                         onClick={handleEndMatch}
-                                        className="px-3 py-1.5 bg-gray-700 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-gray-800 transition-all active:scale-95 whitespace-nowrap"
+                                        className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
                                         試合終了
                                     </button>
@@ -556,7 +552,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, matchPhase: p.matchFormat === 'one_game' ? '1H' : '2H', isLive: true }))}
-                                        className="px-3 py-1.5 bg-gray-100 text-gray-500 font-bold rounded-xl text-[10px] tracking-widest hover:bg-gray-200 transition-all active:scale-95 whitespace-nowrap"
+                                        className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
                                         試合中に戻る
                                     </button>
@@ -564,122 +560,142 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             </div>
                         </div>
 
-                        {/* スコア大表示カード */}
-                        <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="text-center flex-1">
-                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">
-                                        {teamName}
-                                    </span>
-                                    <span className="font-bebas font-black text-6xl text-slate-900 leading-none">{formData.ourScore}</span>
+                        {/* スコア大表示 (カンプ②) */}
+                        <div className="flex items-center justify-between px-6 py-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="text-left w-1/3">
+                                <span className="text-[10px] font-black text-slate-400 block tracking-wider uppercase leading-none">SHARKS</span>
+                                <span className="text-[13px] font-black text-slate-800 leading-tight">U12</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-3 w-1/3">
+                                <span className="font-bebas font-black text-5xl text-slate-950 leading-none">{formData.ourScore}</span>
+                                <span className="text-slate-300 text-3xl font-thin leading-none">-</span>
+                                <span className="font-bebas font-black text-5xl text-slate-950 leading-none">{formData.opponentScore}</span>
+                            </div>
+                            <div className="text-right w-1/3">
+                                <span className="text-[10px] font-black text-slate-400 block tracking-wider uppercase leading-none">対戦相手</span>
+                                <span className="text-[13px] font-black text-slate-800 leading-tight truncate block">{formData.opponentName || 'OPPONENT'}</span>
+                            </div>
+                        </div>
+
+                        {/* スコア入力カウンター 2列カード (カンプ②) */}
+                        <div className="space-y-1">
+                            <span className="text-xs font-black text-slate-500 uppercase tracking-widest block pl-1">スコアを入力</span>
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* SHARKS入力 */}
+                                <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                                    <div className="bg-[#1565FF] text-white text-center py-1.5 text-[10px] font-black tracking-widest uppercase">
+                                        SHARKS
+                                    </div>
+                                    <div className="p-3 flex items-center justify-between gap-1 flex-grow">
+                                        <button
+                                            type="button"
+                                            onClick={() => incrementScore('our', -1)}
+                                            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
+                                        >
+                                            −
+                                        </button>
+                                        <span className="font-bebas font-black text-4xl text-slate-900 leading-none min-w-[30px] text-center">
+                                            {formData.ourScore}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => incrementScore('our', 1)}
+                                            className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200/50 active:scale-90 transition-all"
+                                        >
+                                            ＋
+                                        </button>
+                                    </div>
                                 </div>
-                                <span className="text-3xl font-black text-slate-300 flex-shrink-0">—</span>
-                                <div className="text-center flex-1">
-                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">
-                                        {formData.opponentName || '対戦相手'}
-                                    </span>
-                                    <span className="font-bebas font-black text-6xl text-slate-900 leading-none">{formData.opponentScore}</span>
+
+                                {/* 対戦相手入力 */}
+                                <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                                    <div className="bg-[#2D3748] text-white text-center py-1.5 text-[10px] font-black tracking-widest uppercase">
+                                        対戦相手
+                                    </div>
+                                    <div className="p-3 flex items-center justify-between gap-1 flex-grow">
+                                        <button
+                                            type="button"
+                                            onClick={() => incrementScore('opponent', -1)}
+                                            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
+                                        >
+                                            −
+                                        </button>
+                                        <span className="font-bebas font-black text-4xl text-slate-900 leading-none min-w-[30px] text-center">
+                                            {formData.opponentScore}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => incrementScore('opponent', 1)}
+                                            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 font-bold border border-slate-200/60 active:scale-90 transition-all"
+                                        >
+                                            ＋
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 得点入力タブ */}
-                        <div className="flex gap-1 bg-gray-100 p-1 rounded-2xl">
-                            <button
-                                type="button"
-                                onClick={() => setScoringTab('our')}
-                                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${scoringTab === 'our' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                            >
-                                SHARKS
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setScoringTab('opponent')}
-                                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${scoringTab === 'opponent' ? 'bg-white text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                            >
-                                対戦相手
-                            </button>
-                        </div>
+                        {/* 得点した選手を選択 (カンプ②) */}
+                        {players.length > 0 && (
+                            <div className="space-y-2">
+                                <span className="text-xs font-black text-slate-500 uppercase tracking-widest block pl-1">得点した選手を選択</span>
+                                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {players.map(player => (
+                                            <button
+                                                key={player.name}
+                                                type="button"
+                                                onClick={() => setSelectedQuickScorer(prev => prev === player.name ? null : player.name)}
+                                                className={`px-1.5 py-2.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-start gap-1.5 border leading-none ${
+                                                    selectedQuickScorer === player.name
+                                                        ? 'bg-[#1565FF] text-white border-[#1565FF] shadow-sm shadow-blue-100'
+                                                        : 'bg-white text-[#2D3748] border-slate-200/80 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                {player.number && (
+                                                    <span className={`text-[9px] font-black w-4 text-center shrink-0 ${selectedQuickScorer === player.name ? 'text-blue-200' : 'text-slate-400'}`}>
+                                                        {player.number}
+                                                    </span>
+                                                )}
+                                                <span className="truncate flex-1 text-left">{player.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
 
-                        {/* スコア ±ボタン（タブ共通） */}
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => incrementScore(scoringTab === 'our' ? 'our' : 'opponent', -1)}
-                                className="flex-1 py-5 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95 text-2xl font-black"
-                            >
-                                −
-                            </button>
-                            <span className="font-bebas font-black text-5xl text-slate-900 w-16 text-center leading-none">
-                                {scoringTab === 'our' ? formData.ourScore : formData.opponentScore}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => incrementScore(scoringTab === 'our' ? 'our' : 'opponent', 1)}
-                                className={`flex-1 py-5 rounded-2xl shadow-lg flex items-center justify-center text-white transition-all active:scale-95 text-2xl font-black ${scoringTab === 'our' ? 'bg-blue-600 shadow-blue-100 hover:bg-blue-700' : 'bg-slate-700 shadow-slate-200 hover:bg-slate-800'}`}
-                            >
-                                ＋
-                            </button>
-                        </div>
+                                    <button
+                                        type="button"
+                                        disabled={selectedQuickScorer === null}
+                                        onClick={() => {
+                                            if (selectedQuickScorer) {
+                                                handleQuickScorer(selectedQuickScorer);
+                                                setSelectedQuickScorer(null);
+                                            }
+                                        }}
+                                        className="w-full py-3.5 bg-[#1565FF] hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none text-white font-black rounded-xl shadow-md shadow-blue-100/50 transition-all uppercase text-xs tracking-widest"
+                                    >
+                                        得点を記録する
+                                    </button>
 
-                        {/* SHARKS タブ: 選手グリッド */}
-                        {scoringTab === 'our' && players.length > 0 && (
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-3 gap-2">
-                                    {players.map(player => (
-                                        <button
-                                            key={player.name}
-                                            type="button"
-                                            onClick={() => setSelectedQuickScorer(prev => prev === player.name ? null : player.name)}
-                                            className={`px-2 py-3 rounded-2xl text-xs font-bold transition-all active:scale-95 flex flex-col items-center gap-0.5 border ${
-                                                selectedQuickScorer === player.name
-                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
-                                                    : 'bg-white text-gray-700 border-gray-100 hover:border-blue-200 hover:bg-blue-50'
-                                            }`}
-                                        >
-                                            {player.number && (
-                                                <span className={`text-[9px] font-black ${selectedQuickScorer === player.name ? 'text-blue-200' : 'text-slate-400'}`}>
-                                                    #{player.number}
-                                                </span>
-                                            )}
-                                            <span className="truncate w-full text-center">{player.name}</span>
-                                        </button>
-                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsScorerModalOpen(true)}
+                                        className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-[#4A5568] font-bold rounded-xl text-[10px] uppercase tracking-widest transition-all border border-slate-200/40"
+                                    >
+                                        詳細選択（モーダル）
+                                    </button>
                                 </div>
-
-                                <button
-                                    type="button"
-                                    disabled={selectedQuickScorer === null}
-                                    onClick={() => {
-                                        if (selectedQuickScorer) {
-                                            handleQuickScorer(selectedQuickScorer);
-                                            setSelectedQuickScorer(null);
-                                        }
-                                    }}
-                                    className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 disabled:bg-blue-200 disabled:shadow-none transition-all uppercase text-xs tracking-[0.2em]"
-                                >
-                                    {selectedQuickScorer ? `⚽ ${selectedQuickScorer} の得点を記録` : '選手を選択してください'}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setIsScorerModalOpen(true)}
-                                    className="w-full py-2.5 border border-gray-200 text-gray-500 font-bold rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all"
-                                >
-                                    詳細選択（モーダル）
-                                </button>
                             </div>
                         )}
 
                         {/* Undo Goal Button */}
                         {lastGoalSnapshot !== null && (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center mt-2">
                                 <button
                                     type="button"
                                     onClick={handleUndoGoal}
-                                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black rounded-2xl hover:bg-amber-100 transition-all active:scale-95 uppercase tracking-widest"
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black rounded-xl hover:bg-amber-100 transition-all active:scale-95 uppercase tracking-widest"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                     </svg>
                                     直前の得点を取り消す

@@ -174,7 +174,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
           <button
             className={`flex-1 py-3 text-sm font-black tracking-wide transition-colors ${
               activeTab === 'record'
-                ? 'border-b-2 border-[#1565FF] text-[#1565FF]'
+                ? 'border-b-2 border-[#00693E] text-[#00693E]'
                 : 'text-slate-400'
             }`}
             onClick={() => setActiveTab('record')}
@@ -184,7 +184,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
           <button
             className={`flex-1 py-3 text-sm font-black tracking-wide transition-colors ${
               activeTab === 'info'
-                ? 'border-b-2 border-[#1565FF] text-[#1565FF]'
+                ? 'border-b-2 border-[#00693E] text-[#00693E]'
                 : 'text-slate-400'
             }`}
             onClick={() => setActiveTab('info')}
@@ -198,15 +198,16 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
           <div className="px-6 pt-5 pb-6 space-y-4">
             {/* 得点記録 */}
             {scorerList.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-4 py-1">
                 {scorerList.map((scorer, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-base shrink-0">⚽</span>
-                    <span className="font-black text-sm flex-1 text-slate-800">{scorer.name}</span>
-                    <span className="font-bebas font-black text-2xl leading-none text-slate-900">
-                      {scorer.goals}
+                  <div key={i} className="flex items-center gap-3.5 pb-3 border-b border-slate-50 last:border-0 last:pb-0">
+                    <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-sm shrink-0 shadow-sm">
+                      ⚽
+                    </div>
+                    <span className="font-bold text-[13px] flex-1 text-slate-800 tracking-wide">{scorer.name}</span>
+                    <span className="font-black text-sm text-slate-850 shrink-0">
+                      {scorer.goals}<span className="text-[10px] font-bold text-slate-500 ml-0.5">点</span>
                     </span>
-                    <span className="text-xs text-slate-400">点</span>
                   </div>
                 ))}
               </div>

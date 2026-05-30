@@ -4,24 +4,26 @@
   --font-sans: var(--font-inter);
   --font-heading: var(--font-outfit);
   --font-bebas: var(--font-bebas-neue);
+  --color-sharks-navy: #0D1B2A;
+  --color-sharks-green: #00693E;
+  --color-sharks-blue: #1565FF;
+  --color-sharks-red: #FF2D2D;
+  --color-sharks-bg: #F5F7FA;
+  --color-sharks-border: #E5E7EB;
 }
 
 /* Force Light Mode */
 :root {
-  --background: #ffffff !important;
-  --foreground: #171717 !important;
+  --background: #F5F7FA !important;
+  --foreground: #0D1B2A !important;
   color-scheme: light !important;
 }
 
 /* Base styles with explicit colors to override any defaults */
 html,
 body {
-  background-color: #f8fafc !important;
-  /* slate-50 */
-  background-image:
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.03) 0, transparent 50%),
-    radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.03) 0, transparent 50%);
-  color: #171717 !important;
+  background-color: #F5F7FA !important;
+  color: #0D1B2A !important;
   margin: 0;
   padding: 0;
   min-height: 100vh;
