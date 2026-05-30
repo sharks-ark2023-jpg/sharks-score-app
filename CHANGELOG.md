@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.3 — 2026-05-30
+
+### UI改善・バグ修正
+- **戦績ページ GF/GA 表示を日本語化** (`stats/page.tsx`): GF→得点、GA→失点
+- **戦績ページ 連勝/連敗ストリーク追加** (`stats/page.tsx`): 直近の連勝・連敗・連続引き分けを表示（2以上で表示）
+- **試合詳細 得点者の縦中央揃え** (`view/page.tsx`): ⚽️アイコンと選手名を`items-center`で揃え
+- **試合詳細 対戦相手名の uppercase 削除** (`view/page.tsx`): チーム名を大文字変換しないよう修正
+- **大会名入力フィールドの自動大文字化を無効化** (`MatchForm.tsx`): `autoCapitalize="none"` `autoCorrect="off"` を追加
+- **学年ページのランキングリンク削除** (`grade/[gradeId]/page.tsx`): 戦績ページのTop Scorersで代替
+
+---
+
 ## v1.3.2 — 2026-05-30
 
 ### UI改善・機能追加

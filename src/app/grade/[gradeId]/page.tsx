@@ -274,14 +274,6 @@ export default function GradeDashboard() {
 
             {/* Connection Status Section */}
             <footer className="mt-8 pt-8 border-t border-gray-50">
-                <div className="mb-6 text-center">
-                    <Link
-                        href={`/grade/${gradeId}/players`}
-                        className="text-[9px] font-black text-slate-300 hover:text-slate-500 uppercase tracking-widest transition-colors"
-                    >
-                        選手ランキングを見る →
-                    </Link>
-                </div>
                 <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
                     <h2 className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em]">Connection Status</h2>

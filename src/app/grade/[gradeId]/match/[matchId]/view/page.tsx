@@ -110,7 +110,7 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                         </div>
                         <div className="text-center">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">対戦相手</span>
-                            <div className="font-heading font-black text-sm text-slate-700 leading-tight uppercase">{match.opponentName}</div>
+                            <div className="font-heading font-black text-sm text-slate-700 leading-tight">{match.opponentName}</div>
                         </div>
                     </div>
                 </div>
@@ -118,8 +118,8 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                 {/* 詳細情報 */}
                 <div className="px-6 pb-6 space-y-3 pt-4">
                     {match.scorers && (
-                        <div className="flex items-start gap-2">
-                            <span className="text-base shrink-0 mt-0.5">⚽️</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-base shrink-0">⚽️</span>
                             <p className="text-xs font-bold text-slate-700 leading-relaxed">{match.scorers}</p>
                         </div>
                     )}

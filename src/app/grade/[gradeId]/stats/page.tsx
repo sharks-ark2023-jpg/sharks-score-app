@@ -52,6 +52,21 @@ const winRate = (counts: StatCounts): string => {
     return `${Math.round((counts.win / counts.total) * 100)}%`;
 };
 
+// 連勝/連敗ストリーク（完了試合を日付降順で見て、同じ結果が続く数を数える）
+const calcStreak = (matches: Match[]): { result: 'win' | 'loss' | 'draw'; count: number } | null => {
+    const completed = matches
+        .filter(m => !m.isLive && (m.result === 'win' || m.result === 'loss' || m.result === 'draw'))
+        .slice() // copy to avoid mutation
+        .sort((a, b) => (b.matchDate > a.matchDate ? 1 : b.matchDate < a.matchDate ? -1 : 0));
+    if (completed.length === 0) return null;
+    const first = completed[0].result as 'win' | 'loss' | 'draw';
+    let count = 1;
+    for (let i = 1; i < completed.length; i++) {
+        if (completed[i].result === first) { count++; } else { break; }
+    }
+    return { result: first, count };
+};
+
 export default function StatsPage() {
     const { gradeId } = useParams() as { gradeId: string };
     const { data, isLoading, error } = useSWR<{ matches: Match[] }>(
@@ -79,6 +94,9 @@ export default function StatsPage() {
 
     // セクション3: トップスコアラー（上位5名、選手フィルタなし）
     const topScorers = calcTopScorers(allMatches, undefined, 5);
+
+    // 連勝/連敗ストリーク
+    const streak = calcStreak(allMatches);
 
     // ローディング
     if (isLoading) {
@@ -162,37 +180,52 @@ export default function StatsPage() {
                             {/* W / D / L カード */}
                             <div className="grid grid-cols-3 gap-3 mb-5">
                                 <div className="flex flex-col items-center justify-center bg-[#00693E]/10 rounded-2xl py-5 gap-1">
-                                    <span className="font-bebas text-5xl leading-none text-[#00693E]">{recentCounts.win}</span>
+                                    <span className="font-bebas font-black text-5xl leading-none text-[#00693E]">{recentCounts.win}</span>
                                     <span className="text-[9px] font-black text-[#00693E] tracking-widest uppercase">Win</span>
                                 </div>
                                 <div className="flex flex-col items-center justify-center bg-slate-100 rounded-2xl py-5 gap-1">
-                                    <span className="font-bebas text-5xl leading-none text-[#94A3B8]">{recentCounts.draw}</span>
+                                    <span className="font-bebas font-black text-5xl leading-none text-[#94A3B8]">{recentCounts.draw}</span>
                                     <span className="text-[9px] font-black text-[#94A3B8] tracking-widest uppercase">Draw</span>
                                 </div>
                                 <div className="flex flex-col items-center justify-center bg-[#FF2D2D]/10 rounded-2xl py-5 gap-1">
-                                    <span className="font-bebas text-5xl leading-none text-[#FF2D2D]">{recentCounts.loss}</span>
+                                    <span className="font-bebas font-black text-5xl leading-none text-[#FF2D2D]">{recentCounts.loss}</span>
                                     <span className="text-[9px] font-black text-[#FF2D2D] tracking-widest uppercase">Lose</span>
                                 </div>
                             </div>
 
-                            {/* 勝率 + 得失点 */}
+                            {/* 勝率 + 得失点 + ストリーク */}
                             <div className="flex items-center justify-between px-1">
                                 <div className="flex items-baseline gap-1">
-                                    <span className="font-bebas text-3xl text-slate-700 leading-none">{winRate(recentCounts)}</span>
+                                    <span className="font-bebas font-black text-3xl text-slate-700 leading-none">{winRate(recentCounts)}</span>
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Win Rate</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-[10px] font-black text-slate-500">
                                     <span className="flex items-center gap-1">
-                                        <span className="text-[#00693E]">GF</span>
-                                        <span className="font-bebas text-xl leading-none text-slate-700">{recentGoalsFor}</span>
+                                        <span className="text-[#00693E]">得点</span>
+                                        <span className="font-bebas font-black text-xl leading-none text-slate-700">{recentGoalsFor}</span>
                                     </span>
                                     <span className="text-slate-200">|</span>
                                     <span className="flex items-center gap-1">
-                                        <span className="text-[#FF2D2D]">GA</span>
-                                        <span className="font-bebas text-xl leading-none text-slate-700">{recentGoalsAgainst}</span>
+                                        <span className="text-[#FF2D2D]">失点</span>
+                                        <span className="font-bebas font-black text-xl leading-none text-slate-700">{recentGoalsAgainst}</span>
                                     </span>
                                 </div>
                             </div>
+
+                            {/* ストリーク */}
+                            {streak && streak.count >= 2 && (
+                                <div className="mt-4 px-1 flex items-center gap-2">
+                                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest ${
+                                        streak.result === 'win'
+                                            ? 'bg-[#00693E]/10 text-[#00693E]'
+                                            : streak.result === 'loss'
+                                                ? 'bg-[#FF2D2D]/10 text-[#FF2D2D]'
+                                                : 'bg-slate-100 text-slate-500'
+                                    }`}>
+                                        {streak.count}連{streak.result === 'win' ? '勝' : streak.result === 'loss' ? '敗' : '分け'}中
+                                    </span>
+                                </div>
+                            )}
                         </>
                     )}
                 </section>
@@ -211,22 +244,22 @@ export default function StatsPage() {
                             {/* W / D / L カード */}
                             <div className="grid grid-cols-3 gap-3 mb-5">
                                 <div className="flex flex-col items-center justify-center bg-[#00693E]/10 rounded-2xl py-5 gap-1">
-                                    <span className="font-bebas text-5xl leading-none text-[#00693E]">{officialCounts.win}</span>
+                                    <span className="font-bebas font-black text-5xl leading-none text-[#00693E]">{officialCounts.win}</span>
                                     <span className="text-[9px] font-black text-[#00693E] tracking-widest uppercase">Win</span>
                                 </div>
                                 <div className="flex flex-col items-center justify-center bg-slate-100 rounded-2xl py-5 gap-1">
-                                    <span className="font-bebas text-5xl leading-none text-[#94A3B8]">{officialCounts.draw}</span>
+                                    <span className="font-bebas font-black text-5xl leading-none text-[#94A3B8]">{officialCounts.draw}</span>
                                     <span className="text-[9px] font-black text-[#94A3B8] tracking-widest uppercase">Draw</span>
                                 </div>
                                 <div className="flex flex-col items-center justify-center bg-[#FF2D2D]/10 rounded-2xl py-5 gap-1">
-                                    <span className="font-bebas text-5xl leading-none text-[#FF2D2D]">{officialCounts.loss}</span>
+                                    <span className="font-bebas font-black text-5xl leading-none text-[#FF2D2D]">{officialCounts.loss}</span>
                                     <span className="text-[9px] font-black text-[#FF2D2D] tracking-widest uppercase">Lose</span>
                                 </div>
                             </div>
 
                             {/* 勝率 */}
                             <div className="flex items-baseline gap-1 px-1 mb-5">
-                                <span className="font-bebas text-3xl text-slate-700 leading-none">{winRate(officialCounts)}</span>
+                                <span className="font-bebas font-black text-3xl text-slate-700 leading-none">{winRate(officialCounts)}</span>
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Win Rate</span>
                             </div>
 
@@ -283,7 +316,7 @@ export default function StatsPage() {
 
                                     {/* 得点数 */}
                                     <div className="flex items-baseline gap-1 shrink-0">
-                                        <span className="font-bebas text-3xl leading-none text-slate-800">{goals}</span>
+                                        <span className="font-bebas font-black text-3xl leading-none text-slate-800">{goals}</span>
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">goals</span>
                                     </div>
                                 </div>

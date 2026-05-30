@@ -382,6 +382,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     value={formData.tournamentName || ''}
                                     onChange={handleChange}
                                     placeholder="大会名を入力"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
                                     className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
                                 />
                             </label>

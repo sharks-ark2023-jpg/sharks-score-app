@@ -179,7 +179,7 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
 
                         {/* 対戦相手 */}
                         <div className="flex-1 min-w-0">
-                            <div className="font-black text-sm text-slate-800 truncate uppercase">{match.opponentName}</div>
+                            <div className="font-black text-sm text-slate-800 truncate">{match.opponentName}</div>
                             {match.scorers && (
                                 <div className="text-[9px] font-bold text-slate-400 mt-0.5 break-all leading-relaxed">⚽ {match.scorers}</div>
                             )}
