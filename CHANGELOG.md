@@ -13,8 +13,12 @@
   - `text-center` → `flex items-center justify-center` に変更
 
 ### 機能追加
-- **LINE内ブラウザで外部ブラウザへ誘導** (`middleware.ts`, `line-redirect/page.tsx`)
+- **LINE内ブラウザで外部ブラウザへ誘導** (`proxy.ts`, `line-redirect/page.tsx`)
   - LINE User-Agent を検出した場合、外部ブラウザで開くよう案内するページへリダイレクト
+
+### その他
+- **Next.js 16 対応：middleware.ts → proxy.ts に移行** (`proxy.ts`)
+  - `middleware` ファイル規約が非推奨のため `proxy.ts` に変更
 
 ---
 
