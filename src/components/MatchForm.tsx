@@ -434,7 +434,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 <input
                                     type="number"
                                     name="matchDuration"
-                                    value={formData.matchDuration || 15}
+                                    value={formData.matchDuration ?? ''}
                                     onChange={handleChange}
                                     placeholder="15"
                                     className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2 pr-10 text-center font-bold"

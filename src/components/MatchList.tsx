@@ -158,7 +158,7 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                         className="flex items-center gap-3 bg-white px-4 py-3 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all active:scale-[0.99] group"
                     >
                         {/* 結果バッジ */}
-                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shrink-0 w-12 text-center ${resultStyle}`}>
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shrink-0 w-12 flex items-center justify-center ${resultStyle}`}>
                             {resultLabel}
                         </span>
 

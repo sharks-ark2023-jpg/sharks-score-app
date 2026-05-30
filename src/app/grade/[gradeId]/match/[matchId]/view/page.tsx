@@ -116,7 +116,7 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                 </div>
 
                 {/* 詳細情報 */}
-                <div className="px-6 pb-6 space-y-3 border-t border-slate-50 pt-4">
+                <div className="px-6 pb-6 space-y-3 pt-4">
                     {match.scorers && (
                         <div className="flex items-start gap-2">
                             <span className="text-base shrink-0 mt-0.5">⚽️</span>

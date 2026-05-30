@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.2.0 — 2026-05-30
+
+### バグ修正
+- **試合時間入力のデフォ値が消せない問題を修正** (`MatchForm.tsx`)
+  - `value={formData.matchDuration || 15}` → `value={formData.matchDuration ?? ''}` に変更
+- **チーム名・会場名の小文字入力ができない問題を修正** (`Autocomplete.tsx`)
+  - input に `autoCapitalize="none"` を追加（iOS の自動大文字化を無効化）
+- **試合詳細の得点表示に余計な線が重なる問題を修正** (`view/page.tsx`)
+  - 詳細情報セクションの `border-t border-slate-50` を削除
+- **試合一覧の結果ラベル（WIN/LOSE/DRAW）が左寄せになる問題を修正** (`MatchList.tsx`)
+  - `text-center` → `flex items-center justify-center` に変更
+
+### 機能追加
+- **LINE内ブラウザで外部ブラウザへ誘導** (`middleware.ts`, `line-redirect/page.tsx`)
+  - LINE User-Agent を検出した場合、外部ブラウザで開くよう案内するページへリダイレクト
+
+---
+
 ## v1.1.2 — 2026-04-05
 
 ### 機能追加

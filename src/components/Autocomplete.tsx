@@ -49,6 +49,7 @@ export default function Autocomplete({ value, onChange, options, placeholder, la
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 required={required}
+                autoCapitalize="none"
                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 p-2"
                 onFocus={() => value.length > 0 && setIsOpen(true)}
             />
