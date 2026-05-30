@@ -108,7 +108,7 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                                 </div>
                             )}
                         </div>
-                        <div className="text-center border-l border-slate-100">
+                        <div className="text-center">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">対戦相手</span>
                             <div className="font-heading font-black text-sm text-slate-700 leading-tight uppercase">{match.opponentName}</div>
                         </div>
