@@ -33,7 +33,7 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
     const completedMatches = matches.filter(m => !m.isLive);
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-2 pb-24">
             {/* ライブ試合: カード形式 */}
             {liveMatches.map((match) => (
                 <Link
@@ -91,9 +91,9 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <div className="flex items-center gap-4">
-                                <span className="text-5xl font-black text-slate-900 tabular-nums leading-none tracking-tighter">{match.ourScore}</span>
+                                <span className="font-bebas text-5xl text-slate-900 tabular-nums leading-none tracking-tighter">{match.ourScore}</span>
                                 <span className="text-slate-900 text-3xl font-thin">-</span>
-                                <span className="text-5xl font-black text-slate-900 tabular-nums leading-none tracking-tighter">{match.opponentScore}</span>
+                                <span className="font-bebas text-5xl text-slate-900 tabular-nums leading-none tracking-tighter">{match.opponentScore}</span>
                             </div>
                             {match.pkInfo?.isPk && (
                                 <div className="text-[10px] font-black text-blue-600 mt-3 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 uppercase tracking-[0.2em] shadow-sm">
@@ -141,10 +141,15 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
             {/* 終了試合: リスト形式 */}
             {completedMatches.map((match) => {
                 const resultLabel = match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW';
-                const resultStyle = match.result === 'win'
-                    ? 'bg-green-500 text-white'
+                const accentBarColor = match.result === 'win'
+                    ? 'bg-[#00693E]'
                     : match.result === 'loss'
-                        ? 'bg-red-500 text-white'
+                        ? 'bg-[#FF2D2D]'
+                        : 'bg-slate-400';
+                const resultStyle = match.result === 'win'
+                    ? 'bg-[#00693E] text-white'
+                    : match.result === 'loss'
+                        ? 'bg-[#FF2D2D] text-white'
                         : 'bg-slate-400 text-white';
 
                 const formatLabel = match.matchFormat === 'halves'
@@ -155,8 +160,11 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                     <Link
                         key={match.matchId}
                         href={`/grade/${gradeId}/match/${match.matchId}/view`}
-                        className="flex items-center gap-3 bg-white px-4 py-3 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all active:scale-[0.99] group"
+                        className="flex items-center gap-3 bg-white pl-0 pr-4 py-3 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all active:scale-[0.99] group overflow-hidden"
                     >
+                        {/* 左端アクセントバー */}
+                        <div className={`w-1 self-stretch rounded-l-2xl shrink-0 ${accentBarColor}`} />
+
                         {/* 結果バッジ */}
                         <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shrink-0 w-12 flex items-center justify-center ${resultStyle}`}>
                             {resultLabel}
@@ -164,9 +172,9 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
 
                         {/* スコア */}
                         <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-xl font-black text-slate-900 tabular-nums leading-none">{match.ourScore}</span>
+                            <span className="font-bebas text-2xl text-slate-900 tabular-nums leading-none">{match.ourScore}</span>
                             <span className="text-slate-900 text-sm font-thin">-</span>
-                            <span className="text-xl font-black text-slate-900 tabular-nums leading-none">{match.opponentScore}</span>
+                            <span className="font-bebas text-2xl text-slate-900 tabular-nums leading-none">{match.opponentScore}</span>
                         </div>
 
                         {/* 対戦相手 */}

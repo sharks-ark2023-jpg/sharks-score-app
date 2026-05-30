@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.3.0 — 2026-05-30
+
+### UI改善
+- **フッターナビゲーション追加・Header廃止** (`FooterNav.tsx`, `layout.tsx`)
+  - 上部HeaderをフッターナビゲーションBarに完全移行
+  - 5タブ: ホーム / 入力 / 試合 / ランキング / メニュー（アイコン＋ラベル）
+  - iPhone X 以降の SafeArea（ノッチ）対応
+  - gradeId未取得ページではグレードに依存するタブをグレーアウト
+- **BEBAS NEUE フォント追加** (`globals.css`, `layout.tsx`)
+  - スコア数字に `font-bebas` クラスを適用
+  - Google Fonts から自動ロード（`next/font/google`）
+- **試合一覧カラー更新** (`MatchList.tsx`)
+  - WIN: `#00693E`（緑）/ LOSE: `#FF2D2D`（赤）/ DRAW: グレー に統一
+  - 完了試合行の左端にカラーアクセントバー追加
+  - スコア数字を BEBAS NEUE に変更
+- **試合詳細スコア更新** (`view/page.tsx`)
+  - スコア数字を BEBAS NEUE（7xl）に変更
+  - 結果バッジの色をデザインパレットに合わせて更新
+  - フッターナビ分の余白（pb-24）を追加
+
+---
+
 ## v1.2.1 — 2026-05-30
 
 ### バグ修正

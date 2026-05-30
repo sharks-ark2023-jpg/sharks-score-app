@@ -31,15 +31,15 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
 
     const resultLabel = match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW';
     const resultStyle = match.result === 'win'
-        ? 'bg-green-500 text-white shadow-green-100'
+        ? 'bg-[#00693E] text-white shadow-green-100'
         : match.result === 'loss'
-            ? 'bg-red-500 text-white shadow-red-100'
+            ? 'bg-[#FF2D2D] text-white shadow-red-100'
             : 'bg-slate-400 text-white shadow-slate-100';
 
     const formatLabel = match.matchFormat === 'halves' ? '前後半' : `${match.matchDuration ?? 15}min`;
 
     return (
-        <main className="flex-grow container mx-auto px-4 py-8 max-w-lg">
+        <main className="flex-grow container mx-auto px-4 py-8 max-w-lg pb-24">
             <header className="mb-6 flex items-center justify-between">
                 <Link href={`/grade/${gradeId}`} className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                 )}
             </header>
 
-            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-[2.5rem] shadow-lg shadow-slate-200/60 border border-slate-100 overflow-hidden">
                 {/* ヘッダー帯 */}
                 <div className="px-6 pt-6 pb-4 border-b border-slate-50">
                     <div className="flex items-center justify-between mb-2">
@@ -88,9 +88,9 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                         </div>
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-3">
-                                <span className="text-6xl font-black text-slate-900 tabular-nums leading-none tracking-tighter">{match.ourScore}</span>
+                                <span className="font-bebas text-7xl text-slate-900 leading-none">{match.ourScore}</span>
                                 <span className="text-slate-900 text-4xl font-thin">-</span>
-                                <span className="text-6xl font-black text-slate-900 tabular-nums leading-none tracking-tighter">{match.opponentScore}</span>
+                                <span className="font-bebas text-7xl text-slate-900 leading-none">{match.opponentScore}</span>
                             </div>
                             {match.pkInfo?.isPk && (
                                 <div className="text-[10px] font-black text-blue-600 mt-3 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 uppercase tracking-[0.2em]">

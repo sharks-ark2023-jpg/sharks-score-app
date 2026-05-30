@@ -3,6 +3,7 @@
 @theme {
   --font-sans: var(--font-inter);
   --font-heading: var(--font-outfit);
+  --font-bebas: var(--font-bebas-neue);
 }
 
 /* Force Light Mode */

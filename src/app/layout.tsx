@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Outfit, Inter } from "next/font/google";
+import { Outfit, Inter, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import NextAuthSessionProvider from "@/components/SessionProvider";
-import Header from "@/components/Header";
+import FooterNav from "@/components/FooterNav";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -12,6 +12,12 @@ const outfit = Outfit({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bebas-neue",
 });
 
 export const metadata: Metadata = {
@@ -28,29 +34,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} antialiased font-sans bg-white text-gray-900 min-h-screen`}>
+      <body className={`${inter.variable} ${outfit.variable} ${bebasNeue.variable} antialiased font-sans bg-white text-gray-900 min-h-screen`}>
         <NextAuthSessionProvider>
-          <div className="min-h-screen flex flex-col bg-white">
-            <Header />
+          <div className="min-h-screen flex flex-col bg-white pb-20">
             {children}
-            <footer className="mt-auto py-8 border-t border-gray-50">
-              <div className="container mx-auto px-4 text-center">
-                <div className="flex justify-center gap-6">
-                  <a
-                    href="/manual"
-                    className="text-[10px] font-black text-gray-300 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]"
-                  >
-                    Manual
-                  </a>
-                  <a
-                    href="/privacy"
-                    className="text-[10px] font-black text-gray-300 hover:text-gray-500 transition-colors uppercase tracking-[0.2em]"
-                  >
-                    Privacy Policy
-                  </a>
-                </div>
-              </div>
-            </footer>
+            <FooterNav />
           </div>
         </NextAuthSessionProvider>
       </body>
