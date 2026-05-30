@@ -304,6 +304,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         }
     };
 
+    const isLiveMode = formData.matchPhase !== 'pre-game';
+
     if (lockInfo?.locked) {
         return (
             <div className="max-w-lg mx-auto bg-orange-50 p-8 rounded-[2rem] border border-orange-200 text-center shadow-xl">
@@ -328,12 +330,14 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative pb-24">
+        <form onSubmit={handleSubmit} className={isLiveMode ? "max-w-lg mx-auto space-y-4 pb-24 px-4 pt-2" : "space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative pb-24"}>
+            {!isLiveMode && (
             <div className="flex justify-between items-center border-b pb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                     {initialMatch ? '試合記録を編集' : '新規試合を記録'}
                 </h2>
             </div>
+            )}
 
             {error && (
                 <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100">
@@ -342,7 +346,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             )}
 
             <div className="grid grid-cols-1 gap-4">
-                {/* ========== 試合情報入力（常に表示） ========== */}
+                {/* ========== 試合情報入力（ライブ中は非表示） ========== */}
+                {!isLiveMode && (
                 <div className="grid grid-cols-1 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium text-gray-700">試合日</span>
@@ -449,7 +454,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </label>
                     </div>
                 </div>
+                )}
 
+                {!isLiveMode && (
+                <>
                 <Autocomplete
                     label="対戦相手"
                     value={formData.opponentName || ''}
@@ -466,6 +474,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     options={venues}
                     placeholder="会場名"
                 />
+                </>
+                )}
 
                 {/* ========== pre-game: 試合開始ボタン（ライブ前） ========== */}
                 {formData.matchPhase === 'pre-game' && (
@@ -830,7 +840,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     </>
                 )}
 
-                {/* Advanced Options Toggle */}
+                {/* Advanced Options・得点者（ライブ中は非表示） */}
+                {!isLiveMode && (
+                <>
                 <div className="pt-2">
                     <button
                         type="button"
@@ -924,6 +936,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             />
                         </label>
                     </>
+                )}
+                </>
                 )}
             </div>
 
