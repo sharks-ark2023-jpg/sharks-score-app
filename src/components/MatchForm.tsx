@@ -605,7 +605,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                                 </svg>
                             </button>
-                            <span className="font-bebas text-6xl w-16 text-slate-900 leading-none">{formData.ourScore}</span>
+                            <span className="font-bebas font-black text-6xl w-16 text-slate-900 leading-none">{formData.ourScore}</span>
                             <button
                                 type="button"
                                 onClick={() => setIsScorerModalOpen(true)}
@@ -629,7 +629,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                                 </svg>
                             </button>
-                            <span className="font-bebas text-6xl w-16 text-slate-900 leading-none">{formData.opponentScore}</span>
+                            <span className="font-bebas font-black text-6xl w-16 text-slate-900 leading-none">{formData.opponentScore}</span>
                             <button
                                 type="button"
                                 onClick={() => incrementScore('opponent', 1)}

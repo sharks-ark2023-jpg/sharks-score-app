@@ -223,7 +223,7 @@ export default function PlayerManagementPage() {
                                         <span className="font-black text-lg tracking-tight group-hover:translate-x-1 transition-transform">{name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bebas text-3xl leading-none">{count}</span>
+                                        <span className="font-bebas font-black text-3xl leading-none">{count}</span>
                                         <span className="text-[10px] font-black opacity-50 uppercase tracking-widest">Goals</span>
                                     </div>
                                 </div>

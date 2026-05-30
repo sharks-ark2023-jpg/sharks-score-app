@@ -273,7 +273,15 @@ export default function GradeDashboard() {
             </Modal>
 
             {/* Connection Status Section */}
-            <footer className="mt-16 pt-8 border-t border-gray-50">
+            <footer className="mt-8 pt-8 border-t border-gray-50">
+                <div className="mb-6 text-center">
+                    <Link
+                        href={`/grade/${gradeId}/players`}
+                        className="text-[9px] font-black text-slate-300 hover:text-slate-500 uppercase tracking-widest transition-colors"
+                    >
+                        選手ランキングを見る →
+                    </Link>
+                </div>
                 <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
                     <h2 className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em]">Connection Status</h2>
@@ -295,7 +303,7 @@ export default function GradeDashboard() {
                         </a>
                     </div>
                 )}
-                <p className="mt-8 text-center text-[10px] text-gray-200 font-black tracking-widest uppercase">System Update v1.31 - Tabbed Layout</p>
+                <p className="mt-6 text-center text-[10px] text-gray-200 font-black tracking-widest uppercase">SHARKS SCORE APP v1.3</p>
             </footer>
         </main>
     );

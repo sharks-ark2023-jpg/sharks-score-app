@@ -91,9 +91,9 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <div className="flex items-center gap-4">
-                                <span className="font-bebas text-5xl text-slate-900 tabular-nums leading-none tracking-tighter">{match.ourScore}</span>
+                                <span className="font-bebas font-black text-5xl text-slate-900 tabular-nums leading-none tracking-tighter">{match.ourScore}</span>
                                 <span className="text-slate-900 text-3xl font-thin">-</span>
-                                <span className="font-bebas text-5xl text-slate-900 tabular-nums leading-none tracking-tighter">{match.opponentScore}</span>
+                                <span className="font-bebas font-black text-5xl text-slate-900 tabular-nums leading-none tracking-tighter">{match.opponentScore}</span>
                             </div>
                             {match.pkInfo?.isPk && (
                                 <div className="text-[10px] font-black text-blue-600 mt-3 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 uppercase tracking-[0.2em] shadow-sm">
@@ -172,9 +172,9 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
 
                         {/* スコア */}
                         <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="font-bebas text-2xl text-slate-900 tabular-nums leading-none">{match.ourScore}</span>
+                            <span className="font-bebas font-black text-2xl text-slate-900 tabular-nums leading-none">{match.ourScore}</span>
                             <span className="text-slate-900 text-sm font-thin">-</span>
-                            <span className="font-bebas text-2xl text-slate-900 tabular-nums leading-none">{match.opponentScore}</span>
+                            <span className="font-bebas font-black text-2xl text-slate-900 tabular-nums leading-none">{match.opponentScore}</span>
                         </div>
 
                         {/* 対戦相手 */}

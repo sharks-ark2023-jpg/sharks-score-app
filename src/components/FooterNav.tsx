@@ -13,11 +13,12 @@ export default function FooterNav() {
         pathname.includes('/match/new') ||
         (pathname.includes('/match/') && !pathname.includes('/view') && !pathname.includes('/archive'));
     const isHistory = !!gradeId && pathname === `/grade/${gradeId}`;
-    const isRanking = pathname.includes('/players');
+    const isStats = pathname.includes('/stats');
     const isMenu =
         pathname.includes('/settings') ||
         pathname.includes('/manual') ||
-        pathname.includes('/privacy');
+        pathname.includes('/privacy') ||
+        pathname.includes('/players');
 
     type NavItem = {
         label: string;
@@ -41,9 +42,9 @@ export default function FooterNav() {
             requiresGrade: true,
         },
         {
-            label: 'ランキング',
-            href: gradeId ? `/grade/${gradeId}/players` : '/',
-            active: isRanking,
+            label: '戦績',
+            href: gradeId ? `/grade/${gradeId}/stats` : '/',
+            active: isStats,
             requiresGrade: true,
         },
         { label: 'メニュー', href: '/settings', active: isMenu },
@@ -90,7 +91,7 @@ export default function FooterNav() {
                 />
             </svg>
         ),
-        ランキング: (active) => (
+        戦績: (active) => (
             <svg
                 className={`w-6 h-6 ${active ? 'text-[#1565FF]' : 'text-slate-400'}`}
                 fill="none"

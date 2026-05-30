@@ -88,9 +88,9 @@ export default async function ViewMatchPage({ params }: { params: Promise<{ grad
                         </div>
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-3">
-                                <span className="font-bebas text-7xl text-slate-900 leading-none">{match.ourScore}</span>
+                                <span className="font-bebas font-black text-7xl text-slate-900 leading-none">{match.ourScore}</span>
                                 <span className="text-slate-900 text-4xl font-thin">-</span>
-                                <span className="font-bebas text-7xl text-slate-900 leading-none">{match.opponentScore}</span>
+                                <span className="font-bebas font-black text-7xl text-slate-900 leading-none">{match.opponentScore}</span>
                             </div>
                             {match.pkInfo?.isPk && (
                                 <div className="text-[10px] font-black text-blue-600 mt-3 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 uppercase tracking-[0.2em]">
