@@ -326,7 +326,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative pb-24">
             <div className="flex justify-between items-center border-b pb-4">
                 <h2 className="text-xl font-bold text-gray-900">
                     {initialMatch ? '試合記録を編集' : '新規試合を記録'}
@@ -605,7 +605,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                                 </svg>
                             </button>
-                            <span className="text-5xl font-black w-16 text-slate-900 tabular-nums">{formData.ourScore}</span>
+                            <span className="font-bebas text-6xl w-16 text-slate-900 leading-none">{formData.ourScore}</span>
                             <button
                                 type="button"
                                 onClick={() => setIsScorerModalOpen(true)}
@@ -629,7 +629,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                                 </svg>
                             </button>
-                            <span className="text-5xl font-black w-16 text-slate-900 tabular-nums">{formData.opponentScore}</span>
+                            <span className="font-bebas text-6xl w-16 text-slate-900 leading-none">{formData.opponentScore}</span>
                             <button
                                 type="button"
                                 onClick={() => incrementScore('opponent', 1)}
@@ -656,7 +656,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                                 >
                                     {player.number && (
-                                        <span className="bg-gray-100 px-1 rounded text-[10px] text-gray-500 group-hover:bg-blue-500 group-hover:text-blue-100">
+                                        <span className="bg-slate-100 px-1.5 rounded-md text-[10px] font-black text-slate-500">
                                             {player.number}
                                         </span>
                                     )}
@@ -889,7 +889,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
             {/* Save Toast Notification */}
             {savedToast && (
-                <div className="fixed bottom-6 right-6 bg-green-600 text-white px-4 py-3 rounded-2xl shadow-lg shadow-green-200 text-sm font-bold flex items-center gap-2 animate-pulse">
+                <div className="fixed bottom-24 right-6 bg-green-600 text-white px-4 py-3 rounded-2xl shadow-lg shadow-green-200 text-sm font-bold flex items-center gap-2 animate-pulse">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                     </svg>

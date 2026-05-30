@@ -103,13 +103,13 @@ export default function PlayerManagementPage() {
     };
 
     return (
-        <main className="container mx-auto px-4 py-8 max-w-lg bg-white min-h-screen">
+        <main className="container mx-auto px-4 py-8 max-w-lg pb-24">
             <header className="mb-8 flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">{gradeId} PLAYERS</h1>
                     <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">選手管理</p>
                 </div>
-                <Link href="/" className="p-3 bg-gray-50 rounded-2xl text-gray-400 hover:text-gray-600 transition-colors">
+                <Link href={`/grade/${gradeId}`} className="p-3 bg-gray-50 rounded-2xl text-gray-400 hover:text-gray-600 transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
@@ -217,13 +217,13 @@ export default function PlayerManagementPage() {
                             {ranking.slice(0, 5).map(([name, count], index) => (
                                 <div key={name} className="flex items-center justify-between text-white group">
                                     <div className="flex items-center gap-4">
-                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${index === 0 ? 'bg-yellow-400 text-yellow-900 shadow-lg shadow-yellow-400/20' : index === 1 ? 'bg-gray-300 text-gray-800' : index === 2 ? 'bg-orange-400 text-orange-900' : 'bg-blue-600/50 text-blue-100'}`}>
+                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${index === 0 ? 'bg-amber-400 text-amber-900 shadow-lg shadow-amber-400/20' : index === 1 ? 'bg-gray-300 text-gray-800' : index === 2 ? 'bg-orange-400 text-orange-900' : 'bg-blue-600/50 text-blue-100'}`}>
                                             {index + 1}
                                         </span>
                                         <span className="font-black text-lg tracking-tight group-hover:translate-x-1 transition-transform">{name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-2xl font-black">{count}</span>
+                                        <span className="font-bebas text-3xl leading-none">{count}</span>
                                         <span className="text-[10px] font-black opacity-50 uppercase tracking-widest">Goals</span>
                                     </div>
                                 </div>
