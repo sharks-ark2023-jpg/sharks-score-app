@@ -49,3 +49,7 @@ private_key.txt
 !metadata.json
 !next.config.ts
 .npm-cache
+
+# local files not for git
+/img/
+/vercel_passkey/

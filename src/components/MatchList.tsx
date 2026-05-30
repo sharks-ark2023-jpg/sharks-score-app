@@ -29,6 +29,12 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
         );
     }
 
+    const formatDate = (dateStr: string): string => {
+        const d = new Date(dateStr + 'T00:00:00');
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${weekdays[d.getDay()]})`;
+    };
+
     const liveMatches = matches.filter(m => m.isLive);
     const completedMatches = matches.filter(m => !m.isLive);
 
@@ -138,62 +144,75 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                 </Link>
             ))}
 
-            {/* 終了試合: リスト形式 */}
+            {/* 終了試合: カード形式（刷新） */}
             {completedMatches.map((match) => {
                 const resultLabel = match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW';
-                const accentBarColor = match.result === 'win'
-                    ? 'bg-[#00693E]'
-                    : match.result === 'loss'
-                        ? 'bg-[#FF2D2D]'
-                        : 'bg-slate-400';
                 const resultStyle = match.result === 'win'
                     ? 'bg-[#00693E] text-white'
                     : match.result === 'loss'
                         ? 'bg-[#FF2D2D] text-white'
                         : 'bg-slate-400 text-white';
-
+                const typeStyle = match.matchType === 'tournament'
+                    ? 'bg-[#00693E] text-white'
+                    : 'bg-[#1565FF] text-white';
+                const typeLabel = match.matchType === 'tournament' ? '公式戦' : '練習試合';
                 const formatLabel = match.matchFormat === 'halves'
                     ? '前後半'
-                    : `${match.matchDuration ?? 15}min`;
+                    : `${match.matchDuration ?? 15}MIN`;
 
                 return (
                     <Link
                         key={match.matchId}
                         href={`/grade/${gradeId}/match/${match.matchId}/view`}
-                        className="flex items-center gap-3 bg-white pl-0 pr-4 py-3 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all active:scale-[0.99] group overflow-hidden"
+                        className="block bg-white px-4 pt-3 pb-3 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all active:scale-[0.99] group overflow-hidden"
                     >
-                        {/* 左端アクセントバー */}
-                        <div className={`w-1 self-stretch rounded-l-2xl shrink-0 ${accentBarColor}`} />
-
-                        {/* 結果バッジ */}
-                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shrink-0 w-12 flex items-center justify-center ${resultStyle}`}>
-                            {resultLabel}
-                        </span>
-
-                        {/* スコア */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="font-bebas font-black text-2xl text-slate-900 tabular-nums leading-none">{match.ourScore}</span>
-                            <span className="text-slate-900 text-sm font-thin">-</span>
-                            <span className="font-bebas font-black text-2xl text-slate-900 tabular-nums leading-none">{match.opponentScore}</span>
+                        {/* 上段: 種別バッジ + 日付 + 形式 */}
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0 ${typeStyle}`}>
+                                {typeLabel}
+                            </span>
+                            <span className="text-[10px] font-black text-slate-500 tracking-tight">
+                                {formatDate(match.matchDate)}
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full uppercase tracking-widest ml-auto shrink-0">
+                                {formatLabel}
+                            </span>
                         </div>
 
-                        {/* 対戦相手 */}
-                        <div className="flex-1 min-w-0">
-                            <div className="font-black text-sm text-slate-800 truncate">{match.opponentName}</div>
-                            {match.scorers && (
-                                <div className="text-[9px] font-bold text-slate-400 mt-0.5 break-all leading-relaxed">⚽ {match.scorers}</div>
-                            )}
-                        </div>
-
-                        {/* メタ情報 */}
-                        <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{match.matchDate}</span>
-                            <div className="flex items-center gap-1">
-                                {match.matchType === 'tournament' && (
-                                    <span className="text-[8px] font-black text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full uppercase tracking-widest">公式</span>
-                                )}
-                                <span className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full uppercase tracking-widest">{formatLabel}</span>
+                        {/* 中段: SHARKS + スコア + 対戦相手 + 矢印 */}
+                        <div className="flex items-center gap-2">
+                            {/* 自チーム */}
+                            <div className="shrink-0 text-left">
+                                <div className="text-[10px] font-black text-slate-800 leading-tight">SHARKS</div>
+                                <div className="text-[9px] font-black text-slate-400 leading-tight">{gradeId}</div>
                             </div>
+
+                            {/* スコア */}
+                            <div className="flex items-center gap-1 flex-1 justify-center">
+                                <span className="font-bebas font-black text-3xl text-slate-900 tabular-nums leading-none">{match.ourScore}</span>
+                                <span className="text-slate-400 text-lg font-thin leading-none">-</span>
+                                <span className="font-bebas font-black text-3xl text-slate-900 tabular-nums leading-none">{match.opponentScore}</span>
+                            </div>
+
+                            {/* 対戦相手 */}
+                            <div className="shrink-0 text-right max-w-[100px]">
+                                <div className="text-[11px] font-black text-slate-800 truncate leading-tight">{match.opponentName}</div>
+                            </div>
+
+                            {/* 右矢印 */}
+                            <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+
+                        {/* 下段: WIN/LOSE/DRAWバッジ */}
+                        <div className="mt-2 flex items-center gap-2">
+                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest ${resultStyle}`}>
+                                {resultLabel}
+                            </span>
+                            {match.scorers && (
+                                <span className="text-[9px] font-bold text-slate-400 truncate">⚽ {match.scorers}</span>
+                            )}
                         </div>
                     </Link>
                 );

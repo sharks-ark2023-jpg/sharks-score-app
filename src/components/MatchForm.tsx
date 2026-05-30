@@ -43,6 +43,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [selectedScorer, setSelectedScorer] = useState<string | null>(null);
     const [lastGoalSnapshot, setLastGoalSnapshot] = useState<Partial<Match> | null>(null);
     const [savedToast, setSavedToast] = useState(false);
+    const [scoringTab, setScoringTab] = useState<'our' | 'opponent'>('our');
+    const [selectedQuickScorer, setSelectedQuickScorer] = useState<string | null>(null);
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -340,6 +342,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             )}
 
             <div className="grid grid-cols-1 gap-4">
+                {/* ========== 試合情報入力（常に表示） ========== */}
                 <div className="grid grid-cols-1 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium text-gray-700">試合日</span>
@@ -464,224 +467,367 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     placeholder="会場名"
                 />
 
-                {/* Live Match Control */}
-                <div className="bg-red-50 p-5 rounded-[2rem] border border-red-100 space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${formData.isLive ? 'bg-red-600 animate-ping' : 'bg-gray-300'}`}></span>
-                                Live Match Control
-                            </h3>
-                            <span className="text-[10px] font-black text-gray-400 bg-white px-2 py-1 rounded-full border border-red-100 uppercase tracking-widest">
-                                {formData.matchPhase === 'pre-game' && '試合前'}
-                                {formData.matchPhase === '1H' && (formData.matchFormat === 'one_game' ? '進行中' : '前半進行中')}
-                                {formData.matchPhase === 'halftime' && 'ハーフタイム'}
-                                {formData.matchPhase === '2H' && (formData.matchFormat === 'one_game' ? '進行中' : '後半進行中')}
-                                {formData.matchPhase === 'full-time' && '試合終了'}
-                            </span>
-                        </div>
+                {/* ========== pre-game: 試合開始ボタン（ライブ前） ========== */}
+                {formData.matchPhase === 'pre-game' && (
+                    <div className="bg-red-50 p-5 rounded-[2rem] border border-red-100">
+                        <button
+                            type="button"
+                            onClick={() => setFormData(p => ({ ...p, matchPhase: '1H', isLive: true }))}
+                            className="w-full py-4 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase text-xs tracking-[0.2em]"
+                        >
+                            {formData.matchFormat === 'one_game' ? '試合開始 (Start)' : '前半開始 (Start 1H)'}
+                        </button>
+                    </div>
+                )}
 
-                        <div className="grid grid-cols-2 gap-3">
-                            {formData.matchPhase === 'pre-game' && (
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: '1H', isLive: true }))}
-                                    className="col-span-2 py-4 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase text-xs tracking-[0.2em]"
-                                >
-                                    {formData.matchFormat === 'one_game' ? '試合開始 (Start)' : '前半開始 (Start 1H)'}
-                                </button>
-                            )}
-                            {formData.matchPhase === '1H' && (
-                                formData.matchFormat === 'one_game' ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleEndMatch}
-                                        className="col-span-2 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-lg shadow-gray-200 hover:bg-black transition-all uppercase text-xs tracking-[0.2em]"
-                                    >
-                                        試合終了・保存 (End Match)
-                                    </button>
-                                ) : (
+                {/* ========== ライブ中UI（1H / halftime / 2H / full-time） ========== */}
+                {formData.matchPhase !== 'pre-game' && (
+                    <div className="space-y-3">
+                        {/* ライブヘッダー */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-red-50 rounded-2xl border border-red-100">
+                            {/* LIVE インジケーター */}
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="relative flex h-3 w-3 flex-shrink-0">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                                </span>
+                                <span className="text-red-600 font-black text-sm tracking-widest uppercase">LIVE</span>
+                            </div>
+
+                            {/* フェーズ表示（中央） */}
+                            <div className="flex-1 text-center">
+                                <span className="text-[11px] font-black text-gray-600 uppercase tracking-widest">
+                                    {formData.matchPhase === '1H' && (formData.matchFormat === 'one_game' ? '進行中' : '前半')}
+                                    {formData.matchPhase === 'halftime' && 'ハーフタイム'}
+                                    {formData.matchPhase === '2H' && '後半'}
+                                    {formData.matchPhase === 'full-time' && '試合終了'}
+                                </span>
+                            </div>
+
+                            {/* フェーズアクションボタン（右） */}
+                            <div className="min-w-0">
+                                {formData.matchPhase === '1H' && formData.matchFormat !== 'one_game' && (
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, matchPhase: 'halftime' }))}
-                                        className="col-span-2 py-4 bg-orange-500 text-white font-black rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all uppercase text-xs tracking-[0.2em]"
+                                        className="px-3 py-1.5 bg-orange-500 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-orange-600 transition-all active:scale-95 whitespace-nowrap"
                                     >
-                                        前半終了 (HT)
+                                        前半終了
                                     </button>
-                                )
-                            )}
-                            {formData.matchPhase === 'halftime' && formData.matchFormat !== 'one_game' && (
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: '2H' }))}
-                                    className="col-span-2 py-4 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase text-xs tracking-[0.2em]"
-                                >
-                                    後半開始 (Start 2H)
-                                </button>
-                            )}
-                            {formData.matchPhase === '2H' && formData.matchFormat !== 'one_game' && (
-                                <button
-                                    type="button"
-                                    onClick={handleEndMatch}
-                                    className="col-span-2 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-lg shadow-gray-200 hover:bg-black transition-all uppercase text-xs tracking-[0.2em]"
-                                >
-                                    試合終了・保存 (End Match)
-                                </button>
-                            )}
-                            {formData.matchPhase === 'full-time' && (
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchPhase: p.matchFormat === 'one_game' ? '1H' : '2H', isLive: true }))}
-                                    className="col-span-2 py-3 border-2 border-gray-200 text-gray-400 font-bold rounded-2xl hover:bg-gray-50 transition-all text-[10px] tracking-widest"
-                                >
-                                    入力ミス？試合中に戻る
-                                </button>
-                            )}
+                                )}
+                                {formData.matchPhase === '1H' && formData.matchFormat === 'one_game' && (
+                                    <button
+                                        type="button"
+                                        onClick={handleEndMatch}
+                                        className="px-3 py-1.5 bg-gray-700 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-gray-800 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        試合終了
+                                    </button>
+                                )}
+                                {formData.matchPhase === 'halftime' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, matchPhase: '2H' }))}
+                                        className="px-3 py-1.5 bg-red-600 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-red-700 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        後半開始
+                                    </button>
+                                )}
+                                {formData.matchPhase === '2H' && (
+                                    <button
+                                        type="button"
+                                        onClick={handleEndMatch}
+                                        className="px-3 py-1.5 bg-gray-700 text-white font-black rounded-xl text-[10px] tracking-widest hover:bg-gray-800 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        試合終了
+                                    </button>
+                                )}
+                                {formData.matchPhase === 'full-time' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, matchPhase: p.matchFormat === 'one_game' ? '1H' : '2H', isLive: true }))}
+                                        className="px-3 py-1.5 bg-gray-100 text-gray-500 font-bold rounded-xl text-[10px] tracking-widest hover:bg-gray-200 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        試合中に戻る
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                </div>
 
-                {formData.matchFormat === 'halves' && (
-                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
-                        <div className="space-y-3">
-                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">前半 (1st Half)</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <label className="block">
-                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">SHARKS</span>
-                                    <input
-                                        type="number"
-                                        name="ourScore1H"
-                                        value={formData.ourScore1H || 0}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">相手</span>
-                                    <input
-                                        type="number"
-                                        name="opponentScore1H"
-                                        value={formData.opponentScore1H || 0}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
-                                    />
-                                </label>
+                        {/* スコア大表示カード */}
+                        <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="text-center flex-1">
+                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">
+                                        {teamName}
+                                    </span>
+                                    <span className="font-bebas font-black text-6xl text-slate-900 leading-none">{formData.ourScore}</span>
+                                </div>
+                                <span className="text-3xl font-black text-slate-300 flex-shrink-0">—</span>
+                                <div className="text-center flex-1">
+                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">
+                                        {formData.opponentName || '対戦相手'}
+                                    </span>
+                                    <span className="font-bebas font-black text-6xl text-slate-900 leading-none">{formData.opponentScore}</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="space-y-3">
-                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">後半 (2nd Half)</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <label className="block">
-                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">SHARKS</span>
-                                    <input
-                                        type="number"
-                                        name="ourScore2H"
-                                        value={formData.ourScore2H || 0}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">相手</span>
-                                    <input
-                                        type="number"
-                                        name="opponentScore2H"
-                                        value={formData.opponentScore2H || 0}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
-                                    />
-                                </label>
-                            </div>
+
+                        {/* 得点入力タブ */}
+                        <div className="flex gap-1 bg-gray-100 p-1 rounded-2xl">
+                            <button
+                                type="button"
+                                onClick={() => setScoringTab('our')}
+                                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${scoringTab === 'our' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                SHARKS
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setScoringTab('opponent')}
+                                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${scoringTab === 'opponent' ? 'bg-white text-gray-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                対戦相手
+                            </button>
                         </div>
+
+                        {/* スコア ±ボタン（タブ共通） */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => incrementScore(scoringTab === 'our' ? 'our' : 'opponent', -1)}
+                                className="flex-1 py-5 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95 text-2xl font-black"
+                            >
+                                −
+                            </button>
+                            <span className="font-bebas font-black text-5xl text-slate-900 w-16 text-center leading-none">
+                                {scoringTab === 'our' ? formData.ourScore : formData.opponentScore}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => incrementScore(scoringTab === 'our' ? 'our' : 'opponent', 1)}
+                                className={`flex-1 py-5 rounded-2xl shadow-lg flex items-center justify-center text-white transition-all active:scale-95 text-2xl font-black ${scoringTab === 'our' ? 'bg-blue-600 shadow-blue-100 hover:bg-blue-700' : 'bg-slate-700 shadow-slate-200 hover:bg-slate-800'}`}
+                            >
+                                ＋
+                            </button>
+                        </div>
+
+                        {/* SHARKS タブ: 選手グリッド */}
+                        {scoringTab === 'our' && players.length > 0 && (
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-3 gap-2">
+                                    {players.map(player => (
+                                        <button
+                                            key={player.name}
+                                            type="button"
+                                            onClick={() => setSelectedQuickScorer(prev => prev === player.name ? null : player.name)}
+                                            className={`px-2 py-3 rounded-2xl text-xs font-bold transition-all active:scale-95 flex flex-col items-center gap-0.5 border ${
+                                                selectedQuickScorer === player.name
+                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
+                                                    : 'bg-white text-gray-700 border-gray-100 hover:border-blue-200 hover:bg-blue-50'
+                                            }`}
+                                        >
+                                            {player.number && (
+                                                <span className={`text-[9px] font-black ${selectedQuickScorer === player.name ? 'text-blue-200' : 'text-slate-400'}`}>
+                                                    #{player.number}
+                                                </span>
+                                            )}
+                                            <span className="truncate w-full text-center">{player.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    disabled={selectedQuickScorer === null}
+                                    onClick={() => {
+                                        if (selectedQuickScorer) {
+                                            handleQuickScorer(selectedQuickScorer);
+                                            setSelectedQuickScorer(null);
+                                        }
+                                    }}
+                                    className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 disabled:bg-blue-200 disabled:shadow-none transition-all uppercase text-xs tracking-[0.2em]"
+                                >
+                                    {selectedQuickScorer ? `⚽ ${selectedQuickScorer} の得点を記録` : '選手を選択してください'}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsScorerModalOpen(true)}
+                                    className="w-full py-2.5 border border-gray-200 text-gray-500 font-bold rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all"
+                                >
+                                    詳細選択（モーダル）
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Undo Goal Button */}
+                        {lastGoalSnapshot !== null && (
+                            <div className="flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={handleUndoGoal}
+                                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black rounded-2xl hover:bg-amber-100 transition-all active:scale-95 uppercase tracking-widest"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                    直前の得点を取り消す
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                    <div className="text-center">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{teamName}</span>
-                        <div className="flex items-center justify-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => incrementScore('our', -1)}
-                                className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                </svg>
-                            </button>
-                            <span className="font-bebas font-black text-6xl w-16 text-slate-900 leading-none">{formData.ourScore}</span>
-                            <button
-                                type="button"
-                                onClick={() => setIsScorerModalOpen(true)}
-                                className="w-12 h-12 rounded-2xl bg-blue-600 shadow-lg shadow-blue-100 flex items-center justify-center text-white hover:bg-blue-700 transition-all active:scale-95"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div className="text-center border-l border-slate-100">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">対戦相手</span>
-                        <div className="flex items-center justify-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => incrementScore('opponent', -1)}
-                                className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                </svg>
-                            </button>
-                            <span className="font-bebas font-black text-6xl w-16 text-slate-900 leading-none">{formData.opponentScore}</span>
-                            <button
-                                type="button"
-                                onClick={() => incrementScore('opponent', 1)}
-                                className="w-12 h-12 rounded-2xl bg-slate-900 shadow-lg shadow-slate-200 flex items-center justify-center text-white hover:bg-black transition-all active:scale-95"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                {/* ========== pre-game: 従来のスコア入力エリア ========== */}
+                {formData.matchPhase === 'pre-game' && (
+                    <>
+                        {formData.matchFormat === 'halves' && (
+                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">前半 (1st Half)</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <label className="block">
+                                            <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">SHARKS</span>
+                                            <input
+                                                type="number"
+                                                name="ourScore1H"
+                                                value={formData.ourScore1H || 0}
+                                                onChange={handleChange}
+                                                className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                            />
+                                        </label>
+                                        <label className="block">
+                                            <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">相手</span>
+                                            <input
+                                                type="number"
+                                                name="opponentScore1H"
+                                                value={formData.opponentScore1H || 0}
+                                                onChange={handleChange}
+                                                className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center border-b border-blue-100 pb-1">後半 (2nd Half)</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <label className="block">
+                                            <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">SHARKS</span>
+                                            <input
+                                                type="number"
+                                                name="ourScore2H"
+                                                value={formData.ourScore2H || 0}
+                                                onChange={handleChange}
+                                                className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                            />
+                                        </label>
+                                        <label className="block">
+                                            <span className="text-[9px] font-bold text-gray-400 block text-center uppercase">相手</span>
+                                            <input
+                                                type="number"
+                                                name="opponentScore2H"
+                                                value={formData.opponentScore2H || 0}
+                                                onChange={handleChange}
+                                                className="mt-1 block w-full text-center font-bold rounded-lg border-gray-200 bg-white p-2"
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                {/* Quick Scorer Buttons */}
-                {players.length > 0 && (
-                    <div className="p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">タップで得点を記録 (自チーム)</p>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {players.map(player => (
-                                <button
-                                    key={player.name}
-                                    type="button"
-                                    onClick={() => handleQuickScorer(player.name)}
-                                    className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
-                                >
-                                    {player.number && (
-                                        <span className="bg-slate-100 px-1.5 rounded-md text-[10px] font-black text-slate-500">
-                                            {player.number}
-                                        </span>
-                                    )}
-                                    {player.name}
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-2 gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                            <div className="text-center">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{teamName}</span>
+                                <div className="flex items-center justify-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => incrementScore('our', -1)}
+                                        className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                        </svg>
+                                    </button>
+                                    <span className="font-bebas font-black text-6xl w-16 text-slate-900 leading-none">{formData.ourScore}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsScorerModalOpen(true)}
+                                        className="w-12 h-12 rounded-2xl bg-blue-600 shadow-lg shadow-blue-100 flex items-center justify-center text-white hover:bg-blue-700 transition-all active:scale-95"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="text-center border-l border-slate-100">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">対戦相手</span>
+                                <div className="flex items-center justify-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => incrementScore('opponent', -1)}
+                                        className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                        </svg>
+                                    </button>
+                                    <span className="font-bebas font-black text-6xl w-16 text-slate-900 leading-none">{formData.opponentScore}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => incrementScore('opponent', 1)}
+                                        className="w-12 h-12 rounded-2xl bg-slate-900 shadow-lg shadow-slate-200 flex items-center justify-center text-white hover:bg-black transition-all active:scale-95"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                )}
-                {/* Undo Goal Button */}
-                {lastGoalSnapshot !== null && (
-                    <div className="flex justify-center">
-                        <button
-                            type="button"
-                            onClick={handleUndoGoal}
-                            className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black rounded-2xl hover:bg-amber-100 transition-all active:scale-95 uppercase tracking-widest"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                            </svg>
-                            直前の得点を取り消す
-                        </button>
-                    </div>
+
+                        {/* Quick Scorer Buttons (pre-game) */}
+                        {players.length > 0 && (
+                            <div className="p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">タップで得点を記録 (自チーム)</p>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    {players.map(player => (
+                                        <button
+                                            key={player.name}
+                                            type="button"
+                                            onClick={() => handleQuickScorer(player.name)}
+                                            className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                                        >
+                                            {player.number && (
+                                                <span className="bg-slate-100 px-1.5 rounded-md text-[10px] font-black text-slate-500">
+                                                    {player.number}
+                                                </span>
+                                            )}
+                                            {player.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Undo Goal Button (pre-game) */}
+                        {lastGoalSnapshot !== null && (
+                            <div className="flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={handleUndoGoal}
+                                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black rounded-2xl hover:bg-amber-100 transition-all active:scale-95 uppercase tracking-widest"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                    直前の得点を取り消す
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Advanced Options Toggle */}
