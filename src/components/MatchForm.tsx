@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Match, CommonMaster, GlobalSettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 import Autocomplete from './Autocomplete';
 import Modal from './Modal';
 
@@ -43,18 +43,12 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [selectedScorer, setSelectedScorer] = useState<string | null>(null);
     const [lastGoalSnapshot, setLastGoalSnapshot] = useState<Partial<Match> | null>(null);
     const [savedToast, setSavedToast] = useState(false);
-    const [scoringTab, setScoringTab] = useState<'our' | 'opponent'>('our');
     const [selectedQuickScorer, setSelectedQuickScorer] = useState<string | null>(null);
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
         `/api/settings?grade=${gradeId}`,
-        fetcher
-    );
-
-    const { data: matchesData } = useSWR<{ matches: Match[] }>(
-        `/api/matches?grade=${gradeId}`,
         fetcher
     );
 
@@ -136,7 +130,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        let newValue: any = value;
+        let newValue: string | number | boolean = value;
 
         if (type === 'checkbox') {
             newValue = (e.target as HTMLInputElement).checked;
@@ -263,8 +257,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 }
                 router.refresh();
             }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : '保存に失敗しました');
         } finally {
             setSaving(false);
         }
@@ -298,8 +292,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             if (onSaved) onSaved();
             router.push(`/grade/${gradeId}`);
             router.refresh();
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : '削除に失敗しました');
             setSaving(false);
         }
     };
@@ -524,10 +518,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 {formData.matchPhase === '1H' && formData.matchFormat === 'one_game' && (
                                     <button
                                         type="button"
-                                        onClick={handleEndMatch}
+                                        onClick={(event) => handleSubmit(event, true)}
                                         className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
-                                        試合終了
+                                        保存
                                     </button>
                                 )}
                                 {formData.matchPhase === 'halftime' && (
@@ -542,10 +536,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 {formData.matchPhase === '2H' && (
                                     <button
                                         type="button"
-                                        onClick={handleEndMatch}
+                                        onClick={(event) => handleSubmit(event, true)}
                                         className="px-3 py-1 border border-white/30 text-white hover:bg-white/10 font-bold rounded-lg text-[10px] tracking-wider transition-all"
                                     >
-                                        試合終了
+                                        保存
                                     </button>
                                 )}
                                 {formData.matchPhase === 'full-time' && (
@@ -967,11 +961,12 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         CANCEL
                     </button>
                     <button
-                        type="submit"
+                        type={formData.isLive ? "button" : "submit"}
+                        onClick={formData.isLive ? handleEndMatch : undefined}
                         disabled={saving}
                         className="flex-[2] px-4 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 disabled:bg-blue-300 transition-all uppercase text-[10px] tracking-widest"
                     >
-                        {saving ? 'SAVING...' : formData.isLive ? '試合終了して保存' : '試合記録を保存'}
+                        {saving ? 'SAVING...' : formData.isLive ? '保存して終了' : '試合記録を保存'}
                     </button>
                 </div>
             </div>

@@ -1,8 +1,22 @@
 import { Match } from '@/types';
+import { isHoliday } from 'holiday-jp';
 
 export interface TopScorer {
   name: string;
   goals: number;
+}
+
+export type RankingFilter = 'all' | 'tournament' | 'friendly' | 'saturday' | 'sunday' | 'holiday';
+
+export function filterRankingMatches(matches: Match[], filter: RankingFilter): Match[] {
+  return matches.filter(match => {
+    if (filter === 'all') return true;
+    if (filter === 'tournament' || filter === 'friendly') return match.matchType === filter;
+    const date = new Date(`${match.matchDate}T00:00:00`);
+    const day = date.getDay();
+    if (filter === 'holiday') return day !== 0 && day !== 6 && isHoliday(date);
+    return filter === 'saturday' ? day === 6 : day === 0;
+  });
 }
 
 /**
@@ -49,7 +63,7 @@ export function calcTopScorers(
 
   // ランキングを構築・ソート
   const ranking = Object.entries(counts)
-    .filter(([_, count]) => count > 0)
+    .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([name, goals]) => ({ name, goals }));
 

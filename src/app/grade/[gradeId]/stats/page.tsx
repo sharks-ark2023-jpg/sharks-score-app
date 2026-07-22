@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { Match } from '@/types';
-import { calcTopScorers } from '@/lib/scoring';
+import { calcTopScorers, filterRankingMatches, RankingFilter } from '@/lib/scoring';
 
 const fetcher = (url: string) => fetch(url).then(async (r) => {
     const data = await r.json();
@@ -14,17 +15,12 @@ const fetcher = (url: string) => fetch(url).then(async (r) => {
 
 // 当月 + (今月15日以前なら先月も含む) の判定
 const isRecentMonth = (dateStr: string): boolean => {
-    const now = new Date();
-    const d = new Date(dateStr);
-    const currentYM = now.getFullYear() * 100 + (now.getMonth() + 1);
-    const matchYM = d.getFullYear() * 100 + (d.getMonth() + 1);
-    if (matchYM === currentYM) return true;
-    if (now.getDate() <= 15) {
-        const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const prevYM = prev.getFullYear() * 100 + (prev.getMonth() + 1);
-        if (matchYM === prevYM) return true;
-    }
-    return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(today);
+    start.setDate(start.getDate() - 29);
+    const matchDate = new Date(`${dateStr}T00:00:00`);
+    return matchDate >= start && matchDate <= today;
 };
 
 // 今年度（4月〜翌3月）の判定
@@ -76,6 +72,7 @@ export default function StatsPage() {
     );
 
     const allMatches = data?.matches || [];
+    const [rankingFilter, setRankingFilter] = useState<RankingFilter>('all');
 
     // セクション1: 過去1ヶ月の戦績（完了試合のみ）
     const recentMatches = allMatches.filter(m => !m.isLive && isRecentMonth(m.matchDate));
@@ -93,7 +90,7 @@ export default function StatsPage() {
     );
 
     // セクション3: トップスコアラー（上位5名、選手フィルタなし）
-    const topScorers = calcTopScorers(allMatches, undefined, 5);
+    const topScorers = calcTopScorers(filterRankingMatches(allMatches, rankingFilter), undefined, 5);
 
     // 連勝/連敗ストリーク
     const streak = calcStreak(allMatches);
@@ -288,6 +285,11 @@ export default function StatsPage() {
                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">
                         Top Scorers
                     </h2>
+                    <div className="flex flex-wrap gap-2 mb-5">
+                        {([['all', '総合'], ['tournament', '公式'], ['friendly', 'フレンドリー'], ['saturday', '土曜'], ['sunday', '日曜'], ['holiday', '祝日']] as const).map(([filter, label]) => (
+                            <button key={filter} type="button" onClick={() => setRankingFilter(filter)} className={`px-3 py-1.5 rounded-full text-[10px] font-black ${rankingFilter === filter ? 'bg-[#00693E] text-white' : 'bg-slate-100 text-slate-500'}`}>{label}</button>
+                        ))}
+                    </div>
                     {topScorers.length === 0 ? (
                         <p className="text-center text-slate-300 font-black text-[10px] uppercase tracking-widest py-8">
                             No Score Data
@@ -299,7 +301,7 @@ export default function StatsPage() {
                                 let currentRank = 0;
                                 let skipCount = 0;
 
-                                return topScorers.map(({ name, goals }, index) => {
+                                return topScorers.map(({ name, goals }) => {
                                     if (goals !== lastGoals) {
                                         currentRank += 1 + skipCount;
                                         skipCount = 0;

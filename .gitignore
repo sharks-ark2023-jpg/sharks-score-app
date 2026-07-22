@@ -45,7 +45,6 @@ private_key.txt
 *.json
 !package.json
 !tsconfig.json
-!tsconfig.tsbuildinfo
 !metadata.json
 !next.config.ts
 .npm-cache

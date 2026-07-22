@@ -14,21 +14,10 @@ interface AutocompleteProps {
 
 export default function Autocomplete({ value, onChange, options, placeholder, label, required, showNumber }: AutocompleteProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [filteredOptions, setFilteredOptions] = useState<{ name: string; number?: string }[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (value.length > 0) {
-            const filtered = options.filter(opt =>
-                opt.name.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredOptions(filtered);
-            setIsOpen(true);
-        } else {
-            setFilteredOptions([]);
-            setIsOpen(false);
-        }
-    }, [value, options]);
+    const filteredOptions = value.length > 0
+        ? options.filter(option => option.name.toLowerCase().includes(value.toLowerCase()))
+        : [];
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -46,7 +35,10 @@ export default function Autocomplete({ value, onChange, options, placeholder, la
             <input
                 type="text"
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => {
+                    onChange(e.target.value);
+                    setIsOpen(e.target.value.length > 0);
+                }}
                 placeholder={placeholder}
                 required={required}
                 autoCapitalize="none" autoCorrect="off"
