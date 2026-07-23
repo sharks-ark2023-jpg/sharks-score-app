@@ -39,13 +39,13 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
     const completedMatches = matches.filter(m => !m.isLive);
 
     return (
-        <div className="space-y-2 pb-24">
+        <div className="space-y-2.5 pb-24">
             {/* ライブ試合: カード形式 */}
             {liveMatches.map((match) => (
                 <Link
                     key={match.matchId}
                     href={`/grade/${gradeId}/match/${match.matchId}`}
-                    className="block bg-white p-5 rounded-2xl shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-slate-300/50 transition-all border border-red-100 group active:scale-[0.98] ring-2 ring-red-500/50 ring-offset-2 relative overflow-hidden"
+                    className="block bg-white px-4 py-3 rounded-xl shadow-md transition-all border border-red-200 group active:scale-[0.98] ring-1 ring-red-500/40 relative overflow-hidden"
                 >
                     <div className="absolute top-0 left-0 w-full h-[4px] bg-red-600 animate-pulse" />
 
@@ -67,7 +67,7 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                     <div className="flex items-center justify-between my-4 relative">
                         {/* 自チーム */}
                         <div className="w-1/3 text-left">
-                            <span className="text-[10px] font-black text-slate-400 block tracking-wider leading-none">SHARKS</span>
+                            <span className="text-[10px] font-black text-slate-400 block tracking-wider leading-none truncate">{teamName}</span>
                             <span className="text-[13px] font-black text-slate-800 leading-tight">U12</span>
                         </div>
 
@@ -123,10 +123,10 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                     <Link
                         key={match.matchId}
                         href={`/grade/${gradeId}/match/${match.matchId}/view`}
-                        className="block bg-white p-5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-md hover:shadow-slate-100/60 transition-all active:scale-[0.99] group"
+                        className="block bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-[0_4px_12px_rgba(13,27,42,0.08)] hover:shadow-md transition-all active:scale-[0.99] group"
                     >
                         {/* 上段: 種別バッジ + 日付 + 形式 */}
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 mb-1.5">
                             <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-widest shrink-0 ${typeStyle}`}>
                                 {typeLabel}
                             </span>
@@ -139,10 +139,10 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                         </div>
 
                         {/* 中段: SHARKS U12 vs 対戦相手 */}
-                        <div className="flex items-center justify-between my-4 relative">
+                        <div className="flex items-center justify-between my-2 relative">
                             {/* 自チーム */}
                             <div className="w-1/3 text-left">
-                                <span className="text-[10px] font-black text-slate-400 block tracking-wider leading-none">SHARKS</span>
+                                <span className="text-[10px] font-black text-slate-400 block tracking-wider leading-none truncate">{teamName}</span>
                                 <span className="text-[13px] font-black text-slate-800 leading-tight">U12</span>
                             </div>
 

@@ -29,9 +29,9 @@ export default async function EditMatchPage({ params }: { params: Promise<{ grad
     }
 
     return (
-        <main className="flex-grow container mx-auto px-4 py-8">
-            <header className="mb-6 max-w-lg mx-auto">
-                <Link href={`/grade/${gradeId}`} className="text-sm text-blue-600 hover:underline">← 戻る</Link>
+        <main className="flex-grow max-w-lg w-full mx-auto bg-[#F5F7FA]">
+            <header className="bg-[#061426] text-white px-4 py-4 max-w-lg mx-auto">
+                <Link href={`/grade/${gradeId}`} className="text-sm font-bold">← 戻る</Link>
             </header>
 
             <MatchForm gradeId={gradeId} initialMatch={match} />

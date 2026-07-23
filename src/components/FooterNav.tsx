@@ -55,7 +55,7 @@ export default function FooterNav() {
             <svg
                 className="w-[22px] h-[22px]"
                 fill="none"
-                stroke={active ? '#00693E' : '#718096'}
+                stroke={active ? '#49D17D' : '#D5DCE6'}
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -69,7 +69,7 @@ export default function FooterNav() {
             <svg
                 className="w-[22px] h-[22px]"
                 fill="none"
-                stroke={active ? '#00693E' : '#718096'}
+                stroke={active ? '#49D17D' : '#D5DCE6'}
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -83,7 +83,7 @@ export default function FooterNav() {
             <svg
                 className="w-[22px] h-[22px]"
                 fill="none"
-                stroke={active ? '#00693E' : '#718096'}
+                stroke={active ? '#49D17D' : '#D5DCE6'}
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -99,7 +99,7 @@ export default function FooterNav() {
             <svg
                 className="w-[22px] h-[22px]"
                 fill="none"
-                stroke={active ? '#00693E' : '#718096'}
+                stroke={active ? '#49D17D' : '#D5DCE6'}
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -116,7 +116,7 @@ export default function FooterNav() {
             <svg
                 className="w-[22px] h-[22px]"
                 fill="none"
-                stroke={active ? '#00693E' : '#718096'}
+                stroke={active ? '#49D17D' : '#D5DCE6'}
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -131,7 +131,7 @@ export default function FooterNav() {
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.05)]"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-[#061426]/95 backdrop-blur-md border-t border-white/10 shadow-[0_-8px_24px_rgba(3,13,26,0.2)] text-white"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
             <div className="flex items-center h-16 max-w-lg mx-auto px-2">
@@ -146,12 +146,12 @@ export default function FooterNav() {
                             }`}
                         >
                             {item.active && (
-                                <div className="absolute top-0 w-8 h-[3px] bg-[#00693E] rounded-b-md animate-fade-in" />
+                                <div className="absolute top-0 w-8 h-[3px] bg-[#49D17D] rounded-b-md animate-fade-in" />
                             )}
                             {icons[item.label]?.(item.active)}
                             <span
                                 className={`text-[9px] font-black tracking-widest leading-none ${
-                                    item.active ? 'text-[#00693E]' : 'text-[#718096]'
+                                    item.active ? 'text-[#49D17D]' : 'text-slate-300'
                                 }`}
                             >
                                 {item.label}

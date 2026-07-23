@@ -51,25 +51,25 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
   const scorerList = match.scorers ? parseScorers(match.scorers) : [];
 
   return (
-    <main className="flex-grow container mx-auto px-4 py-8 max-w-lg pb-24">
+    <main className="flex-grow mx-auto max-w-lg w-full pb-24 bg-[#F5F7FA]">
       {/* ヘッダー */}
-      <header className="mb-6 flex items-center justify-between">
+      <header className="bg-[#061426] text-white px-4 py-4 flex items-center justify-between">
         <Link
           href={`/grade/${gradeId}`}
-          className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+          className="p-2 text-white transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
 
-        <span className="text-lg font-black text-gray-900">試合詳細</span>
+        <span className="text-base font-black text-white">試合詳細</span>
 
         <div className="flex items-center gap-2">
           {canShare && (
             <button
               onClick={handleShare}
-              className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 text-white transition-colors"
               aria-label="シェア"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
         </div>
       </header>
 
-      <div className="bg-white rounded-[2.5rem] shadow-lg shadow-slate-200/60 border border-slate-100 overflow-hidden">
+      <div className="bg-white shadow-sm border-b border-slate-200 overflow-hidden">
         {/* ヘッダー帯: 日付・形式・バッジ */}
         <div className="px-6 pt-6 pb-4 border-b border-slate-50">
           <div className="flex items-center justify-between mb-2">
@@ -121,7 +121,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
         </div>
 
         {/* スコア */}
-        <div className="px-6 py-8">
+        <div className="px-5 py-7">
           <div className="grid grid-cols-3 items-center">
             <div className="text-center">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">

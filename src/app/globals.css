@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-noto-sans-jp), var(--font-inter), sans-serif;
   --font-heading: var(--font-outfit);
   --font-bebas: var(--font-bebas-neue);
   --color-sharks-navy: #0D1B2A;
@@ -10,6 +10,45 @@
   --color-sharks-red: #FF2D2D;
   --color-sharks-bg: #F5F7FA;
   --color-sharks-border: #E5E7EB;
+}
+
+@layer components {
+  .app-screen {
+    min-height: 100dvh;
+    background: #F5F7FA;
+  }
+
+  .stadium-hero {
+    position: relative;
+    overflow: hidden;
+    color: white;
+    background:
+      linear-gradient(180deg, rgba(13, 27, 42, 0.34) 0%, rgba(13, 27, 42, 0.72) 66%, #0D1B2A 100%),
+      url("/images/stadium-day.jpg") center 57% / cover;
+  }
+
+  .stadium-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(3, 13, 26, 0.28), transparent 42%, rgba(3, 13, 26, 0.16));
+  }
+
+  .app-surface {
+    position: relative;
+    z-index: 1;
+    margin-top: -1px;
+    border-radius: 20px 20px 0 0;
+    background: #F5F7FA;
+  }
+
+  .compact-card {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 5px 16px rgba(13, 27, 42, 0.08);
+  }
 }
 
 /* Force Light Mode */
@@ -100,4 +139,3 @@ h6 {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
-

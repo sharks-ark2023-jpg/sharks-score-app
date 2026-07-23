@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6.0 — 2026-07-23
+
+### UIカンプ再現と昼のスタジアムテーマ
+- **昼景スタジアム素材** (`public/images/stadium-day.jpg`): 夜のグラウンド背景を晴れた昼のサッカー場へ刷新
+- **ホーム画面** (`grade/[gradeId]/page.tsx`, `MatchList.tsx`): スタジアムヒーロー、仮ロゴ、上部タブ、コンパクトな試合カードへ再構成
+- **共通ナビゲーション** (`FooterNav.tsx`, `layout.tsx`): カンプに合わせた濃紺の固定フッターナビとライトグレーの画面基盤へ統一
+- **主要画面** (`MatchForm.tsx`, `MatchDetailClient.tsx`, `stats/page.tsx`): ライブ入力、試合詳細、ランキングのヘッダー・余白・カード形状を共通デザインへ統一
+- **タイポグラフィ** (`layout.tsx`): 日本語表示用に Noto Sans JP を追加
+
 ## v1.5.1 — 2026-07-23
 
 ### 戦績・得点ランキングの集計改善

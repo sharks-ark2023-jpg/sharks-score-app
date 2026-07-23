@@ -144,27 +144,27 @@ export default function StatsPage() {
     }
 
     return (
-        <main className="container mx-auto px-4 py-6 max-w-lg pb-24">
+        <main className="mx-auto max-w-lg w-full pb-24 bg-[#F5F7FA]">
             {/* ページヘッダー */}
-            <header className="mb-8 flex items-center gap-3">
+            <header className="bg-[#061426] text-white px-4 py-4 flex items-center gap-3">
                 <Link
                     href={`/grade/${gradeId}`}
-                    className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+                    className="p-2 text-white transition-colors"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </Link>
                 <div>
-                    <h1 className="text-xl font-black text-gray-900 tracking-tighter uppercase">STATS</h1>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{gradeId} 戦績ダッシュボード</p>
+                    <h1 className="text-xl font-black text-white tracking-tighter">得点ランキング</h1>
+                    <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">{gradeId} MATCH CENTER</p>
                 </div>
             </header>
 
-            <div className="space-y-6">
+            <div className="space-y-4 px-3 pt-4">
 
                 {/* セクション1: 過去1ヶ月の戦績 */}
-                <section className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
+                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">
                         Recent Record
                     </h2>
@@ -228,7 +228,7 @@ export default function StatsPage() {
                 </section>
 
                 {/* セクション2: 今年度 公式戦戦績 */}
-                <section className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
+                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">
                         Official Matches — This Season
                     </h2>
@@ -281,7 +281,7 @@ export default function StatsPage() {
                 </section>
 
                 {/* セクション3: トップスコアラー */}
-                <section className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
+                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                     <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">
                         Top Scorers
                     </h2>

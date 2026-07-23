@@ -324,7 +324,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     }
 
     return (
-        <form onSubmit={handleSubmit} className={isLiveMode ? "max-w-lg mx-auto space-y-4 pb-24 px-4 pt-2" : "space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative pb-24"}>
+        <form onSubmit={handleSubmit} className={isLiveMode ? "max-w-lg mx-auto space-y-4 pb-24 px-3 pt-3" : "space-y-6 max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative pb-24"}>
             {!isLiveMode && (
             <div className="flex justify-between items-center border-b pb-4">
                 <h2 className="text-xl font-bold text-gray-900">
@@ -488,7 +488,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 {formData.matchPhase !== 'pre-game' && (
                     <div className="space-y-4">
                         {/* ライブヘッダー (カンプ②) */}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-[#002D1E] rounded-xl text-white shadow-md border border-[#004D33]/30">
+                        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#00693E] to-[#00472A] rounded-xl text-white shadow-md border border-[#004D33]/30">
                             {/* LIVE インジケーター */}
                             <div className="flex items-center gap-2 min-w-0">
                                 <span className="relative flex h-2 w-2 flex-shrink-0">

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { Match, GlobalSettings } from '@/types';
 import MatchList from '@/components/MatchList';
 import Modal from '@/components/Modal';
@@ -20,8 +19,6 @@ const fetcher = async (url: string) => {
 
 export default function GradeDashboard() {
     const { gradeId } = useParams() as { gradeId: string };
-    const { data: session } = useSession();
-    const isLoggedIn = !!session;
     const [filterType, setFilterType] = useState<string>('all');
     const [isBandModalOpen, setIsBandModalOpen] = useState(false);
     const [bandDate, setBandDate] = useState('');
@@ -40,7 +37,8 @@ export default function GradeDashboard() {
     );
 
     const teamName = settingsData?.settings?.teamName || 'シャークス';
-    const spreadsheetId = matchesRes?.spreadsheetId || (error as any)?.spreadsheetId;
+    const spreadsheetId = matchesRes?.spreadsheetId ||
+        (error as Error & { spreadsheetId?: string } | undefined)?.spreadsheetId;
 
     if (isLoading) {
         return (
@@ -164,29 +162,34 @@ export default function GradeDashboard() {
     };
 
     return (
-        <main className="flex-grow container mx-auto px-4 py-6 max-w-lg pb-24">
-            <header className="mb-6 flex items-center justify-between">
+        <main className="flex-grow max-w-lg mx-auto w-full pb-24 bg-[#F5F7FA]">
+            <header className="stadium-hero px-5 pt-6 pb-0">
+              <div className="relative z-10 flex items-center justify-between pb-6">
                 <div className="flex items-center gap-3">
-                    {/* チームロゴ風アイコン */}
-                    <div className="w-10 h-10 rounded-full bg-[#0D1B2A] flex items-center justify-center shrink-0">
-                        <span className="text-white font-black text-lg leading-none">S</span>
+                    <div className="w-12 h-12 rounded-xl bg-[#0D1B2A]/85 border-2 border-[#49D17D] flex items-center justify-center shrink-0 shadow-lg">
+                        <span className="text-white font-bebas text-2xl leading-none">S</span>
                     </div>
                     <div>
-                        <h1 className="font-black text-xl tracking-tight text-gray-900">{teamName} {gradeId}</h1>
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">MATCH CENTER</p>
+                        <h1 className="font-black text-lg tracking-tight text-white drop-shadow-md">{teamName} {gradeId}</h1>
+                        <p className="text-[9px] font-black text-white/75 uppercase tracking-[0.2em]">MATCH CENTER</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Link href="/settings" className="p-2.5 bg-gray-50 rounded-xl text-gray-400 hover:text-gray-600 transition-colors" title="設定">
+                    <Link href="/settings" className="p-2.5 rounded-xl text-white bg-black/15 border border-white/20 hover:bg-black/25 transition-colors" title="設定">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </Link>
                 </div>
+              </div>
+              <div className="relative z-10 grid grid-cols-2 text-center text-xs font-black">
+                <span className="py-3 border-b-[3px] border-[#49D17D]">試合履歴</span>
+                <Link href={`/grade/${gradeId}/stats`} className="py-3 border-b-[3px] border-transparent text-white/75">ランキング</Link>
+              </div>
             </header>
 
-            <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section className="app-surface animate-in fade-in slide-in-from-bottom-4 duration-500 px-3 pt-4">
                     {liveMatches.length > 0 && (
                         <div className="mb-10">
                             <h2 className="text-[10px] font-black text-red-600 flex items-center gap-2 mb-4 uppercase tracking-[0.2em]">
