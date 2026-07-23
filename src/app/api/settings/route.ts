@@ -3,28 +3,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getGlobalSettings, getCommonMasters, updateGlobalSettings } from '@/lib/sheets';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
+import { getErrorMessage } from '@/lib/errors';
 
 const SETTINGS_CACHE_KEY = 'settings:global';
 const SETTINGS_TTL = 30_000;
 
 export const dynamic = 'force-dynamic';
 
-function getSpreadsheetId(gradeName: string) {
-    const config = process.env.GRADES_CONFIG || '';
-    const grades = config.split(',').reduce((acc, item) => {
-        const [name, id] = item.split(':');
-        acc[name] = id;
-        return acc;
-    }, {} as Record<string, string>);
-    return grades[gradeName];
-}
-
-export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const grade = searchParams.get('grade');
-
-    // grade is optional for settings if we only want global ones, 
-    // but the app currently uses it to find the spreadsheet context.
+export async function GET() {
     try {
         let cached = getCached<{ settings: unknown; masters: unknown }>(SETTINGS_CACHE_KEY);
         if (!cached) {
@@ -40,9 +26,9 @@ export async function GET(req: NextRequest) {
             envCommonId: process.env.COMMON_SPREADSHEET_ID,
             envGradesConfig: process.env.GRADES_CONFIG
         });
-    } catch (err: any) {
+    } catch (error: unknown) {
         return NextResponse.json({
-            error: err.message,
+            error: getErrorMessage(error),
             spreadsheetId: process.env.COMMON_SPREADSHEET_ID
         }, { status: 500 });
     }
@@ -59,7 +45,7 @@ export async function POST(req: NextRequest) {
         await updateGlobalSettings(settings, session.user.email);
         invalidateCache(SETTINGS_CACHE_KEY);
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }

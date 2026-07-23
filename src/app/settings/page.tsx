@@ -3,13 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
+import Image from 'next/image';
 import { GlobalSettings, CommonMaster } from '@/types';
+import { AppError, getErrorMessage } from '@/lib/errors';
+
+interface SettingsResponse {
+    settings: GlobalSettings;
+    masters: CommonMaster[];
+    envCommonId?: string;
+    envGradesConfig?: string;
+}
 
 const fetcher = (url: string) => fetch(url).then(async (res) => {
     const data = await res.json();
     if (!res.ok) {
         const err = new Error(data.error || 'Fetch failed');
-        if (data.spreadsheetId) (err as any).spreadsheetId = data.spreadsheetId;
+        if (data.spreadsheetId) (err as AppError).spreadsheetId = data.spreadsheetId;
         throw err;
     }
     return data;
@@ -17,7 +26,7 @@ const fetcher = (url: string) => fetch(url).then(async (res) => {
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { data, mutate } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>('/api/settings?grade=U12', fetcher);
+    const { data, mutate } = useSWR<SettingsResponse>('/api/settings?grade=U12', fetcher);
 
     const [formData, setFormData] = useState<Partial<GlobalSettings>>({});
     const [saving, setSaving] = useState(false);
@@ -46,8 +55,8 @@ export default function SettingsPage() {
             setMessage({ type: 'success', text: '設定を保存しました' });
             mutate(); // Refresh local cache
             router.refresh();
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message });
+        } catch (error: unknown) {
+            setMessage({ type: 'error', text: getErrorMessage(error, '保存に失敗しました') });
         } finally {
             setSaving(false);
         }
@@ -64,12 +73,12 @@ export default function SettingsPage() {
 
             setMessage({ type: 'success', text: 'マスタを削除しました' });
             mutate();
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message });
+        } catch (error: unknown) {
+            setMessage({ type: 'error', text: getErrorMessage(error, '削除に失敗しました') });
         }
     };
 
-    const activeCommonId = formData.commonSpreadsheetId || (data as any)?.envCommonId;
+    const activeCommonId = formData.commonSpreadsheetId || data?.envCommonId;
 
     return (
         <main className="container mx-auto px-4 py-8 max-w-lg bg-white min-h-screen">
@@ -122,7 +131,14 @@ export default function SettingsPage() {
                         />
                         {formData.teamLogoUrl && (
                             <div className="mt-4 flex justify-center p-6 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100">
-                                <img src={formData.teamLogoUrl} alt="Preview" className="h-20 w-20 object-contain drop-shadow-md" />
+                                <Image
+                                    src={formData.teamLogoUrl}
+                                    alt="チームロゴのプレビュー"
+                                    width={80}
+                                    height={80}
+                                    unoptimized
+                                    className="h-20 w-20 object-contain drop-shadow-md"
+                                />
                             </div>
                         )}
                     </label>
@@ -156,10 +172,10 @@ export default function SettingsPage() {
                                 type="text"
                                 value={formData.commonSpreadsheetId || ''}
                                 onChange={e => setFormData(p => ({ ...p, commonSpreadsheetId: e.target.value }))}
-                                placeholder={(data as any)?.envCommonId || "未設定 (Vercel環境変数を使用)"}
+                                placeholder={data?.envCommonId || "未設定 (Vercel環境変数を使用)"}
                                 className="mt-2 block w-full rounded-2xl border-2 border-gray-50 bg-gray-50 p-4 font-mono text-[10px] font-bold text-gray-500 focus:bg-white focus:border-blue-500 transition-all outline-none"
                             />
-                            {!formData.commonSpreadsheetId && (data as any)?.envCommonId && (
+                            {!formData.commonSpreadsheetId && data?.envCommonId && (
                                 <p className="mt-2 text-[10px] font-bold text-blue-400 ml-1">
                                     現在は Vercel 環境変数の ID を使用しています
                                 </p>
@@ -171,7 +187,7 @@ export default function SettingsPage() {
                             <textarea
                                 value={formData.gradesConfig || ''}
                                 onChange={e => setFormData(p => ({ ...p, gradesConfig: e.target.value }))}
-                                placeholder={(data as any)?.envGradesConfig || "U12:ID1,U11:ID2"}
+                                placeholder={data?.envGradesConfig || "U12:ID1,U11:ID2"}
                                 rows={2}
                                 className="mt-2 block w-full rounded-2xl border-2 border-gray-50 bg-gray-50 p-4 font-mono text-[10px] font-bold text-gray-500 focus:bg-white focus:border-blue-500 transition-all outline-none"
                             />
@@ -234,7 +250,7 @@ export default function SettingsPage() {
     );
 }
 
-function MasterSection({ title, type, masters, onDelete }: { title: string, type: string, masters: any[], onDelete: (name: string, type: string) => void }) {
+function MasterSection({ title, type, masters, onDelete }: { title: string, type: CommonMaster['masterType'], masters: CommonMaster[], onDelete: (name: string, type: string) => void }) {
     const filtered = masters.filter(m => m.masterType === type);
 
     return (

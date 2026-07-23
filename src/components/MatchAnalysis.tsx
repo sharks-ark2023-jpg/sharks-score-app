@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Match } from '@/types';
+import { getErrorMessage } from '@/lib/errors';
 
 interface MatchAnalysisProps {
     gradeId: string;
@@ -35,8 +36,8 @@ export default function MatchAnalysis({ gradeId, match }: MatchAnalysisProps) {
 
             const data = await res.json();
             setAnalysis(data.analysis);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, '分析に失敗しました'));
         } finally {
             setIsAnalyzing(false);
         }

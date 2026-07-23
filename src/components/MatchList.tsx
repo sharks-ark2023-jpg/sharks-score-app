@@ -107,13 +107,13 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
             {completedMatches.map((match) => {
                 const resultLabel = match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW';
                 const resultStyle = match.result === 'win'
-                    ? 'bg-[#00693E] text-white'
+                    ? 'bg-sharks-green text-white'
                     : match.result === 'loss'
-                        ? 'bg-[#FF2D2D] text-white'
+                        ? 'bg-sharks-red text-white'
                         : 'bg-slate-500 text-white';
                 const typeStyle = match.matchType === 'tournament'
-                    ? 'bg-[#00693E] text-white'
-                    : 'bg-[#1565FF] text-white';
+                    ? 'bg-sharks-green text-white'
+                    : 'bg-sharks-blue text-white';
                 const typeLabel = match.matchType === 'tournament' ? '公式戦' : '練習試合';
                 const formatLabel = match.matchFormat === 'halves'
                     ? '前後半'

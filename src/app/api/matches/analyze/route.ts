@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getMatches, upsertMatch } from '@/lib/sheets';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getErrorMessage } from '@/lib/errors';
 
 function getSpreadsheetId(gradeName: string) {
     const config = process.env.GRADES_CONFIG || '';
@@ -83,8 +84,8 @@ ${matchInfo}
         await upsertMatch(spreadsheetId, `${grade}_Matches`, updatedMatch, session.user?.email ?? 'system');
 
         return NextResponse.json({ analysis });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Analysis error:', error);
-        return NextResponse.json({ error: error.message || '分析に失敗しました' }, { status: 500 });
+        return NextResponse.json({ error: getErrorMessage(error, '分析に失敗しました') }, { status: 500 });
     }
 }

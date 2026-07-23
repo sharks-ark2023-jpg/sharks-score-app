@@ -91,7 +91,7 @@ const rankings = [
 
 function PreviewHeader({ title }: { title: string }) {
   return (
-    <header className="bg-[#061426] px-4 py-4 text-white">
+    <header className="bg-sharks-ink px-4 py-4 text-white">
       <div className="flex items-center justify-between">
         <span className="text-xl" aria-hidden="true">‹</span>
         <h1 className="text-base font-black">{title}</h1>
@@ -119,7 +119,7 @@ export default function UiPreviewPage() {
             type="button"
             onClick={() => setScreen(id)}
             className={`rounded-lg px-2 py-2 text-[11px] font-black ${
-              screen === id ? 'bg-[#0D1B2A] text-white' : 'bg-slate-100 text-slate-500'
+              screen === id ? 'bg-sharks-navy text-white' : 'bg-slate-100 text-slate-500'
             }`}
           >
             {label}
@@ -132,7 +132,7 @@ export default function UiPreviewPage() {
           <header className="stadium-hero px-5 pt-7">
             <div className="relative z-10 flex items-center justify-between pb-7">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-[#49D17D] bg-[#0D1B2A]/85 shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-sharks-accent bg-sharks-navy/85 shadow-lg">
                   <span className="font-bebas text-2xl">S</span>
                 </div>
                 <div>
@@ -143,7 +143,7 @@ export default function UiPreviewPage() {
               <span className="text-xl" aria-label="設定">⚙</span>
             </div>
             <div className="relative z-10 grid grid-cols-2 text-center text-xs font-black">
-              <span className="border-b-[3px] border-[#49D17D] py-3">試合履歴</span>
+              <span className="border-b-[3px] border-sharks-accent py-3">試合履歴</span>
               <span className="border-b-[3px] border-transparent py-3 text-white/70">ランキング</span>
             </div>
           </header>
@@ -157,7 +157,7 @@ export default function UiPreviewPage() {
       {screen === 'live' && (
         <>
           <div className="flex items-center justify-between bg-gradient-to-r from-[#00693E] to-[#00472A] px-4 py-3 text-white">
-            <span className="rounded-md bg-[#FF2D2D] px-2.5 py-1 text-xs font-black">● LIVE</span>
+            <span className="rounded-md bg-sharks-red px-2.5 py-1 text-xs font-black">● LIVE</span>
             <div className="text-center">
               <p className="text-[10px] font-bold">前半</p>
               <p className="font-bebas text-3xl leading-none">08:24</p>
@@ -175,7 +175,7 @@ export default function UiPreviewPage() {
               <div className="grid grid-cols-2 gap-3">
                 {['SHARKS', '対戦相手'].map((team, index) => (
                   <div key={team} className="compact-card overflow-hidden">
-                    <div className={`${index === 0 ? 'bg-[#1565FF]' : 'bg-slate-600'} py-2 text-center text-xs font-black text-white`}>{team}</div>
+                    <div className={`${index === 0 ? 'bg-sharks-blue' : 'bg-slate-600'} py-2 text-center text-xs font-black text-white`}>{team}</div>
                     <div className="flex items-center justify-between p-3">
                       <button type="button" className="h-8 w-8 rounded-full bg-slate-100 text-xl">−</button>
                       <span className="font-bebas text-5xl">{index === 0 ? 1 : 0}</span>
@@ -194,7 +194,7 @@ export default function UiPreviewPage() {
                     type="button"
                     onClick={() => setSelectedPlayer(number)}
                     className={`rounded-lg border px-2 py-3 text-xs font-black shadow-sm ${
-                      selectedPlayer === number ? 'border-[#1565FF] bg-[#1565FF] text-white' : 'border-slate-200 bg-white'
+                      selectedPlayer === number ? 'border-sharks-blue bg-sharks-blue text-white' : 'border-slate-200 bg-white'
                     }`}
                   >
                     <span className="mr-1.5 opacity-70">{number}</span>{name}
@@ -202,7 +202,7 @@ export default function UiPreviewPage() {
                 ))}
               </div>
             </div>
-            <button type="button" className="w-full rounded-xl bg-[#1565FF] py-4 text-sm font-black text-white shadow-lg">得点を記録する</button>
+            <button type="button" className="w-full rounded-xl bg-sharks-blue py-4 text-sm font-black text-white shadow-lg">得点を記録する</button>
           </section>
         </>
       )}
@@ -214,14 +214,14 @@ export default function UiPreviewPage() {
             <div className="flex items-center justify-between px-5 pt-5 text-xs font-bold text-slate-500">
               <span>2026.05.24（土）</span><span>15MIN</span>
             </div>
-            <div className="px-5 pt-3"><span className="rounded-md bg-[#FF2D2D] px-3 py-1 text-[10px] font-black text-white">LOSE</span></div>
+            <div className="px-5 pt-3"><span className="rounded-md bg-sharks-red px-3 py-1 text-[10px] font-black text-white">LOSE</span></div>
             <div className="grid grid-cols-3 items-center px-5 py-8 text-center">
               <div className="font-black">SHARKS<br />U12</div>
               <div className="flex items-center justify-center gap-3 font-bebas text-7xl"><span>0</span><span className="text-4xl">-</span><span>3</span></div>
               <div className="font-black">TFA</div>
             </div>
             <div className="grid grid-cols-2 border-b border-slate-200 text-center text-sm font-black">
-              <span className="border-b-[3px] border-[#00693E] py-3 text-[#00693E]">試合記録</span>
+              <span className="border-b-[3px] border-sharks-green py-3 text-sharks-green">試合記録</span>
               <span className="py-3 text-slate-500">基本情報</span>
             </div>
           </section>
@@ -241,9 +241,8 @@ export default function UiPreviewPage() {
         <>
           <PreviewHeader title="得点ランキング" />
           <section className="px-3 py-4">
-            <div className="mb-3 grid grid-cols-2 rounded-xl bg-[#061426] text-center text-sm font-black text-white">
-              <span className="border-b-[3px] border-[#49D17D] py-3">チーム内</span>
-              <span className="py-3 text-white/65">大会全体</span>
+            <div className="mb-3 rounded-xl border-b-[3px] border-sharks-accent bg-sharks-ink py-3 text-center text-sm font-black text-white">
+              チーム内 得点ランキング
             </div>
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               {rankings.map(([name, goals], index) => (

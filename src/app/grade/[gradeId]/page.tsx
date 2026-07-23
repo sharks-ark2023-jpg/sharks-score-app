@@ -166,7 +166,7 @@ export default function GradeDashboard() {
             <header className="stadium-hero px-5 pt-6 pb-0">
               <div className="relative z-10 flex items-center justify-between pb-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-[#0D1B2A]/85 border-2 border-[#49D17D] flex items-center justify-center shrink-0 shadow-lg">
+                    <div className="w-12 h-12 rounded-xl bg-sharks-navy/85 border-2 border-sharks-accent flex items-center justify-center shrink-0 shadow-lg">
                         <span className="text-white font-bebas text-2xl leading-none">S</span>
                     </div>
                     <div>
@@ -184,7 +184,7 @@ export default function GradeDashboard() {
                 </div>
               </div>
               <div className="relative z-10 grid grid-cols-2 text-center text-xs font-black">
-                <span className="py-3 border-b-[3px] border-[#49D17D]">試合履歴</span>
+                <span className="py-3 border-b-[3px] border-sharks-accent">試合履歴</span>
                 <Link href={`/grade/${gradeId}/stats`} className="py-3 border-b-[3px] border-transparent text-white/75">ランキング</Link>
               </div>
             </header>

@@ -131,7 +131,7 @@ export default function FooterNav() {
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-50 bg-[#061426]/95 backdrop-blur-md border-t border-white/10 shadow-[0_-8px_24px_rgba(3,13,26,0.2)] text-white"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-sharks-ink/95 backdrop-blur-md border-t border-white/10 shadow-[0_-8px_24px_rgba(3,13,26,0.2)] text-white"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
             <div className="flex items-center h-16 max-w-lg mx-auto px-2">
@@ -146,12 +146,12 @@ export default function FooterNav() {
                             }`}
                         >
                             {item.active && (
-                                <div className="absolute top-0 w-8 h-[3px] bg-[#49D17D] rounded-b-md animate-fade-in" />
+                                <div className="absolute top-0 w-8 h-[3px] bg-sharks-accent rounded-b-md animate-fade-in" />
                             )}
                             {icons[item.label]?.(item.active)}
                             <span
                                 className={`text-[9px] font-black tracking-widest leading-none ${
-                                    item.active ? 'text-[#49D17D]' : 'text-slate-300'
+                                    item.active ? 'text-sharks-accent' : 'text-slate-300'
                                 }`}
                             >
                                 {item.label}

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getMatches, upsertMatch, updateCommonMaster, deleteMatch } from '@/lib/sheets';
 import { Match } from '@/types';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
+import { getErrorMessage } from '@/lib/errors';
 
 const MATCHES_TTL = 15_000;
 
@@ -42,8 +43,8 @@ export async function GET(req: NextRequest) {
             setCached(cacheKey, cached, MATCHES_TTL);
         }
         return NextResponse.json(cached);
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message, spreadsheetId }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: getErrorMessage(error), spreadsheetId }, { status: 500 });
     }
 }
 
@@ -77,11 +78,11 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        if (err.message === 'CONFLICT') {
+    } catch (error: unknown) {
+        if (getErrorMessage(error) === 'CONFLICT') {
             return NextResponse.json({ error: 'Conflict' }, { status: 409 });
         }
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }
 
@@ -108,7 +109,7 @@ export async function DELETE(req: NextRequest) {
         await deleteMatch(spreadsheetId, `${grade}_Matches`, matchId);
         invalidateCache(`matches:${grade}`);
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }

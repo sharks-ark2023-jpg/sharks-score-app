@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.6.2 — 2026-07-23
+
+### リファクタリング・保守性・セキュリティ改善
+- **型安全なエラー処理** (`errors.ts`, API Routes, Settings, Players, MatchAnalysis): `any` と `@ts-ignore` を廃止し、API・画面の例外メッセージ処理を共通化
+- **認証セッション型** (`next-auth.d.ts`): セッションユーザーIDを型拡張し、暗黙的な型抑制を削除
+- **Next.js 16対応** (`proxy.ts`): 非推奨の `middleware.ts` を `proxy.ts` へ移行し、既存の認証・LINEブラウザ判定を維持
+- **不要コード削除** (`Header.tsx`, `line-redirect/page.tsx`): 未使用ヘッダーと不要なEffect/stateを削除
+- **UI設計整理** (`globals.css`, 各UI): ブランド色をTailwindテーマトークンへ集約し、UIプレビューから不要な「大会全体」ランキングを削除
+- **画像最適化** (`settings/page.tsx`): ロゴプレビューを `next/image` へ移行
+- **依存関係更新** (`package.json`, `package-lock.json`): Next.js 16.2.11、React 19.2.4、next-auth 4.24.15、uuid 13.0.1へ更新し、安全に解消可能な依存監査項目を修正
+- **品質検証**: リポジトリ全体のESLintエラー・警告を0件化
+
 ## v1.6.1 — 2026-07-23
 
 ### 認証不要UIプレビュー

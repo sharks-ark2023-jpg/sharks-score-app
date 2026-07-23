@@ -577,7 +577,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             <div className="grid grid-cols-2 gap-4">
                                 {/* SHARKS入力 */}
                                 <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-                                    <div className="bg-[#1565FF] text-white text-center py-1.5 text-[10px] font-black tracking-widest uppercase">
+                                    <div className="bg-sharks-blue text-white text-center py-1.5 text-[10px] font-black tracking-widest uppercase">
                                         SHARKS
                                     </div>
                                     <div className="p-3 flex items-center justify-between gap-1 flex-grow">
@@ -642,7 +642,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                                 onClick={() => setSelectedQuickScorer(prev => prev === player.name ? null : player.name)}
                                                 className={`px-1.5 py-2.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-start gap-1.5 border leading-none ${
                                                     selectedQuickScorer === player.name
-                                                        ? 'bg-[#1565FF] text-white border-[#1565FF] shadow-sm shadow-blue-100'
+                                                        ? 'bg-sharks-blue text-white border-sharks-blue shadow-sm shadow-blue-100'
                                                         : 'bg-white text-[#2D3748] border-slate-200/80 hover:bg-slate-50'
                                                 }`}
                                             >
@@ -665,7 +665,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                                 setSelectedQuickScorer(null);
                                             }
                                         }}
-                                        className="w-full py-3.5 bg-[#1565FF] hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none text-white font-black rounded-xl shadow-md shadow-blue-100/50 transition-all uppercase text-xs tracking-widest"
+                                        className="w-full py-3.5 bg-sharks-blue hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none text-white font-black rounded-xl shadow-md shadow-blue-100/50 transition-all uppercase text-xs tracking-widest"
                                     >
                                         得点を記録する
                                     </button>

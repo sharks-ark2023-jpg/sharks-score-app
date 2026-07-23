@@ -32,9 +32,9 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
     match.result === 'win' ? 'WIN' : match.result === 'loss' ? 'LOSE' : 'DRAW';
   const resultStyle =
     match.result === 'win'
-      ? 'bg-[#00693E] text-white shadow-green-100'
+      ? 'bg-sharks-green text-white shadow-green-100'
       : match.result === 'loss'
-      ? 'bg-[#FF2D2D] text-white shadow-red-100'
+      ? 'bg-sharks-red text-white shadow-red-100'
       : 'bg-slate-400 text-white shadow-slate-100';
 
   const formatLabel =
@@ -53,7 +53,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
   return (
     <main className="flex-grow mx-auto max-w-lg w-full pb-24 bg-[#F5F7FA]">
       {/* ヘッダー */}
-      <header className="bg-[#061426] text-white px-4 py-4 flex items-center justify-between">
+      <header className="bg-sharks-ink text-white px-4 py-4 flex items-center justify-between">
         <Link
           href={`/grade/${gradeId}`}
           className="p-2 text-white transition-colors"
@@ -174,7 +174,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
           <button
             className={`flex-1 py-3 text-sm font-black tracking-wide transition-colors ${
               activeTab === 'record'
-                ? 'border-b-2 border-[#00693E] text-[#00693E]'
+                ? 'border-b-2 border-sharks-green text-sharks-green'
                 : 'text-slate-400'
             }`}
             onClick={() => setActiveTab('record')}
@@ -184,7 +184,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
           <button
             className={`flex-1 py-3 text-sm font-black tracking-wide transition-colors ${
               activeTab === 'info'
-                ? 'border-b-2 border-[#00693E] text-[#00693E]'
+                ? 'border-b-2 border-sharks-green text-sharks-green'
                 : 'text-slate-400'
             }`}
             onClick={() => setActiveTab('info')}

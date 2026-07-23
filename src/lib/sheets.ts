@@ -122,7 +122,7 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             result: data.result,
             pkInfo: data.pkInfo ? JSON.parse(data.pkInfo) : undefined,
             isLive: data.isLive === 'TRUE' || data.isLive === 'true',
-            matchPhase: data.matchPhase as any,
+            matchPhase: data.matchPhase as Match['matchPhase'],
             scorers: data.scorers,
             mvp: data.mvp,
             memo: data.memo,
@@ -138,7 +138,7 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
 
 export async function upsertMatch(spreadsheetId: string, sheetName: string, match: Match, userEmail: string) {
     const doc = await getGoogleSheet(spreadsheetId);
-    let sheet = doc.sheetsByTitle[sheetName];
+    const sheet = doc.sheetsByTitle[sheetName];
 
     // シートが存在しない場合は作成を試みる（簡易的な自動作成）
     if (!sheet) {
@@ -209,8 +209,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         // Update existing row
         Object.keys(dataToSave).forEach(key => {
             if (key !== 'matchId' && key !== 'createdAt' && key !== 'createdBy') {
-                // @ts-ignore
-                existingRow.set(key, dataToSave[key]);
+                existingRow.set(key, dataToSave[key as keyof typeof dataToSave]);
             }
         });
         await existingRow.save();
@@ -300,9 +299,9 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
                 lastUsed: new Date().toISOString(),
             });
         }
-    } catch (err: any) {
-        console.error('[Sheets] Error updating CommonMaster:', err);
-        throw err;
+    } catch (error: unknown) {
+        console.error('[Sheets] Error updating CommonMaster:', error);
+        throw error;
     }
 }
 

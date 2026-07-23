@@ -1,14 +1,4 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-
 export default function LineRedirectPage() {
-    const [url, setUrl] = useState('');
-
-    useEffect(() => {
-        setUrl(window.location.href.replace('/line-redirect', '').replace(/\?.*/, ''));
-    }, []);
-
     return (
         <main className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
             <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-8 max-w-sm w-full text-center space-y-6">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { updateMatchLock, getMatches } from '@/lib/sheets';
+import { getErrorMessage } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
     }
 }

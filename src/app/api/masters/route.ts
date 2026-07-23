@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getCommonMasters, updateCommonMaster, getGoogleSheet, getGlobalSettings } from '@/lib/sheets';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
+import { getErrorMessage } from '@/lib/errors';
 
 const MASTERS_CACHE_KEY = 'masters:common';
 const MASTERS_TTL = 30_000;
@@ -39,9 +40,9 @@ export async function GET(req: NextRequest) {
             filtered = filtered.filter(m => !m.grade || m.grade === grade);
         }
         return NextResponse.json(filtered);
-    } catch (err: any) {
+    } catch (error: unknown) {
         return NextResponse.json({
-            error: err.message,
+            error: getErrorMessage(error),
             spreadsheetId: commonId
         }, { status: 500 });
     }
@@ -63,9 +64,9 @@ export async function POST(req: NextRequest) {
         await updateCommonMaster(name, type, grade, number);
         invalidateCache(MASTERS_CACHE_KEY);
         return NextResponse.json({ success: true });
-    } catch (err: any) {
+    } catch (error: unknown) {
         return NextResponse.json({
-            error: err.message,
+            error: getErrorMessage(error),
             spreadsheetId: commonId
         }, { status: 500 });
     }
@@ -107,9 +108,9 @@ export async function DELETE(req: NextRequest) {
         } else {
             return NextResponse.json({ error: 'Master not found' }, { status: 404 });
         }
-    } catch (err: any) {
+    } catch (error: unknown) {
         return NextResponse.json({
-            error: err.message,
+            error: getErrorMessage(error),
             spreadsheetId: commonId
         }, { status: 500 });
     }

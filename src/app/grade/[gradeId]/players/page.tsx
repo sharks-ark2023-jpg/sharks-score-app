@@ -6,12 +6,13 @@ import useSWR from 'swr';
 import { CommonMaster, Match } from '@/types';
 import Link from 'next/link';
 import { calcTopScorers } from '@/lib/scoring';
+import { AppError, getErrorMessage } from '@/lib/errors';
 
 const fetcher = (url: string) => fetch(url).then(async (res) => {
     const data = await res.json();
     if (!res.ok) {
         const err = new Error(data.error || 'Fetch failed');
-        if (data.spreadsheetId) (err as any).spreadsheetId = data.spreadsheetId;
+        if (data.spreadsheetId) (err as AppError).spreadsheetId = data.spreadsheetId;
         throw err;
     }
     return data;
@@ -74,9 +75,13 @@ export default function PlayerManagementPage() {
             setNewName('');
             setNewNumber('');
             mutate();
-        } catch (err: any) {
-            console.error('[Players] Add error:', err);
-            setMessage({ type: 'error', text: `エラー: ${err.message}`, spreadsheetId: err.spreadsheetId });
+        } catch (error: unknown) {
+            console.error('[Players] Add error:', error);
+            setMessage({
+                type: 'error',
+                text: `エラー: ${getErrorMessage(error)}`,
+                spreadsheetId: (error as AppError).spreadsheetId,
+            });
         } finally {
             setSaving(false);
         }
@@ -97,8 +102,8 @@ export default function PlayerManagementPage() {
 
             setMessage({ type: 'success', text: '削除しました' });
             mutate();
-        } catch (err: any) {
-            setMessage({ type: 'error', text: `エラー: ${err.message}` });
+        } catch (error: unknown) {
+            setMessage({ type: 'error', text: `エラー: ${getErrorMessage(error)}` });
         }
     };
 
@@ -247,7 +252,7 @@ export default function PlayerManagementPage() {
                 )}
 
                 <div className="grid grid-cols-1 gap-3">
-                    {players?.map((p: any) => (
+                    {players?.map((p) => (
                         <div key={p.name} className="flex justify-between items-center bg-white p-5 rounded-3xl border-2 border-gray-50 shadow-sm hover:shadow-md transition-all group">
                             <div className="flex items-center gap-4">
                                 {p.number && (
