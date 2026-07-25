@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getCommonMasters, updateCommonMaster, getGoogleSheet, getGlobalSettings } from '@/lib/sheets';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
 import { getErrorMessage } from '@/lib/errors';
+import { getCommonSpreadsheetId } from '@/lib/spreadsheet-config';
 
 const MASTERS_CACHE_KEY = 'masters:common';
 const MASTERS_TTL = 30_000;
@@ -11,12 +12,15 @@ const MASTERS_TTL = 30_000;
 export const dynamic = 'force-dynamic';
 
 async function getSpreadsheetId() {
+    const configuredId = getCommonSpreadsheetId();
+    if (process.env.APP_SPREADSHEET_ID) return configuredId;
+
     // Try to get from GlobalSettings first, fallback to env
     try {
         const settings = await getGlobalSettings();
-        return settings?.commonSpreadsheetId || process.env.COMMON_SPREADSHEET_ID;
+        return settings?.commonSpreadsheetId || configuredId;
     } catch {
-        return process.env.COMMON_SPREADSHEET_ID;
+        return configuredId;
     }
 }
 

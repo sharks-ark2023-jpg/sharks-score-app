@@ -5,20 +5,11 @@ import { getMatches, upsertMatch, updateCommonMaster, deleteMatch } from '@/lib/
 import { Match } from '@/types';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
 import { getErrorMessage } from '@/lib/errors';
+import { getGradeSpreadsheetId } from '@/lib/spreadsheet-config';
 
 const MATCHES_TTL = 15_000;
 
 export const dynamic = 'force-dynamic';
-
-function getSpreadsheetId(gradeName: string) {
-    const config = process.env.GRADES_CONFIG || '';
-    const grades = config.split(',').reduce((acc, item) => {
-        const [name, id] = item.split(':');
-        acc[name] = id;
-        return acc;
-    }, {} as Record<string, string>);
-    return grades[gradeName];
-}
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -28,7 +19,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Grade is required' }, { status: 400 });
     }
 
-    const spreadsheetId = getSpreadsheetId(grade);
+    const spreadsheetId = getGradeSpreadsheetId(grade);
     if (!spreadsheetId) {
         return NextResponse.json({ error: 'Spreadsheet not found for grade' }, { status: 404 });
     }
@@ -60,7 +51,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Grade and match data are required' }, { status: 400 });
     }
 
-    const spreadsheetId = getSpreadsheetId(grade);
+    const spreadsheetId = getGradeSpreadsheetId(grade);
     if (!spreadsheetId) {
         return NextResponse.json({ error: 'Spreadsheet not found for grade' }, { status: 404 });
     }
@@ -100,7 +91,7 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: 'Grade and matchId are required' }, { status: 400 });
     }
 
-    const spreadsheetId = getSpreadsheetId(grade);
+    const spreadsheetId = getGradeSpreadsheetId(grade);
     if (!spreadsheetId) {
         return NextResponse.json({ error: 'Spreadsheet not found for grade' }, { status: 404 });
     }

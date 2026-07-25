@@ -3,18 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { updateMatchLock, getMatches } from '@/lib/sheets';
 import { getErrorMessage } from '@/lib/errors';
+import { getGradeSpreadsheetId } from '@/lib/spreadsheet-config';
 
 export const dynamic = 'force-dynamic';
-
-function getSpreadsheetId(gradeName: string) {
-    const config = process.env.GRADES_CONFIG || '';
-    const grades = config.split(',').reduce((acc, item) => {
-        const [name, id] = item.split(':');
-        acc[name] = id;
-        return acc;
-    }, {} as Record<string, string>);
-    return grades[gradeName];
-}
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -28,7 +19,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Grade and matchId are required' }, { status: 400 });
     }
 
-    const spreadsheetId = getSpreadsheetId(grade);
+    const spreadsheetId = getGradeSpreadsheetId(grade);
     if (!spreadsheetId) {
         return NextResponse.json({ error: 'Spreadsheet not found' }, { status: 404 });
     }

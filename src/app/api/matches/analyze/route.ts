@@ -4,16 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getMatches, upsertMatch } from '@/lib/sheets';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getErrorMessage } from '@/lib/errors';
-
-function getSpreadsheetId(gradeName: string) {
-    const config = process.env.GRADES_CONFIG || '';
-    const grades = config.split(',').reduce((acc, item) => {
-        const [name, id] = item.split(':');
-        acc[name] = id;
-        return acc;
-    }, {} as Record<string, string>);
-    return grades[gradeName];
-}
+import { getGradeSpreadsheetId } from '@/lib/spreadsheet-config';
 
 export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -34,7 +25,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'grade と matchId が必要です' }, { status: 400 });
         }
 
-        const spreadsheetId = getSpreadsheetId(grade);
+        const spreadsheetId = getGradeSpreadsheetId(grade);
         if (!spreadsheetId) {
             return NextResponse.json({ error: '学年が見つかりません' }, { status: 404 });
         }

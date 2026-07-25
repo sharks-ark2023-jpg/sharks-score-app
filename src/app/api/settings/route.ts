@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getGlobalSettings, getCommonMasters, updateGlobalSettings } from '@/lib/sheets';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
 import { getErrorMessage } from '@/lib/errors';
+import { getCommonSpreadsheetId } from '@/lib/spreadsheet-config';
 
 const SETTINGS_CACHE_KEY = 'settings:global';
 const SETTINGS_TTL = 30_000;
@@ -23,13 +24,14 @@ export async function GET() {
         }
         return NextResponse.json({
             ...cached,
-            envCommonId: process.env.COMMON_SPREADSHEET_ID,
+            envCommonId: getCommonSpreadsheetId(),
+            envUnifiedId: process.env.APP_SPREADSHEET_ID,
             envGradesConfig: process.env.GRADES_CONFIG
         });
     } catch (error: unknown) {
         return NextResponse.json({
             error: getErrorMessage(error),
-            spreadsheetId: process.env.COMMON_SPREADSHEET_ID
+            spreadsheetId: getCommonSpreadsheetId()
         }, { status: 500 });
     }
 }

@@ -1,6 +1,7 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { Match, GlobalSettings, CommonMaster } from '@/types';
+import { getCommonSpreadsheetId } from '@/lib/spreadsheet-config';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
@@ -43,7 +44,7 @@ export async function getGoogleSheet(spreadsheetId: string) {
 }
 
 export async function getGlobalSettings(): Promise<GlobalSettings | null> {
-    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    const commonId = getCommonSpreadsheetId();
     if (!commonId) return null;
     try {
         const doc = await getGoogleSheet(commonId);
@@ -70,7 +71,7 @@ export async function getGlobalSettings(): Promise<GlobalSettings | null> {
 }
 
 export async function getCommonMasters(): Promise<CommonMaster[]> {
-    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    const commonId = getCommonSpreadsheetId();
     if (!commonId) return [];
     try {
         const doc = await getGoogleSheet(commonId);
@@ -251,8 +252,8 @@ export async function deleteMatch(spreadsheetId: string, sheetName: string, matc
 }
 
 export async function updateCommonMaster(name: string, type: 'venue' | 'opponent' | 'player', grade?: string, number?: string) {
-    const commonId = process.env.COMMON_SPREADSHEET_ID;
-    if (!commonId) throw new Error('COMMON_SPREADSHEET_ID is not configured');
+    const commonId = getCommonSpreadsheetId();
+    if (!commonId) throw new Error('Spreadsheet ID is not configured');
 
     try {
         const doc = await getGoogleSheet(commonId);
@@ -306,7 +307,7 @@ export async function updateCommonMaster(name: string, type: 'venue' | 'opponent
 }
 
 export async function updateGlobalSettings(settings: Partial<GlobalSettings>, userEmail: string) {
-    const commonId = process.env.COMMON_SPREADSHEET_ID;
+    const commonId = getCommonSpreadsheetId();
     if (!commonId) return;
 
     try {

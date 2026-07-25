@@ -1,21 +1,12 @@
 import { getMatches } from '@/lib/sheets';
+import { getGradeSpreadsheetId } from '@/lib/spreadsheet-config';
 import MatchForm from '@/components/MatchForm';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-function getSpreadsheetId(gradeName: string) {
-    const config = process.env.GRADES_CONFIG || '';
-    const grades = config.split(',').reduce((acc, item) => {
-        const [name, id] = item.split(':');
-        acc[name] = id;
-        return acc;
-    }, {} as Record<string, string>);
-    return grades[gradeName];
-}
-
 export default async function EditMatchPage({ params }: { params: Promise<{ gradeId: string, matchId: string }> }) {
     const { gradeId, matchId } = await params;
-    const spreadsheetId = getSpreadsheetId(gradeId);
+    const spreadsheetId = getGradeSpreadsheetId(gradeId);
 
     if (!spreadsheetId) {
         notFound();
