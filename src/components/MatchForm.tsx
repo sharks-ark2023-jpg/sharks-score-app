@@ -9,6 +9,11 @@ import Autocomplete from './Autocomplete';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
+type SaveResult = {
+    lastUpdated: string;
+    saveToken: string;
+};
+
 interface MatchFormProps {
     gradeId: string;
     initialMatch?: Match;
@@ -28,7 +33,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             ourScore: 0,
             opponentScore: 0,
             result: 'draw',
-            isLive: false,
+            isLive: true,
             matchPhase: 'pre-game',
             matchDuration: 15,
         }
@@ -46,6 +51,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const liveSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
     const lastLiveSaveAtRef = useRef(0);
     const formDataRef = useRef(formData);
+    const saveTokenRef = useRef<string | null>(null);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
         `/api/settings?grade=${gradeId}`,
@@ -213,7 +219,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         }
     };
 
-    const doSave = async (dataToSave: Partial<Match>, stayOnPage: boolean = false): Promise<string | null> => {
+    const doSave = async (dataToSave: Partial<Match>, stayOnPage: boolean = false): Promise<SaveResult | null> => {
         setSaving(true);
         setError(null);
         try {
@@ -224,6 +230,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     grade: gradeId,
                     match: dataToSave,
                     syncMasters: !stayOnPage,
+                    saveToken: stayOnPage ? saveTokenRef.current : undefined,
                 }),
             });
 
@@ -234,7 +241,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 const data = await res.json();
                 throw new Error(data.error || '保存に失敗しました');
             } else {
-                const data: { lastUpdated?: string } = await res.json();
+                const data: { lastUpdated?: string; saveToken?: string } = await res.json();
+                if (!data.lastUpdated || !data.saveToken) {
+                    throw new Error('保存結果が不正です');
+                }
+                saveTokenRef.current = data.saveToken;
                 // Show save toast when auto-saving (stayOnPage = true)
                 if (stayOnPage) {
                     setSavedToast(true);
@@ -256,13 +267,14 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             opponentScore1H: 0,
                             opponentScore2H: 0,
                             result: 'draw',
-                            isLive: false,
+                            isLive: true,
                             matchPhase: 'pre-game',
                             scorers: '',
                             mvp: '',
                             memo: '',
                             pkInfo: undefined,
                         }));
+                        saveTokenRef.current = null;
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
                         if (onSaved) onSaved();
@@ -270,7 +282,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     }
                 }
                 if (!stayOnPage) router.refresh();
-                return data.lastUpdated || null;
+                return {
+                    lastUpdated: data.lastUpdated,
+                    saveToken: data.saveToken,
+                };
             }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : '保存に失敗しました');
@@ -289,12 +304,13 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             while (liveSavePendingRef.current) {
                 const nextData = liveSavePendingRef.current;
                 liveSavePendingRef.current = null;
-                const lastUpdated = await doSave(nextData, true);
-                if (!lastUpdated) {
+                const saveResult = await doSave(nextData, true);
+                if (!saveResult) {
                     liveSavePendingRef.current = null;
                     break;
                 }
 
+                const { lastUpdated } = saveResult;
                 formDataRef.current = { ...formDataRef.current, lastUpdated };
                 setFormData(prev => ({ ...prev, lastUpdated }));
                 const pendingData = liveSavePendingRef.current as Partial<Match> | null;
@@ -771,7 +787,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 )}
 
                 {/* ========== pre-game: 従来のスコア入力エリア ========== */}
-                {formData.matchPhase === 'pre-game' && (
+                {formData.matchPhase === 'pre-game' && !formData.isLive && (
                     <>
                         {formData.matchFormat === 'halves' && (
                             <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
@@ -985,14 +1001,16 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 )}
 
 
-                <Autocomplete
-                    label="得点者 (自チーム)"
-                    value={formData.scorers || ''}
-                    onChange={(val) => setFormData(p => ({ ...p, scorers: val }))}
-                    options={players}
-                    placeholder="例: 佐藤(2), 田中"
-                    showNumber={true}
-                />
+                {!formData.isLive && (
+                    <Autocomplete
+                        label="得点者 (自チーム)"
+                        value={formData.scorers || ''}
+                        onChange={(val) => setFormData(p => ({ ...p, scorers: val }))}
+                        options={players}
+                        placeholder="例: 佐藤(2), 田中"
+                        showNumber={true}
+                    />
+                )}
 
 
                 {showAdvanced && (

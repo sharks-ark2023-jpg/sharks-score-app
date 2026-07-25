@@ -13,6 +13,37 @@ const SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
 ];
 
+function createSheetsAuth(): JWT {
+    let serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    let privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
+        .split('\\n').join('\n')
+        .replace(/^["']/, '').replace(/["']$/, '');
+
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+        try {
+            let jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+            if (!jsonStr.trim().startsWith('{')) {
+                jsonStr = Buffer.from(jsonStr, 'base64').toString();
+            }
+            const credentials = JSON.parse(jsonStr);
+            serviceAccountEmail = credentials.client_email;
+            privateKey = credentials.private_key;
+        } catch (err) {
+            console.error('[Sheets] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON:', err);
+        }
+    }
+
+    if (!serviceAccountEmail || !privateKey) {
+        throw new Error('Google Service Account credentials are not configured');
+    }
+
+    return new JWT({
+        email: serviceAccountEmail,
+        key: privateKey,
+        scopes: SCOPES,
+    });
+}
+
 export async function getGoogleSheet(spreadsheetId: string) {
     const cached = documentCache.get(spreadsheetId);
     if (cached && cached.expiresAt > Date.now()) {
@@ -23,35 +54,7 @@ export async function getGoogleSheet(spreadsheetId: string) {
     if (pending) return pending;
 
     const loadDocument = async () => {
-        let serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-        let privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
-            .split('\\n').join('\n')
-            .replace(/^["']/, '').replace(/["']$/, '');
-
-        if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-            try {
-                let jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-                if (!jsonStr.trim().startsWith('{')) {
-                    jsonStr = Buffer.from(jsonStr, 'base64').toString();
-                }
-                const credentials = JSON.parse(jsonStr);
-                serviceAccountEmail = credentials.client_email;
-                privateKey = credentials.private_key;
-            } catch (err) {
-                console.error('[Sheets] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON:', err);
-            }
-        }
-
-        if (!serviceAccountEmail || !privateKey) {
-            throw new Error('Google Service Account credentials are not configured');
-        }
-
-        const jwt = new JWT({
-            email: serviceAccountEmail,
-            key: privateKey,
-            scopes: SCOPES,
-        });
-
+        const jwt = createSheetsAuth();
         const doc = new GoogleSpreadsheet(spreadsheetId, jwt);
         await doc.loadInfo();
         documentCache.set(spreadsheetId, {
@@ -206,6 +209,16 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
     });
 }
 
+export type MatchSaveCursor = {
+    spreadsheetId: string;
+    sheetName: string;
+    matchId: string;
+    rowNumber: number;
+    headers: string[];
+    lastUpdated: string;
+    issuedAt: number;
+};
+
 export async function upsertMatch(spreadsheetId: string, sheetName: string, match: Match, userEmail: string) {
     const doc = await getGoogleSheet(spreadsheetId);
     const sheet = doc.sheetsByTitle[sheetName];
@@ -273,9 +286,10 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         analysis: match.analysis || '',
     };
 
-    if (existingRow) {
+    let savedRow = existingRow;
+    if (savedRow) {
         // 楽観的ロック: 保存前に lastUpdated を比較
-        const serverLastUpdated = existingRow.get('lastUpdated');
+        const serverLastUpdated = savedRow.get('lastUpdated');
         if (match.lastUpdated && serverLastUpdated && serverLastUpdated !== match.lastUpdated) {
             console.warn('[Sheets] Optimistic Locking Conflict:', { client: match.lastUpdated, server: serverLastUpdated });
             throw new Error('CONFLICT');
@@ -284,20 +298,111 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         // Update existing row
         Object.keys(dataToSave).forEach(key => {
             if (key !== 'matchId' && key !== 'createdAt' && key !== 'createdBy') {
-                existingRow.set(key, dataToSave[key as keyof typeof dataToSave]);
+                savedRow?.set(key, dataToSave[key as keyof typeof dataToSave]);
             }
         });
-        await existingRow.save();
+        await savedRow.save();
     } else {
         // Add new row
-        await sheet.addRow({
+        savedRow = await sheet.addRow({
             ...dataToSave,
             createdAt: new Date().toISOString(),
             createdBy: userEmail,
         });
     }
 
-    return dataToSave.lastUpdated;
+    return {
+        lastUpdated: dataToSave.lastUpdated,
+        cursor: {
+            spreadsheetId,
+            sheetName,
+            matchId: match.matchId,
+            rowNumber: savedRow.rowNumber,
+            headers: [...sheet.headerValues],
+            lastUpdated: dataToSave.lastUpdated,
+            issuedAt: Date.now(),
+        } satisfies MatchSaveCursor,
+    };
+}
+
+const LIVE_UPDATE_FIELDS = [
+    'ourScore',
+    'ourScore1H',
+    'ourScore2H',
+    'opponentScore',
+    'opponentScore1H',
+    'opponentScore2H',
+    'result',
+    'isLive',
+    'matchPhase',
+    'scorers',
+    'lastUpdated',
+    'lastUpdatedBy',
+] as const;
+
+function columnNumberToLetter(columnNumber: number): string {
+    let value = columnNumber;
+    let result = '';
+    while (value > 0) {
+        const remainder = (value - 1) % 26;
+        result = String.fromCharCode(65 + remainder) + result;
+        value = Math.floor((value - 1) / 26);
+    }
+    return result;
+}
+
+export async function updateLiveMatchByCursor(
+    cursor: MatchSaveCursor,
+    match: Match,
+    userEmail: string
+): Promise<{ lastUpdated: string; cursor: MatchSaveCursor }> {
+    const isExpired = Date.now() - cursor.issuedAt > 12 * 60 * 60_000;
+    if (isExpired || cursor.matchId !== match.matchId || cursor.lastUpdated !== match.lastUpdated) {
+        throw new Error('CONFLICT');
+    }
+
+    const lastUpdated = new Date().toISOString();
+    const values: Record<(typeof LIVE_UPDATE_FIELDS)[number], string | number> = {
+        ourScore: match.ourScore ?? 0,
+        ourScore1H: match.ourScore1H ?? '',
+        ourScore2H: match.ourScore2H ?? '',
+        opponentScore: match.opponentScore ?? 0,
+        opponentScore1H: match.opponentScore1H ?? '',
+        opponentScore2H: match.opponentScore2H ?? '',
+        result: match.result || 'draw',
+        isLive: match.isLive ? 'TRUE' : 'FALSE',
+        matchPhase: match.matchPhase || '',
+        scorers: match.scorers || '',
+        lastUpdated,
+        lastUpdatedBy: userEmail,
+    };
+    const escapedSheetName = cursor.sheetName.replace(/'/g, "''");
+    const data = LIVE_UPDATE_FIELDS.map(field => {
+        const headerIndex = cursor.headers.indexOf(field);
+        if (headerIndex === -1) {
+            throw new Error(`Missing required header: ${field}`);
+        }
+        const column = columnNumberToLetter(headerIndex + 1);
+        return {
+            range: `'${escapedSheetName}'!${column}${cursor.rowNumber}`,
+            values: [[values[field]]],
+        };
+    });
+
+    const auth = createSheetsAuth();
+    await auth.request({
+        url: `https://sheets.googleapis.com/v4/spreadsheets/${cursor.spreadsheetId}/values:batchUpdate`,
+        method: 'POST',
+        data: {
+            valueInputOption: 'RAW',
+            data,
+        },
+    });
+
+    return {
+        lastUpdated,
+        cursor: { ...cursor, lastUpdated },
+    };
 }
 
 export async function updateMatchLock(spreadsheetId: string, sheetName: string, matchId: string, email: string | null, expiresAt: string | null) {

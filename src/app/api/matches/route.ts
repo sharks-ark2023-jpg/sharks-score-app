@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getMatches, upsertMatch, updateCommonMaster, deleteMatch } from '@/lib/sheets';
+import { getMatches, upsertMatch, updateCommonMaster, deleteMatch, updateLiveMatchByCursor } from '@/lib/sheets';
 import { Match } from '@/types';
 import { getCached, setCached, invalidateCache } from '@/lib/cache';
 import { getErrorMessage } from '@/lib/errors';
 import { getGradeSpreadsheetId } from '@/lib/spreadsheet-config';
+import { createMatchSaveToken, verifyMatchSaveToken } from '@/lib/match-save-token';
 
 const MATCHES_TTL = 15_000;
 
@@ -49,10 +50,12 @@ export async function POST(req: NextRequest) {
         grade,
         match,
         syncMasters = true,
+        saveToken,
     }: {
         grade: string;
         match: Match;
         syncMasters?: boolean;
+        saveToken?: string;
     } = await req.json();
 
     if (!grade || !match) {
@@ -65,7 +68,17 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const lastUpdated = await upsertMatch(spreadsheetId, `${grade}_Matches`, match, session.user.email);
+        const sheetName = `${grade}_Matches`;
+        const verifiedCursor = saveToken ? verifyMatchSaveToken(saveToken) : null;
+        const canUseDirectUpdate =
+            !syncMasters &&
+            verifiedCursor?.spreadsheetId === spreadsheetId &&
+            verifiedCursor.sheetName === sheetName &&
+            verifiedCursor.matchId === match.matchId;
+
+        const saveResult = canUseDirectUpdate
+            ? await updateLiveMatchByCursor(verifiedCursor, match, session.user.email)
+            : await upsertMatch(spreadsheetId, sheetName, match, session.user.email);
         invalidateCache(`matches:${grade}`);
 
         // マスターデータへの同期（非同期で実行）
@@ -76,7 +89,12 @@ export async function POST(req: NextRequest) {
             updateCommonMaster(match.venueName, 'venue').catch(console.error);
         }
 
-        return NextResponse.json({ success: true, lastUpdated });
+        return NextResponse.json({
+            success: true,
+            lastUpdated: saveResult.lastUpdated,
+            saveToken: createMatchSaveToken(saveResult.cursor),
+            directUpdate: canUseDirectUpdate,
+        });
     } catch (error: unknown) {
         if (getErrorMessage(error) === 'CONFLICT') {
             return NextResponse.json({ error: 'Conflict' }, { status: 409 });

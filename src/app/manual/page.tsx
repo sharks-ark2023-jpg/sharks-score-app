@@ -88,7 +88,8 @@ export default function ManualPage() {
 
                     <div className="space-y-6 ml-4 border-l-2 border-gray-50 pl-6">
                         <p className="text-sm text-gray-600 leading-relaxed">
-                            「Live Recording」スイッチをオンにすると、リアルタイムでスコアが公開されます。
+                            「Live Recording」は初期状態でオンです。試合開始前は対戦相手・会場などを設定し、
+                            得点と得点者は試合開始後のライブ画面で記録します。
                         </p>
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● フェーズ管理（Control）</h3>
