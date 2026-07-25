@@ -93,21 +93,16 @@ export default function ManualPage() {
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● フェーズ管理（Control）</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">
-                                「試合開始」→「ハーフタイム」→「試合終了」と進めることで、
+                                前後半制では「前半開始」→「前半終了」→「後半開始」→「試合終了」と進めます。
+                                1本制では「試合開始」→「試合終了」だけを使用します。
                                 視聴者には現在の進行状況（前半・HT・後半）が表示されます。
                             </p>
                         </div>
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● 得点記録</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">
-                                得点の記録方法は2つあります。
-                            </p>
-                            <ul className="mt-2 space-y-2 text-sm text-gray-600">
-                                <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">①</span>画面に並んだ選手名ボタンをタップすると、その選手の得点としてスコアが即時+1されます（クイック記録）。</li>
-                                <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">②</span>「⚽ 得点を記録」ボタンを押すとモーダルが開き、選手を検索・選択して記録できます。</li>
-                            </ul>
                             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                                どちらの方法でも、ライブ中は自動でスプレッドシートに即時保存されます。
+                                画面に並んだ選手名をタップすると、その選手の得点としてスコアが即時+1され、自動保存されます。
+                                相手チームの得点やスコアの訂正も、＋／−を押した時点で自動保存されます。
                             </p>
                         </div>
                         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
@@ -117,11 +112,10 @@ export default function ManualPage() {
                                 直前の1件のみ取り消し可能です。ライブ中は取り消し後に自動保存されます。
                             </p>
                         </div>
-                        <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
-                            <h4 className="text-xs font-black text-red-700 uppercase tracking-widest mb-1">⚠️ 途中保存について</h4>
-                            <p className="text-xs text-red-600 leading-relaxed">
-                                得点記録ボタン以外でスコアを変更した場合は、「途中保存」ボタンを押すことで最新のスコアが外部へ公開されます。
-                                得点記録ボタン経由の場合は自動で保存されるため、途中保存は不要です。
+                        <div className="bg-green-50 p-4 rounded-2xl border border-green-100">
+                            <h4 className="text-xs font-black text-green-700 uppercase tracking-widest mb-1">✓ ライブ中は自動保存</h4>
+                            <p className="text-xs text-green-700 leading-relaxed">
+                                途中保存ボタンはありません。得点・訂正・フェーズ変更は操作のたびに保存され、完了すると「保存済み」と表示されます。
                             </p>
                         </div>
                     </div>

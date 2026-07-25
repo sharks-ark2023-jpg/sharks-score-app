@@ -156,7 +156,7 @@ export default function StatsPage() {
                     </svg>
                 </Link>
                 <div>
-                    <h1 className="text-xl font-black text-white tracking-tighter">得点ランキング</h1>
+                    <h1 className="text-xl font-black text-white tracking-tighter">{gradeId} サマリー</h1>
                     <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">{gradeId} MATCH CENTER</p>
                 </div>
             </header>

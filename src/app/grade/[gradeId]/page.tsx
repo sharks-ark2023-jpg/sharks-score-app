@@ -185,7 +185,7 @@ export default function GradeDashboard() {
               </div>
               <div className="relative z-10 grid grid-cols-2 text-center text-xs font-black">
                 <span className="py-3 border-b-[3px] border-sharks-accent">試合履歴</span>
-                <Link href={`/grade/${gradeId}/stats`} className="py-3 border-b-[3px] border-transparent text-white/75">ランキング</Link>
+                <Link href={`/grade/${gradeId}/stats`} className="py-3 border-b-[3px] border-transparent text-white/75">サマリー</Link>
               </div>
             </header>
 

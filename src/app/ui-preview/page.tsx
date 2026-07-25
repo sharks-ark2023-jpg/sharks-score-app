@@ -144,7 +144,7 @@ export default function UiPreviewPage() {
             </div>
             <div className="relative z-10 grid grid-cols-2 text-center text-xs font-black">
               <span className="border-b-[3px] border-sharks-accent py-3">試合履歴</span>
-              <span className="border-b-[3px] border-transparent py-3 text-white/70">ランキング</span>
+              <span className="border-b-[3px] border-transparent py-3 text-white/70">サマリー</span>
             </div>
           </header>
           <section className="app-surface px-3 pt-4">
@@ -186,7 +186,8 @@ export default function UiPreviewPage() {
               </div>
             </div>
             <div>
-              <h2 className="mb-3 text-sm font-black">得点した選手を選択</h2>
+              <h2 className="mb-1 text-sm font-black">得点者をタップ</h2>
+              <p className="mb-3 text-[10px] font-bold text-slate-400">タップすると得点を記録して自動保存します</p>
               <div className="grid grid-cols-3 gap-2">
                 {players.map(([number, name]) => (
                   <button
@@ -202,7 +203,6 @@ export default function UiPreviewPage() {
                 ))}
               </div>
             </div>
-            <button type="button" className="w-full rounded-xl bg-sharks-blue py-4 text-sm font-black text-white shadow-lg">得点を記録する</button>
           </section>
         </>
       )}
@@ -239,7 +239,7 @@ export default function UiPreviewPage() {
 
       {screen === 'ranking' && (
         <>
-          <PreviewHeader title="得点ランキング" />
+          <PreviewHeader title="U12 サマリー" />
           <section className="px-3 py-4">
             <div className="mb-3 rounded-xl border-b-[3px] border-sharks-accent bg-sharks-ink py-3 text-center text-sm font-black text-white">
               チーム内 得点ランキング

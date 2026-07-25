@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        await upsertMatch(spreadsheetId, `${grade}_Matches`, match, session.user.email);
+        const lastUpdated = await upsertMatch(spreadsheetId, `${grade}_Matches`, match, session.user.email);
         invalidateCache(`matches:${grade}`);
 
         // マスターデータへの同期（非同期で実行）
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
             updateCommonMaster(match.venueName, 'venue').catch(console.error);
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, lastUpdated });
     } catch (error: unknown) {
         if (getErrorMessage(error) === 'CONFLICT') {
             return NextResponse.json({ error: 'Conflict' }, { status: 409 });

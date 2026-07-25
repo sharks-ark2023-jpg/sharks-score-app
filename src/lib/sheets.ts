@@ -222,6 +222,8 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
             createdBy: userEmail,
         });
     }
+
+    return dataToSave.lastUpdated;
 }
 
 export async function updateMatchLock(spreadsheetId: string, sheetName: string, matchId: string, email: string | null, expiresAt: string | null) {
