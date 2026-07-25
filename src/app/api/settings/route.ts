@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getGlobalSettings, getCommonMasters, updateGlobalSettings } from '@/lib/sheets';
-import { getCached, setCached, invalidateCache } from '@/lib/cache';
+import { updateGlobalSettings } from '@/lib/sheets';
 import { getErrorMessage } from '@/lib/errors';
 import { getCommonSpreadsheetId } from '@/lib/spreadsheet-config';
-
-const SETTINGS_CACHE_KEY = 'settings:global';
-const SETTINGS_TTL = 30_000;
+import { getCachedSettingsBundle, invalidateSettingsBundle } from '@/lib/settings-cache';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        let cached = getCached<{ settings: unknown; masters: unknown }>(SETTINGS_CACHE_KEY);
-        if (!cached) {
-            const [settings, masters] = await Promise.all([
-                getGlobalSettings(),
-                getCommonMasters().catch(() => [])
-            ]);
-            cached = { settings, masters };
-            setCached(SETTINGS_CACHE_KEY, cached, SETTINGS_TTL);
-        }
+        const cached = await getCachedSettingsBundle();
         return NextResponse.json({
             ...cached,
             envCommonId: getCommonSpreadsheetId(),
@@ -45,7 +34,7 @@ export async function POST(req: NextRequest) {
     try {
         const settings = await req.json();
         await updateGlobalSettings(settings, session.user.email);
-        invalidateCache(SETTINGS_CACHE_KEY);
+        invalidateSettingsBundle();
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
         return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });

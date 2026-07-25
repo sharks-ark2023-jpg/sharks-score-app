@@ -3,44 +3,113 @@ import { JWT } from 'google-auth-library';
 import { Match, GlobalSettings, CommonMaster } from '@/types';
 import { getCommonSpreadsheetId } from '@/lib/spreadsheet-config';
 
+const SHEET_DOCUMENT_TTL = 5 * 60_000;
+const documentCache = new Map<string, { doc: GoogleSpreadsheet; expiresAt: number }>();
+const documentLoads = new Map<string, Promise<GoogleSpreadsheet>>();
+const verifiedHeaders = new Set<string>();
+
 const SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive.file',
 ];
 
 export async function getGoogleSheet(spreadsheetId: string) {
-    let serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    let privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
-        .split('\\n').join('\n')
-        .replace(/^["']/, '').replace(/["']$/, '');
+    const cached = documentCache.get(spreadsheetId);
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.doc;
+    }
 
-    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-        try {
-            let jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-            if (!jsonStr.trim().startsWith('{')) {
-                jsonStr = Buffer.from(jsonStr, 'base64').toString();
+    const pending = documentLoads.get(spreadsheetId);
+    if (pending) return pending;
+
+    const loadDocument = async () => {
+        let serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+        let privateKey = (process.env.GOOGLE_PRIVATE_KEY || '')
+            .split('\\n').join('\n')
+            .replace(/^["']/, '').replace(/["']$/, '');
+
+        if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+            try {
+                let jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+                if (!jsonStr.trim().startsWith('{')) {
+                    jsonStr = Buffer.from(jsonStr, 'base64').toString();
+                }
+                const credentials = JSON.parse(jsonStr);
+                serviceAccountEmail = credentials.client_email;
+                privateKey = credentials.private_key;
+            } catch (err) {
+                console.error('[Sheets] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON:', err);
             }
-            const credentials = JSON.parse(jsonStr);
-            serviceAccountEmail = credentials.client_email;
-            privateKey = credentials.private_key;
-        } catch (err) {
-            console.error('[Sheets] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON:', err);
         }
-    }
 
-    if (!serviceAccountEmail || !privateKey) {
-        throw new Error('Google Service Account credentials are not configured');
-    }
+        if (!serviceAccountEmail || !privateKey) {
+            throw new Error('Google Service Account credentials are not configured');
+        }
 
-    const jwt = new JWT({
-        email: serviceAccountEmail,
-        key: privateKey,
-        scopes: SCOPES,
+        const jwt = new JWT({
+            email: serviceAccountEmail,
+            key: privateKey,
+            scopes: SCOPES,
+        });
+
+        const doc = new GoogleSpreadsheet(spreadsheetId, jwt);
+        await doc.loadInfo();
+        documentCache.set(spreadsheetId, {
+            doc,
+            expiresAt: Date.now() + SHEET_DOCUMENT_TTL,
+        });
+        return doc;
+    };
+
+    const promise = loadDocument();
+    documentLoads.set(spreadsheetId, promise);
+    try {
+        return await promise;
+    } finally {
+        documentLoads.delete(spreadsheetId);
+    }
+}
+
+export async function getSettingsBundle(): Promise<{
+    settings: GlobalSettings | null;
+    masters: CommonMaster[];
+}> {
+    const commonId = getCommonSpreadsheetId();
+    if (!commonId) return { settings: null, masters: [] };
+
+    const doc = await getGoogleSheet(commonId);
+    const settingsSheet = doc.sheetsByTitle['GlobalSettings'];
+    const mastersSheet = doc.sheetsByTitle['CommonMasters'];
+    const [settingsRows, masterRows] = await Promise.all([
+        settingsSheet ? settingsSheet.getRows() : Promise.resolve([]),
+        mastersSheet ? mastersSheet.getRows() : Promise.resolve([]),
+    ]);
+
+    const settingsData = settingsRows[0]?.toObject();
+    const settings = settingsData ? {
+        teamName: settingsData.teamName,
+        teamLogoUrl: settingsData.teamLogoUrl,
+        teamColor: settingsData.teamColor,
+        gradesConfig: settingsData.gradesConfig,
+        commonSpreadsheetId: settingsData.commonSpreadsheetId,
+        lastUpdated: settingsData.lastUpdated,
+        lastUpdatedBy: settingsData.lastUpdatedBy,
+    } as GlobalSettings : null;
+
+    const masters = masterRows.map(row => {
+        const data = row.toObject();
+        return {
+            masterType: data.masterType,
+            name: data.name,
+            number: data.number,
+            grade: data.grade,
+            createdAt: data.createdAt,
+            lastUsed: data.lastUsed,
+            usageCount: parseInt(data.usageCount || '0'),
+        } as CommonMaster;
     });
 
-    const doc = new GoogleSpreadsheet(spreadsheetId, jwt);
-    await doc.loadInfo();
-    return doc;
+    return { settings, masters };
 }
 
 export async function getGlobalSettings(): Promise<GlobalSettings | null> {
@@ -160,23 +229,28 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         'editingBy', 'editingExpires', 'analysis'
     ];
 
-    await sheet.loadHeaderRow();
-    const currentHeaders = sheet.headerValues;
-    const missingHeaders = requiredHeaders.filter(h => !currentHeaders.includes(h));
+    const headerCacheKey = `${spreadsheetId}:${sheetName}`;
+    if (!verifiedHeaders.has(headerCacheKey)) {
+        await sheet.loadHeaderRow();
+        const currentHeaders = sheet.headerValues;
+        const missingHeaders = requiredHeaders.filter(h => !currentHeaders.includes(h));
 
-    if (missingHeaders.length > 0) {
-        const newHeaders = [...currentHeaders, ...missingHeaders];
-        console.log(`[Sheets] Adding missing headers to ${sheetName}:`, missingHeaders);
+        if (missingHeaders.length > 0) {
+            const newHeaders = [...currentHeaders, ...missingHeaders];
+            console.log(`[Sheets] Adding missing headers to ${sheetName}:`, missingHeaders);
 
-        // 列数が足りない場合はリサイズ
-        if (sheet.columnCount < newHeaders.length) {
-            await sheet.resize({
-                rowCount: sheet.rowCount,
-                columnCount: newHeaders.length
-            });
+            // 列数が足りない場合はリサイズ
+            if (sheet.columnCount < newHeaders.length) {
+                await sheet.resize({
+                    rowCount: sheet.rowCount,
+                    columnCount: newHeaders.length
+                });
+            }
+
+            await sheet.setHeaderRow(newHeaders);
         }
 
-        await sheet.setHeaderRow(newHeaders);
+        verifiedHeaders.add(headerCacheKey);
     }
 
     const dataToSave = {

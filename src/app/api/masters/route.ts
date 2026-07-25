@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getCommonMasters, updateCommonMaster, getGoogleSheet, getGlobalSettings } from '@/lib/sheets';
-import { getCached, setCached, invalidateCache } from '@/lib/cache';
+import { updateCommonMaster, getGoogleSheet, getGlobalSettings } from '@/lib/sheets';
 import { getErrorMessage } from '@/lib/errors';
 import { getCommonSpreadsheetId } from '@/lib/spreadsheet-config';
-
-const MASTERS_CACHE_KEY = 'masters:common';
-const MASTERS_TTL = 30_000;
+import { getCachedSettingsBundle, invalidateSettingsBundle } from '@/lib/settings-cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,11 +28,7 @@ export async function GET(req: NextRequest) {
     const commonId = await getSpreadsheetId();
 
     try {
-        let masters = getCached<Awaited<ReturnType<typeof getCommonMasters>>>(MASTERS_CACHE_KEY);
-        if (!masters) {
-            masters = await getCommonMasters();
-            setCached(MASTERS_CACHE_KEY, masters, MASTERS_TTL);
-        }
+        const { masters } = await getCachedSettingsBundle();
         let filtered = masters;
         if (type) {
             filtered = filtered.filter(m => m.masterType === type);
@@ -66,7 +59,7 @@ export async function POST(req: NextRequest) {
         }
 
         await updateCommonMaster(name, type, grade, number);
-        invalidateCache(MASTERS_CACHE_KEY);
+        invalidateSettingsBundle();
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
         return NextResponse.json({
@@ -108,6 +101,7 @@ export async function DELETE(req: NextRequest) {
 
         if (existingRow) {
             await existingRow.delete();
+            invalidateSettingsBundle();
             return NextResponse.json({ success: true });
         } else {
             return NextResponse.json({ error: 'Master not found' }, { status: 404 });

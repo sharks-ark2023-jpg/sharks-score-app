@@ -43,6 +43,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
     const liveSavePendingRef = useRef<Partial<Match> | null>(null);
     const liveSaveInFlightRef = useRef(false);
+    const liveSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const lastLiveSaveAtRef = useRef(0);
     const formDataRef = useRef(formData);
 
     const { data } = useSWR<{ settings: GlobalSettings, masters: CommonMaster[] }>(
@@ -58,6 +60,13 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     useEffect(() => {
         formDataRef.current = formData;
     }, [formData]);
+
+    useEffect(() => {
+        return () => {
+            if (liveSaveTimerRef.current) clearTimeout(liveSaveTimerRef.current);
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         if (!initialMatch) return;
@@ -186,7 +195,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         formDataRef.current = newData;
         setFormData(newData);
         if (currentData.matchPhase !== 'pre-game') {
-            enqueueLiveSave(newData);
+            scheduleLiveSave(newData);
         }
     };
 
@@ -198,7 +207,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         setFormData(snapshot);
         setLastGoalSnapshot(null);
         if (currentData.matchPhase !== 'pre-game') {
-            await enqueueLiveSave(snapshot);
+            scheduleLiveSave(snapshot);
         } else {
             await doSave(snapshot, true);
         }
@@ -211,7 +220,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             const res = await fetch('/api/matches', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ grade: gradeId, match: dataToSave }),
+                body: JSON.stringify({
+                    grade: gradeId,
+                    match: dataToSave,
+                    syncMasters: !stayOnPage,
+                }),
             });
 
             if (res.status === 409) {
@@ -288,10 +301,36 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 if (pendingData) {
                     liveSavePendingRef.current = { ...pendingData, lastUpdated };
                 }
+                lastLiveSaveAtRef.current = Date.now();
             }
         } finally {
             liveSaveInFlightRef.current = false;
         }
+    };
+
+    const scheduleLiveSave = (data: Partial<Match>) => {
+        liveSavePendingRef.current = data;
+        if (liveSaveTimerRef.current) clearTimeout(liveSaveTimerRef.current);
+
+        const minimumIntervalRemaining = Math.max(
+            0,
+            3_000 - (Date.now() - lastLiveSaveAtRef.current)
+        );
+        const delay = Math.max(1_500, minimumIntervalRemaining);
+        liveSaveTimerRef.current = setTimeout(() => {
+            liveSaveTimerRef.current = null;
+            const pendingData = liveSavePendingRef.current;
+            if (pendingData) enqueueLiveSave(pendingData);
+        }, delay);
+    };
+
+    const flushLiveSave = (data: Partial<Match>) => {
+        if (liveSaveTimerRef.current) {
+            clearTimeout(liveSaveTimerRef.current);
+            liveSaveTimerRef.current = null;
+        }
+        liveSavePendingRef.current = null;
+        return enqueueLiveSave(data);
     };
 
     const incrementScore = (side: 'our' | 'opponent', amount: number) => {
@@ -300,7 +339,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         formDataRef.current = updated;
         setFormData(updated);
         if (currentData.matchPhase !== 'pre-game') {
-            enqueueLiveSave(updated);
+            scheduleLiveSave(updated);
         }
     };
 
@@ -308,7 +347,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         const updated = { ...formDataRef.current, matchPhase, isLive };
         formDataRef.current = updated;
         setFormData(updated);
-        enqueueLiveSave(updated);
+        flushLiveSave(updated);
     };
 
     const handleSubmit = async (e: React.FormEvent, stayOnPage: boolean = false) => {
@@ -326,6 +365,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         const finalData = { ...formDataRef.current, matchPhase: 'full-time' as const, isLive: false };
         formDataRef.current = finalData;
         setFormData(finalData);
+        if (liveSaveTimerRef.current) {
+            clearTimeout(liveSaveTimerRef.current);
+            liveSaveTimerRef.current = null;
+        }
+        liveSavePendingRef.current = null;
         await doSave(finalData, false);
     };
 

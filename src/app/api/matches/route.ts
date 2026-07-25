@@ -45,7 +45,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { grade, match }: { grade: string, match: Match } = await req.json();
+    const {
+        grade,
+        match,
+        syncMasters = true,
+    }: {
+        grade: string;
+        match: Match;
+        syncMasters?: boolean;
+    } = await req.json();
 
     if (!grade || !match) {
         return NextResponse.json({ error: 'Grade and match data are required' }, { status: 400 });
@@ -61,10 +69,10 @@ export async function POST(req: NextRequest) {
         invalidateCache(`matches:${grade}`);
 
         // マスターデータへの同期（非同期で実行）
-        if (match.opponentName) {
+        if (syncMasters && match.opponentName) {
             updateCommonMaster(match.opponentName, 'opponent').catch(console.error);
         }
-        if (match.venueName) {
+        if (syncMasters && match.venueName) {
             updateCommonMaster(match.venueName, 'venue').catch(console.error);
         }
 
