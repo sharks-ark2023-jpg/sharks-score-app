@@ -81,9 +81,14 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                         </div>
 
                         {/* 対戦相手 */}
-                        <div className="w-1/3 text-right flex items-center justify-end gap-2">
-                            <span className="text-[13px] font-black text-slate-800 leading-tight truncate">{match.opponentName}</span>
-                            <svg className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-1/3 min-w-0 text-right flex items-center justify-end gap-1.5">
+                            <span
+                                className="line-clamp-2 min-w-0 text-[13px] font-black text-slate-800 leading-tight [overflow-wrap:anywhere]"
+                                title={match.opponentName}
+                            >
+                                {match.opponentName}
+                            </span>
+                            <svg className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 5l7 7-7 7" />
                             </svg>
                         </div>
@@ -161,18 +166,32 @@ export default function MatchList({ matches, gradeId, teamName = '自チーム' 
                             </div>
 
                             {/* 対戦相手 */}
-                            <div className="w-1/3 text-right flex items-center justify-end gap-2">
-                                <span className="text-[13px] font-black text-slate-800 leading-tight truncate">{match.opponentName}</span>
-                                <svg className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-1/3 min-w-0 text-right flex items-center justify-end gap-1.5">
+                                <span
+                                    className="line-clamp-2 min-w-0 text-[13px] font-black text-slate-800 leading-tight [overflow-wrap:anywhere]"
+                                    title={match.opponentName}
+                                >
+                                    {match.opponentName}
+                                </span>
+                                <svg className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 5l7 7-7 7" />
                                 </svg>
                             </div>
                         </div>
 
-                        {/* 下段: 得点者など */}
-                        {match.scorers && (
-                            <div className="mt-2 pt-3 border-t border-slate-100/60 flex items-center justify-start">
-                                <span className="text-[9px] font-bold text-slate-400 truncate">⚽ {match.scorers}</span>
+                        {/* 下段: 会場・得点者 */}
+                        {(match.venueName || match.scorers) && (
+                            <div className="mt-2 pt-2.5 border-t border-slate-100/60 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                {match.venueName && (
+                                    <span className="min-w-0 max-w-full text-[9px] font-bold text-slate-500 truncate">
+                                        📍 {match.venueName}
+                                    </span>
+                                )}
+                                {match.scorers && (
+                                    <span className="min-w-0 max-w-full text-[9px] font-bold text-slate-400 truncate">
+                                        ⚽ {match.scorers}
+                                    </span>
+                                )}
                             </div>
                         )}
                     </Link>
