@@ -658,6 +658,16 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             </div>
                         </div>
 
+                        {/* この試合で記録済みの得点者 */}
+                        <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+                            <span className="shrink-0 text-xs font-black text-sharks-blue">⚽ 得点者</span>
+                            <span className={`min-w-0 break-words text-xs font-bold leading-relaxed ${
+                                formData.scorers ? 'text-slate-800' : 'text-slate-400'
+                            }`}>
+                                {formData.scorers || 'まだ得点記録はありません'}
+                            </span>
+                        </div>
+
                         {/* スコア入力カウンター 2列カード (カンプ②) */}
                         <div className="space-y-1">
                             <span className="text-xs font-black text-slate-500 uppercase tracking-widest block pl-1">スコアを入力</span>

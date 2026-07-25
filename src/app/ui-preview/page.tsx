@@ -170,6 +170,10 @@ export default function UiPreviewPage() {
               <div className="flex items-center gap-3 font-bebas text-6xl"><span>1</span><span className="text-3xl">-</span><span>0</span></div>
               <div className="w-1/3 text-right text-xs font-black">対戦相手</div>
             </div>
+            <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+              <span className="shrink-0 text-xs font-black text-sharks-blue">⚽ 得点者</span>
+              <span className="text-xs font-bold text-slate-800">いたる</span>
+            </div>
             <div>
               <h2 className="mb-2 text-sm font-black">スコアを入力</h2>
               <div className="grid grid-cols-2 gap-3">
