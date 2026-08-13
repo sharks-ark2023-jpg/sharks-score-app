@@ -12,19 +12,19 @@
 ```
 sharks-score-app/
 ├── src/
-│   ├── app/             → Next.js App Router（ページ構成）
-│   │   ├── page.tsx     → トップ（学年一覧）
-│   │   └── grade/[gradeId]/page.tsx → 試合記録・得点入力
+│   ├── app/             → Next.js App Router（ページ・API）
 │   ├── components/      → UIコンポーネント
-│   └── lib/             → ユーティリティ・型定義
+│   ├── lib/             → 認証・Google Sheets・集計などの共通処理
+│   ├── types/           → TypeScript型定義
+│   └── proxy.ts        → 編集画面の認証・LINE内ブラウザ判定
 ├── public/              → 静的ファイル
-├── CHANGELOG.md         → 変更履歴（バージョン管理）
+├── CHANGELOG.md        → 変更履歴
 └── README.md
 ```
 
 **技術スタック**：Next.js / TypeScript / Tailwind CSS
 **デプロイ**：Vercel（自動デプロイ）
-**認証**：Google認証（Firebase）
+**認証**：NextAuth.js（Google OAuth）
 
 ---
 

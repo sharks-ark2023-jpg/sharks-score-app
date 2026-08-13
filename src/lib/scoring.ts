@@ -8,6 +8,16 @@ export interface TopScorer {
 
 export type RankingFilter = 'all' | 'tournament' | 'friendly' | 'saturday' | 'sunday' | 'holiday';
 
+function parseScorerEntry(entry: string): { name: string; goals: number } {
+  const matchedEntry = entry.match(/^(.+)\((\d+)\)$/);
+  if (!matchedEntry) return { name: entry, goals: 1 };
+
+  return {
+    name: matchedEntry[1].trim(),
+    goals: Number.parseInt(matchedEntry[2], 10),
+  };
+}
+
 export function filterRankingMatches(matches: Match[], filter: RankingFilter): Match[] {
   return matches.filter(match => {
     if (filter === 'all') return true;
@@ -32,45 +42,33 @@ export function calcTopScorers(
   limit?: number
 ): TopScorer[] {
   const counts: Record<string, number> = {};
+  const registeredPlayers = playerNames ? new Set(playerNames) : null;
 
-  // プレイヤー名が指定されていれば、初期化
   if (playerNames) {
-    playerNames.forEach(p => (counts[p] = 0));
+    playerNames.forEach(name => {
+      counts[name] = 0;
+    });
   }
 
-  // 全試合の得点者を集計
-  matches.forEach(m => {
-    if (!m.scorers) return;
+  matches.forEach(match => {
+    if (!match.scorers) return;
 
-    const parts = m.scorers.split(',').map(s => s.trim()).filter(Boolean);
-    parts.forEach(p => {
-      const match = p.match(/^(.+)\((\d+)\)$/);
-      if (match) {
-        // "佐藤(2)" 形式
-        const name = match[1].trim();
-        const count = parseInt(match[2]);
-        if (!playerNames || playerNames.includes(name)) {
-          counts[name] = (counts[name] || 0) + count;
+    match.scorers
+      .split(',')
+      .map(entry => entry.trim())
+      .filter(Boolean)
+      .map(parseScorerEntry)
+      .forEach(({ name, goals }) => {
+        if (!registeredPlayers || registeredPlayers.has(name)) {
+          counts[name] = (counts[name] || 0) + goals;
         }
-      } else {
-        // "田中" 形式（得点1件）
-        if (!playerNames || playerNames.includes(p)) {
-          counts[p] = (counts[p] || 0) + 1;
-        }
-      }
-    });
+      });
   });
 
-  // ランキングを構築・ソート
   const ranking = Object.entries(counts)
-    .filter(([, count]) => count > 0)
-    .sort((a, b) => b[1] - a[1])
+    .filter(([, goals]) => goals > 0)
+    .sort(([, goalsA], [, goalsB]) => goalsB - goalsA)
     .map(([name, goals]) => ({ name, goals }));
 
-  // 制限がある場合はスライス
-  if (limit !== undefined) {
-    return ranking.slice(0, limit);
-  }
-
-  return ranking;
+  return limit === undefined ? ranking : ranking.slice(0, limit);
 }
