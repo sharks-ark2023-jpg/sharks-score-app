@@ -6,8 +6,43 @@ import { Match, CommonMaster, GlobalSettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import Autocomplete from './Autocomplete';
+import Modal from './Modal';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+const calculateResult = (our: number, opponent: number): 'win' | 'loss' | 'draw' => {
+    if (our > opponent) return 'win';
+    if (our < opponent) return 'loss';
+    return 'draw';
+};
+
+export const computeRemoveGoalData = (playerName: string, half: '1H' | '2H', current: Partial<Match>): Partial<Match> => {
+    const updated = { ...current };
+    const parts = (current.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
+    const nameMap: Record<string, number> = {};
+    parts.forEach(part => {
+        const matched = part.match(/^(.+)\((\d+)\)$/);
+        if (matched) {
+            const name = matched[1].trim();
+            nameMap[name] = (nameMap[name] || 0) + parseInt(matched[2]);
+        } else {
+            nameMap[part] = (nameMap[part] || 0) + 1;
+        }
+    });
+
+    if (nameMap[playerName]) {
+        nameMap[playerName] -= 1;
+        if (nameMap[playerName] === 0) delete nameMap[playerName];
+    }
+    updated.scorers = Object.entries(nameMap)
+        .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
+        .join(', ');
+    updated.ourScore = Math.max(0, (current.ourScore || 0) - 1);
+    if (half === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) - 1);
+    if (half === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) - 1);
+    updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
+    return updated;
+};
 
 type SaveResult = {
     lastUpdated: string;
@@ -38,11 +73,12 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             matchDuration: 15,
         }
     );
-    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [showAdvanced, setShowAdvanced] = useState(initialMatch?.matchPhase === 'full-time');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lockInfo, setLockInfo] = useState<{ locked: boolean, lockedBy?: string } | null>(null);
     const [lastGoalSnapshot, setLastGoalSnapshot] = useState<Partial<Match> | null>(null);
+    const [scorerToRemove, setScorerToRemove] = useState<string | null>(null);
     const [savedToast, setSavedToast] = useState(false);
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,12 +154,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             }).catch(console.error);
         };
     }, [gradeId, initialMatch]);
-
-    const calculateResult = (our: number, opponent: number): 'win' | 'loss' | 'draw' => {
-        if (our > opponent) return 'win';
-        if (our < opponent) return 'loss';
-        return 'draw';
-    };
 
     const computeScoreData = (side: 'our' | 'opponent', amount: number, current: Partial<Match>) => {
             const phase = current.matchPhase;
@@ -216,6 +246,19 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             scheduleLiveSave(snapshot);
         } else {
             await doSave(snapshot, true);
+        }
+    };
+
+    const handleRemoveScorer = (half: '1H' | '2H') => {
+        if (!scorerToRemove) return;
+        const currentData = formDataRef.current;
+        const newData = computeRemoveGoalData(scorerToRemove, half, currentData);
+        formDataRef.current = newData;
+        setFormData(newData);
+        setLastGoalSnapshot(null);
+        setScorerToRemove(null);
+        if (currentData.matchPhase !== 'pre-game' && currentData.matchPhase !== 'full-time') {
+            scheduleLiveSave(newData);
         }
     };
 
@@ -386,7 +429,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             liveSaveTimerRef.current = null;
         }
         liveSavePendingRef.current = null;
-        await doSave(finalData, false);
+        const saveResult = await doSave(finalData, true);
+        if (saveResult) setShowAdvanced(true);
     };
 
     const handleDelete = async () => {
@@ -407,6 +451,14 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     };
 
     const isLiveMode = formData.matchPhase !== 'pre-game';
+    const scorerEntries = (formData.scorers || '')
+        .split(',')
+        .map(entry => entry.trim())
+        .filter(Boolean)
+        .map(entry => {
+            const matched = entry.match(/^(.+)\((\d+)\)$/);
+            return matched ? { name: matched[1].trim(), goals: parseInt(matched[2]) } : { name: entry, goals: 1 };
+        });
 
     if (lockInfo?.locked) {
         return (
@@ -677,11 +729,22 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         {/* この試合で記録済みの得点者 */}
                         <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3">
                             <span className="shrink-0 text-xs font-black text-sharks-blue">⚽ 得点者</span>
-                            <span className={`min-w-0 break-words text-xs font-bold leading-relaxed ${
-                                formData.scorers ? 'text-slate-800' : 'text-slate-400'
-                            }`}>
-                                {formData.scorers || 'まだ得点記録はありません'}
-                            </span>
+                            {scorerEntries.length > 0 ? (
+                                <div className="flex min-w-0 flex-wrap gap-2">
+                                    {scorerEntries.map(({ name, goals }) => (
+                                        <button
+                                            key={name}
+                                            type="button"
+                                            onClick={() => setScorerToRemove(name)}
+                                            className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition-colors hover:border-red-300 hover:bg-red-50"
+                                        >
+                                            {name}{goals > 1 ? ` ×${goals}` : ''}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <span className="text-xs font-bold text-slate-400">まだ得点記録はありません</span>
+                            )}
                         </div>
 
                         {/* スコア入力カウンター 2列カード (カンプ②) */}
@@ -937,9 +1000,12 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                     </>
                 )}
 
-                {/* Advanced Options・得点者（ライブ中は非表示） */}
-                {!isLiveMode && (
+                {/* 試合詳細オプション（開始前・終了後のみ） */}
+                {(!isLiveMode || formData.matchPhase === 'full-time') && (
                 <>
+                {formData.matchPhase === 'full-time' ? (
+                    <h2 className="pt-2 text-sm font-black text-slate-800">試合後の記録（PK・MVP・メモ）</h2>
+                ) : (
                 <div className="pt-2">
                     <button
                         type="button"
@@ -963,8 +1029,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         )}
                     </button>
                 </div>
+                )}
 
-                {showAdvanced && (
+                {(showAdvanced || formData.matchPhase === 'full-time') && (
                     <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -1001,7 +1068,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 )}
 
 
-                {!formData.isLive && (
+                {!formData.isLive && formData.matchPhase === 'pre-game' && (
                     <Autocomplete
                         label="得点者 (自チーム)"
                         value={formData.scorers || ''}
@@ -1013,7 +1080,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 )}
 
 
-                {showAdvanced && (
+                {(showAdvanced || formData.matchPhase === 'full-time') && (
                     <>
                         <Autocomplete
                             label="MVP"
@@ -1055,11 +1122,61 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         disabled={saving}
                         className="flex-[2] px-4 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 disabled:bg-blue-300 transition-all uppercase text-[10px] tracking-widest"
                     >
-                        {saving ? 'SAVING...' : '試合記録を保存'}
+                        {saving ? 'SAVING...' : formData.matchPhase === 'full-time' ? '記録を確定' : '試合記録を保存'}
                     </button>
                 </div>
             </div>
             )}
+
+            <Modal
+                isOpen={scorerToRemove !== null}
+                onClose={() => setScorerToRemove(null)}
+                title={scorerToRemove ? `${scorerToRemove} の得点を1点削除` : ''}
+            >
+                <p className="mb-5 text-sm leading-relaxed text-slate-600">
+                    {formData.matchFormat === 'halves'
+                        ? '削除する得点の前半・後半を選択してください。'
+                        : 'この選手の得点を1点削除します。'}
+                </p>
+                <div className="flex flex-col gap-3">
+                    {formData.matchFormat === 'halves' ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveScorer('1H')}
+                                disabled={(formData.ourScore1H || 0) === 0}
+                                className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-200"
+                            >
+                                前半の得点を削除
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveScorer('2H')}
+                                disabled={(formData.ourScore2H || 0) === 0}
+                                className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-200"
+                            >
+                                後半の得点を削除
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => handleRemoveScorer('1H')}
+                            disabled={(formData.ourScore || 0) === 0}
+                            className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-200"
+                        >
+                            削除する
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setScorerToRemove(null)}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-500 transition-colors hover:bg-slate-50"
+                    >
+                        キャンセル
+                    </button>
+                </div>
+            </Modal>
 
             {
                 initialMatch && (

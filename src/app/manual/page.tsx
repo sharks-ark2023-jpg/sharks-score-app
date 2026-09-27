@@ -113,10 +113,22 @@ export default function ManualPage() {
                                 直前の1件のみ取り消し可能です。ライブ中は取り消し後に自動保存されます。
                             </p>
                         </div>
+                        <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
+                            <h4 className="text-xs font-black text-red-700 uppercase tracking-widest mb-1">得点者を個別に削除するには</h4>
+                            <p className="text-xs text-red-700 leading-relaxed">
+                                得点者名をタップして削除する得点を選びます。前後半制では前半・後半のどちらの得点かを選択し、1本制ではそのまま1点を削除します。
+                            </p>
+                        </div>
                         <div className="bg-green-50 p-4 rounded-2xl border border-green-100">
                             <h4 className="text-xs font-black text-green-700 uppercase tracking-widest mb-1">✓ ライブ中は自動保存</h4>
                             <p className="text-xs text-green-700 leading-relaxed">
                                 途中保存ボタンはありません。得点・訂正・フェーズ変更は操作のたびに保存され、完了すると「保存済み」と表示されます。
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-800 mb-2">● 試合終了後の記録</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                「試合終了」を押すとスコアを保存したまま試合後の記録画面に留まります。PK戦・MVP・メモを入力して「記録を確定」を押してください。
                             </p>
                         </div>
                     </div>

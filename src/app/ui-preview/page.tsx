@@ -172,7 +172,7 @@ export default function UiPreviewPage() {
             </div>
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3">
               <span className="shrink-0 text-xs font-black text-sharks-blue">⚽ 得点者</span>
-              <span className="text-xs font-bold text-slate-800">いたる</span>
+              <button type="button" className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm">いたる</button>
             </div>
             <div>
               <h2 className="mb-2 text-sm font-black">スコアを入力</h2>
