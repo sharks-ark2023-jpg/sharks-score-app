@@ -128,7 +128,7 @@ export default function ManualPage() {
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● 試合終了後の記録</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">
-                                「試合終了」を押すとスコアを保存したまま試合後の記録画面に留まります。PK戦・MVP・メモを入力して「記録を確定」を押してください。
+                                「試合終了」を押すとスコアを保存したまま試合後の記録画面に留まります。PK戦・MVP・メモに加え、＋／−や得点者タップで結果を訂正できます。前後半制では訂正する前半・後半を選び、最後に「記録を確定」を押してください。
                             </p>
                         </div>
                     </div>

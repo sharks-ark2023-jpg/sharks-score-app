@@ -30,10 +30,9 @@ export const computeRemoveGoalData = (playerName: string, half: '1H' | '2H', cur
         }
     });
 
-    if (nameMap[playerName]) {
-        nameMap[playerName] -= 1;
-        if (nameMap[playerName] === 0) delete nameMap[playerName];
-    }
+    if (!nameMap[playerName]) return current;
+    nameMap[playerName] -= 1;
+    if (nameMap[playerName] === 0) delete nameMap[playerName];
     updated.scorers = Object.entries(nameMap)
         .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
         .join(', ');
@@ -44,10 +43,58 @@ export const computeRemoveGoalData = (playerName: string, half: '1H' | '2H', cur
     return updated;
 };
 
+export const computeScoreData = (side: 'our' | 'opponent', amount: number, current: Partial<Match>, half?: '1H' | '2H'): Partial<Match> => {
+    const phase = half || current.matchPhase;
+    const updated = { ...current };
+
+    if (side === 'our') {
+        updated.ourScore = Math.max(0, (current.ourScore || 0) + amount);
+        if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + amount);
+        if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + amount);
+    } else {
+        updated.opponentScore = Math.max(0, (current.opponentScore || 0) + amount);
+        if (phase === '1H') updated.opponentScore1H = Math.max(0, (current.opponentScore1H || 0) + amount);
+        if (phase === '2H') updated.opponentScore2H = Math.max(0, (current.opponentScore2H || 0) + amount);
+    }
+
+    updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
+    return updated;
+};
+
+export const computeGoalData = (playerName: string, current: Partial<Match>, half?: '1H' | '2H'): Partial<Match> => {
+    const phase = half || current.matchPhase;
+    const updated = { ...current };
+    updated.ourScore = Math.max(0, (current.ourScore || 0) + 1);
+    if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + 1);
+    if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + 1);
+    updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
+
+    const parts = (current.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
+    const nameMap: Record<string, number> = {};
+    parts.forEach(part => {
+        const matched = part.match(/^(.+)\((\d+)\)$/);
+        if (matched) {
+            const name = matched[1].trim();
+            nameMap[name] = (nameMap[name] || 0) + parseInt(matched[2]);
+        } else {
+            nameMap[part] = (nameMap[part] || 0) + 1;
+        }
+    });
+    nameMap[playerName] = (nameMap[playerName] || 0) + 1;
+    updated.scorers = Object.entries(nameMap)
+        .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
+        .join(', ');
+    return updated;
+};
+
 type SaveResult = {
     lastUpdated: string;
     saveToken: string;
 };
+
+type PendingCorrection =
+    | { kind: 'score'; side: 'our' | 'opponent'; amount: number }
+    | { kind: 'goal'; playerName: string };
 
 interface MatchFormProps {
     gradeId: string;
@@ -79,6 +126,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const [lockInfo, setLockInfo] = useState<{ locked: boolean, lockedBy?: string } | null>(null);
     const [lastGoalSnapshot, setLastGoalSnapshot] = useState<Partial<Match> | null>(null);
     const [scorerToRemove, setScorerToRemove] = useState<string | null>(null);
+    const [pendingCorrection, setPendingCorrection] = useState<PendingCorrection | null>(null);
     const [savedToast, setSavedToast] = useState(false);
     const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -155,24 +203,6 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         };
     }, [gradeId, initialMatch]);
 
-    const computeScoreData = (side: 'our' | 'opponent', amount: number, current: Partial<Match>) => {
-            const phase = current.matchPhase;
-            const updated = { ...current };
-
-            if (side === 'our') {
-                updated.ourScore = Math.max(0, (current.ourScore || 0) + amount);
-                if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + amount);
-                if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + amount);
-            } else {
-                updated.opponentScore = Math.max(0, (current.opponentScore || 0) + amount);
-                if (phase === '1H') updated.opponentScore1H = Math.max(0, (current.opponentScore1H || 0) + amount);
-                if (phase === '2H') updated.opponentScore2H = Math.max(0, (current.opponentScore2H || 0) + amount);
-            }
-
-            updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
-            return updated;
-    };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         let newValue: string | number | boolean = value;
@@ -202,36 +232,23 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     };
 
 
-    const computeGoalData = (playerName: string, current: Partial<Match>): Partial<Match> => {
-        const phase = current.matchPhase;
-        const updated = { ...current };
-        updated.ourScore = Math.max(0, (current.ourScore || 0) + 1);
-        if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + 1);
-        if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + 1);
-        updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
-
-        const parts = (current.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
-        const nameMap: Record<string, number> = {};
-        parts.forEach(p => {
-            const m = p.match(/^(.+)\((\d+)\)$/);
-            if (m) { nameMap[m[1].trim()] = (nameMap[m[1].trim()] || 0) + parseInt(m[2]); }
-            else { nameMap[p] = (nameMap[p] || 0) + 1; }
-        });
-        nameMap[playerName] = (nameMap[playerName] || 0) + 1;
-        updated.scorers = Object.entries(nameMap)
-            .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
-            .join(', ');
-        return updated;
-    };
-
     const handleQuickScorer = (playerName: string) => {
         const currentData = formDataRef.current;
-        if (currentData.matchPhase !== '1H' && currentData.matchPhase !== '2H') return;
+        if (currentData.matchPhase === 'halftime') return;
+        if (currentData.matchPhase === 'full-time') {
+            const correction: PendingCorrection = { kind: 'goal', playerName };
+            if (currentData.matchFormat === 'halves') {
+                setPendingCorrection(correction);
+            } else {
+                applyFullTimeCorrection(correction, '1H');
+            }
+            return;
+        }
         setLastGoalSnapshot(currentData);
         const newData = computeGoalData(playerName, currentData);
         formDataRef.current = newData;
         setFormData(newData);
-        scheduleLiveSave(newData);
+        if (currentData.matchPhase !== 'pre-game') scheduleLiveSave(newData);
     };
 
     const handleUndoGoal = async () => {
@@ -393,11 +410,31 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
     const incrementScore = (side: 'our' | 'opponent', amount: number) => {
         const currentData = formDataRef.current;
-        if (currentData.matchPhase !== '1H' && currentData.matchPhase !== '2H') return;
+        if (currentData.matchPhase === 'halftime') return;
+        if (currentData.matchPhase === 'full-time') {
+            const correction: PendingCorrection = { kind: 'score', side, amount };
+            if (currentData.matchFormat === 'halves') {
+                setPendingCorrection(correction);
+            } else {
+                applyFullTimeCorrection(correction, '1H');
+            }
+            return;
+        }
         const updated = computeScoreData(side, amount, currentData);
         formDataRef.current = updated;
         setFormData(updated);
-        scheduleLiveSave(updated);
+        if (currentData.matchPhase !== 'pre-game') scheduleLiveSave(updated);
+    };
+
+    const applyFullTimeCorrection = (correction: PendingCorrection, half: '1H' | '2H') => {
+        const currentData = formDataRef.current;
+        const updated = correction.kind === 'goal'
+            ? computeGoalData(correction.playerName, currentData, half)
+            : computeScoreData(correction.side, correction.amount, currentData, half);
+        formDataRef.current = updated;
+        setFormData(updated);
+        setLastGoalSnapshot(null);
+        setPendingCorrection(null);
     };
 
     const handlePhaseChange = (matchPhase: Match['matchPhase'], isLive: boolean = true) => {
@@ -455,7 +492,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     };
 
     const isLiveMode = formData.matchPhase !== 'pre-game';
-    const canRecordGoals = formData.matchPhase === '1H' || formData.matchPhase === '2H';
+    const canEditScore = formData.matchPhase !== 'halftime';
+    const canAddScorer = formData.matchPhase !== 'halftime';
+    const canUndoGoal = formData.matchPhase === 'pre-game' || formData.matchPhase === '1H' || formData.matchPhase === '2H';
     const scorerEntries = (formData.scorers || '')
         .split(',')
         .map(entry => entry.trim())
@@ -751,6 +790,9 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 <span className="text-xs font-bold text-slate-400">まだ得点記録はありません</span>
                             )}
                         </div>
+                        {formData.matchPhase === 'full-time' && (
+                            <p className="-mt-2 text-center text-[10px] font-bold text-slate-500">試合終了後の修正は「記録を確定」で保存されます</p>
+                        )}
 
                         {/* スコア入力カウンター 2列カード (カンプ②) */}
                         <div className="space-y-1">
@@ -765,7 +807,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('our', -1)}
-                                            disabled={!canRecordGoals}
+                                            disabled={!canEditScore}
                                             className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
                                         >
                                             −
@@ -776,7 +818,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('our', 1)}
-                                            disabled={!canRecordGoals}
+                                            disabled={!canEditScore}
                                             className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200/50 active:scale-90 transition-all"
                                         >
                                             ＋
@@ -793,7 +835,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('opponent', -1)}
-                                            disabled={!canRecordGoals}
+                                            disabled={!canEditScore}
                                             className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
                                         >
                                             −
@@ -804,7 +846,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('opponent', 1)}
-                                            disabled={!canRecordGoals}
+                                            disabled={!canEditScore}
                                             className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 font-bold border border-slate-200/60 active:scale-90 transition-all"
                                         >
                                             ＋
@@ -815,7 +857,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </div>
 
                         {/* 得点者を直接記録 */}
-                        {players.length > 0 && canRecordGoals && (
+                        {players.length > 0 && canAddScorer && (
                             <div className="space-y-2">
                                 <span className="text-xs font-black text-slate-500 uppercase tracking-widest block pl-1">得点者をタップ</span>
                                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -841,7 +883,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         )}
 
                         {/* Undo Goal Button */}
-                        {lastGoalSnapshot !== null && canRecordGoals && (
+                        {lastGoalSnapshot !== null && canUndoGoal && (
                             <div className="flex justify-center mt-2">
                                 <button
                                     type="button"
@@ -1136,6 +1178,46 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                 </div>
             </div>
             )}
+
+            <Modal
+                isOpen={pendingCorrection !== null}
+                onClose={() => setPendingCorrection(null)}
+                title={pendingCorrection?.kind === 'goal'
+                    ? `${pendingCorrection.playerName} の得点を追加`
+                    : pendingCorrection
+                        ? `${pendingCorrection.side === 'our' ? teamName : '相手'} のスコアを ${pendingCorrection.amount > 0 ? '+' : '−'}1`
+                        : ''}
+            >
+                <p className="mb-5 text-sm leading-relaxed text-slate-600">訂正する前半・後半を選択してください。</p>
+                <div className="flex flex-col gap-3">
+                    {(['1H', '2H'] as const).map(half => {
+                        const selectedHalfScore = pendingCorrection?.kind === 'score'
+                            ? pendingCorrection.side === 'our'
+                                ? (half === '1H' ? formData.ourScore1H || 0 : formData.ourScore2H || 0)
+                                : (half === '1H' ? formData.opponentScore1H || 0 : formData.opponentScore2H || 0)
+                            : 1;
+                        const disabled = pendingCorrection?.kind === 'score' && pendingCorrection.amount < 0 && selectedHalfScore === 0;
+                        return (
+                            <button
+                                key={half}
+                                type="button"
+                                onClick={() => pendingCorrection && applyFullTimeCorrection(pendingCorrection, half)}
+                                disabled={disabled}
+                                className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200"
+                            >
+                                {half === '1H' ? '前半に反映' : '後半に反映'}
+                            </button>
+                        );
+                    })}
+                    <button
+                        type="button"
+                        onClick={() => setPendingCorrection(null)}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-500 transition-colors hover:bg-slate-50"
+                    >
+                        キャンセル
+                    </button>
+                </div>
+            </Modal>
 
             <Modal
                 isOpen={scorerToRemove !== null}
