@@ -803,26 +803,10 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     <div className="bg-sharks-blue text-white text-center py-1.5 text-[10px] font-black tracking-widest uppercase">
                                         SHARKS
                                     </div>
-                                    <div className="p-3 flex items-center justify-between gap-1 flex-grow">
-                                        <button
-                                            type="button"
-                                            onClick={() => incrementScore('our', -1)}
-                                            disabled={!canEditScore}
-                                            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
-                                        >
-                                            −
-                                        </button>
+                                    <div className="p-3 flex items-center justify-center flex-grow">
                                         <span className="font-bebas font-black text-4xl text-slate-900 leading-none min-w-[30px] text-center">
                                             {formData.ourScore}
                                         </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => incrementScore('our', 1)}
-                                            disabled={!canEditScore}
-                                            className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200/50 active:scale-90 transition-all"
-                                        >
-                                            ＋
-                                        </button>
                                     </div>
                                 </div>
 
@@ -857,7 +841,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </div>
 
                         {/* 得点者を直接記録 */}
-                        {players.length > 0 && canAddScorer && (
+                        {canAddScorer && (
                             <div className="space-y-2">
                                 <span className="text-xs font-black text-slate-500 uppercase tracking-widest block pl-1">得点者をタップ</span>
                                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -877,6 +861,15 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                                 <span className="truncate flex-1 text-left">{player.name}</span>
                                             </button>
                                         ))}
+                                        {!players.some(player => player.name === '不明') && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleQuickScorer('不明')}
+                                                className="px-1.5 py-3 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-slate-500 hover:bg-slate-100"
+                                            >
+                                                不明
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

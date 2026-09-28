@@ -78,6 +78,7 @@ const players = [
   ['10', 'えいた'],
   ['11', 'たいせい'],
   ['12', 'りこ'],
+  ['', '不明'],
 ];
 
 const rankings = [
@@ -180,10 +181,10 @@ export default function UiPreviewPage() {
                 {['SHARKS', '対戦相手'].map((team, index) => (
                   <div key={team} className="compact-card overflow-hidden">
                     <div className={`${index === 0 ? 'bg-sharks-blue' : 'bg-slate-600'} py-2 text-center text-xs font-black text-white`}>{team}</div>
-                    <div className="flex items-center justify-between p-3">
-                      <button type="button" className="h-8 w-8 rounded-full bg-slate-100 text-xl">−</button>
+                    <div className={`flex items-center p-3 ${index === 0 ? 'justify-center' : 'justify-between'}`}>
+                      {index === 1 && <button type="button" className="h-8 w-8 rounded-full bg-slate-100 text-xl">−</button>}
                       <span className="font-bebas text-5xl">{index === 0 ? 1 : 0}</span>
-                      <button type="button" className="h-8 w-8 rounded-full bg-slate-100 text-xl">＋</button>
+                      {index === 1 && <button type="button" className="h-8 w-8 rounded-full bg-slate-100 text-xl">＋</button>}
                     </div>
                   </div>
                 ))}
@@ -202,7 +203,7 @@ export default function UiPreviewPage() {
                       selectedPlayer === number ? 'border-sharks-blue bg-sharks-blue text-white' : 'border-slate-200 bg-white'
                     }`}
                   >
-                    <span className="mr-1.5 opacity-70">{number}</span>{name}
+                    {number && <span className="mr-1.5 opacity-70">{number}</span>}{name}
                   </button>
                 ))}
               </div>

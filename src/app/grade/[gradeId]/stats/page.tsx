@@ -90,7 +90,9 @@ export default function StatsPage() {
     );
 
     // セクション3: トップスコアラー（上位5名、選手フィルタなし）
-    const topScorers = calcTopScorers(filterRankingMatches(allMatches, rankingFilter), undefined, 5);
+    const topScorers = calcTopScorers(filterRankingMatches(allMatches, rankingFilter), undefined)
+        .filter(({ name }) => name !== '不明')
+        .slice(0, 5);
 
     // 連勝/連敗ストリーク
     const streak = calcStreak(allMatches);

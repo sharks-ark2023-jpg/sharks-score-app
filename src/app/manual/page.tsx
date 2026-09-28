@@ -102,8 +102,8 @@ export default function ManualPage() {
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● 得点記録</h3>
                             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                                画面に並んだ選手名をタップすると、その選手の得点としてスコアが即時+1され、自動保存されます。
-                                相手チームの得点やスコアの訂正も、＋／−を押した時点で自動保存されます。
+                                画面に並んだ選手名、または「不明」をタップすると、自チームの得点としてスコアが即時+1され、自動保存されます。自チームのスコアを直接操作するボタンはありません。
+                                相手チームの得点やスコアの訂正は、＋／−を押した時点で自動保存されます。
                             </p>
                         </div>
                         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
@@ -128,7 +128,7 @@ export default function ManualPage() {
                         <div>
                             <h3 className="font-bold text-gray-800 mb-2">● 試合終了後の記録</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">
-                                「試合終了」を押すとスコアを保存したまま試合後の記録画面に留まります。PK戦・MVP・メモに加え、＋／−や得点者タップで結果を訂正できます。前後半制では訂正する前半・後半を選び、最後に「記録を確定」を押してください。
+                                「試合終了」を押すとスコアを保存したまま試合後の記録画面に留まります。PK戦・MVP・メモに加え、得点者タップ（不明を含む）と相手スコアの＋／−で結果を訂正できます。前後半制では訂正する前半・後半を選び、最後に「記録を確定」を押してください。
                             </p>
                         </div>
                     </div>
