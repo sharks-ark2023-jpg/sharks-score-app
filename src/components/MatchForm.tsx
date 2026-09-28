@@ -258,7 +258,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         setFormData(newData);
         setLastGoalSnapshot(null);
         setScorerToRemove(null);
-        if (currentData.matchPhase !== 'pre-game') {
+        if (currentData.matchPhase !== 'pre-game' && currentData.matchPhase !== 'full-time') {
             scheduleLiveSave(newData);
         }
     };
@@ -433,7 +433,12 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         }
         liveSavePendingRef.current = null;
         const saveResult = await doSave(finalData, true);
-        if (saveResult) setShowAdvanced(true);
+        if (saveResult) {
+            const savedData = { ...formDataRef.current, lastUpdated: saveResult.lastUpdated };
+            formDataRef.current = savedData;
+            setFormData(savedData);
+            setShowAdvanced(true);
+        }
     };
 
     const handleDelete = async () => {
