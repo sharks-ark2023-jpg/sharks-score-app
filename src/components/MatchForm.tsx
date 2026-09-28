@@ -226,14 +226,12 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
     const handleQuickScorer = (playerName: string) => {
         const currentData = formDataRef.current;
-        if (currentData.matchPhase === 'full-time') return;
+        if (currentData.matchPhase !== '1H' && currentData.matchPhase !== '2H') return;
         setLastGoalSnapshot(currentData);
         const newData = computeGoalData(playerName, currentData);
         formDataRef.current = newData;
         setFormData(newData);
-        if (currentData.matchPhase !== 'pre-game') {
-            scheduleLiveSave(newData);
-        }
+        scheduleLiveSave(newData);
     };
 
     const handleUndoGoal = async () => {
@@ -395,13 +393,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
     const incrementScore = (side: 'our' | 'opponent', amount: number) => {
         const currentData = formDataRef.current;
-        if (currentData.matchPhase === 'full-time') return;
+        if (currentData.matchPhase !== '1H' && currentData.matchPhase !== '2H') return;
         const updated = computeScoreData(side, amount, currentData);
         formDataRef.current = updated;
         setFormData(updated);
-        if (currentData.matchPhase !== 'pre-game') {
-            scheduleLiveSave(updated);
-        }
+        scheduleLiveSave(updated);
     };
 
     const handlePhaseChange = (matchPhase: Match['matchPhase'], isLive: boolean = true) => {
@@ -459,7 +455,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     };
 
     const isLiveMode = formData.matchPhase !== 'pre-game';
-    const isFullTime = formData.matchPhase === 'full-time';
+    const canRecordGoals = formData.matchPhase === '1H' || formData.matchPhase === '2H';
     const scorerEntries = (formData.scorers || '')
         .split(',')
         .map(entry => entry.trim())
@@ -769,7 +765,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('our', -1)}
-                                            disabled={isFullTime}
+                                            disabled={!canRecordGoals}
                                             className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
                                         >
                                             −
@@ -780,7 +776,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('our', 1)}
-                                            disabled={isFullTime}
+                                            disabled={!canRecordGoals}
                                             className="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200/50 active:scale-90 transition-all"
                                         >
                                             ＋
@@ -797,7 +793,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('opponent', -1)}
-                                            disabled={isFullTime}
+                                            disabled={!canRecordGoals}
                                             className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200/60 active:scale-90 transition-all"
                                         >
                                             −
@@ -808,7 +804,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                         <button
                                             type="button"
                                             onClick={() => incrementScore('opponent', 1)}
-                                            disabled={isFullTime}
+                                            disabled={!canRecordGoals}
                                             className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-700 font-bold border border-slate-200/60 active:scale-90 transition-all"
                                         >
                                             ＋
@@ -819,7 +815,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         </div>
 
                         {/* 得点者を直接記録 */}
-                        {players.length > 0 && !isFullTime && (
+                        {players.length > 0 && canRecordGoals && (
                             <div className="space-y-2">
                                 <span className="text-xs font-black text-slate-500 uppercase tracking-widest block pl-1">得点者をタップ</span>
                                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -845,7 +841,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         )}
 
                         {/* Undo Goal Button */}
-                        {lastGoalSnapshot !== null && !isFullTime && (
+                        {lastGoalSnapshot !== null && canRecordGoals && (
                             <div className="flex justify-center mt-2">
                                 <button
                                     type="button"
