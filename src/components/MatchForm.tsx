@@ -7,85 +7,10 @@ import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import Autocomplete from './Autocomplete';
 import Modal from './Modal';
+import ScorerBreakdown from './ScorerBreakdown';
+import { calculateResult, computeGoalData, computeRemoveGoalData, computeScoreData, getUnassignedScorers, parseScorers, setHalfScorers, canRemoveScorer } from '@/lib/goal-records';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-const calculateResult = (our: number, opponent: number): 'win' | 'loss' | 'draw' => {
-    if (our > opponent) return 'win';
-    if (our < opponent) return 'loss';
-    return 'draw';
-};
-
-export const computeRemoveGoalData = (playerName: string, half: '1H' | '2H', current: Partial<Match>): Partial<Match> => {
-    const updated = { ...current };
-    const parts = (current.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
-    const nameMap: Record<string, number> = {};
-    parts.forEach(part => {
-        const matched = part.match(/^(.+)\((\d+)\)$/);
-        if (matched) {
-            const name = matched[1].trim();
-            nameMap[name] = (nameMap[name] || 0) + parseInt(matched[2]);
-        } else {
-            nameMap[part] = (nameMap[part] || 0) + 1;
-        }
-    });
-
-    if (!nameMap[playerName]) return current;
-    nameMap[playerName] -= 1;
-    if (nameMap[playerName] === 0) delete nameMap[playerName];
-    updated.scorers = Object.entries(nameMap)
-        .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
-        .join(', ');
-    updated.ourScore = Math.max(0, (current.ourScore || 0) - 1);
-    if (half === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) - 1);
-    if (half === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) - 1);
-    updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
-    return updated;
-};
-
-export const computeScoreData = (side: 'our' | 'opponent', amount: number, current: Partial<Match>, half?: '1H' | '2H'): Partial<Match> => {
-    const phase = half || current.matchPhase;
-    const updated = { ...current };
-
-    if (side === 'our') {
-        updated.ourScore = Math.max(0, (current.ourScore || 0) + amount);
-        if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + amount);
-        if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + amount);
-    } else {
-        updated.opponentScore = Math.max(0, (current.opponentScore || 0) + amount);
-        if (phase === '1H') updated.opponentScore1H = Math.max(0, (current.opponentScore1H || 0) + amount);
-        if (phase === '2H') updated.opponentScore2H = Math.max(0, (current.opponentScore2H || 0) + amount);
-    }
-
-    updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
-    return updated;
-};
-
-export const computeGoalData = (playerName: string, current: Partial<Match>, half?: '1H' | '2H'): Partial<Match> => {
-    const phase = half || current.matchPhase;
-    const updated = { ...current };
-    updated.ourScore = Math.max(0, (current.ourScore || 0) + 1);
-    if (phase === '1H') updated.ourScore1H = Math.max(0, (current.ourScore1H || 0) + 1);
-    if (phase === '2H') updated.ourScore2H = Math.max(0, (current.ourScore2H || 0) + 1);
-    updated.result = calculateResult(updated.ourScore || 0, updated.opponentScore || 0);
-
-    const parts = (current.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
-    const nameMap: Record<string, number> = {};
-    parts.forEach(part => {
-        const matched = part.match(/^(.+)\((\d+)\)$/);
-        if (matched) {
-            const name = matched[1].trim();
-            nameMap[name] = (nameMap[name] || 0) + parseInt(matched[2]);
-        } else {
-            nameMap[part] = (nameMap[part] || 0) + 1;
-        }
-    });
-    nameMap[playerName] = (nameMap[playerName] || 0) + 1;
-    updated.scorers = Object.entries(nameMap)
-        .map(([name, count]) => count > 1 ? `${name}(${count})` : name)
-        .join(', ');
-    return updated;
-};
 
 type SaveResult = {
     lastUpdated: string;
@@ -235,7 +160,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const handleQuickScorer = (playerName: string) => {
         const currentData = formDataRef.current;
         if (currentData.matchPhase === 'halftime') return;
-        if (currentData.matchPhase === 'full-time') {
+        if (currentData.matchPhase === 'full-time' || (currentData.matchPhase === 'pre-game' && currentData.matchFormat === 'halves')) {
             const correction: PendingCorrection = { kind: 'goal', playerName };
             if (currentData.matchFormat === 'halves') {
                 setPendingCorrection(correction);
@@ -329,6 +254,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             isLive: true,
                             matchPhase: 'pre-game',
                             scorers: '',
+                            scorers1H: '',
+                            scorers2H: '',
                             mvp: '',
                             memo: '',
                             pkInfo: undefined,
@@ -411,7 +338,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const incrementScore = (side: 'our' | 'opponent', amount: number) => {
         const currentData = formDataRef.current;
         if (currentData.matchPhase === 'halftime') return;
-        if (currentData.matchPhase === 'full-time') {
+        if (currentData.matchPhase === 'full-time' || (currentData.matchPhase === 'pre-game' && currentData.matchFormat === 'halves')) {
             const correction: PendingCorrection = { kind: 'score', side, amount };
             if (currentData.matchFormat === 'halves') {
                 setPendingCorrection(correction);
@@ -421,6 +348,11 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             return;
         }
         const updated = computeScoreData(side, amount, currentData);
+        if (updated === currentData) {
+            setError('得点者が記録されている点は、得点者名をタップして削除してください。');
+            return;
+        }
+        setError(null);
         formDataRef.current = updated;
         setFormData(updated);
         if (currentData.matchPhase !== 'pre-game') scheduleLiveSave(updated);
@@ -431,9 +363,15 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         const updated = correction.kind === 'goal'
             ? computeGoalData(correction.playerName, currentData, half)
             : computeScoreData(correction.side, correction.amount, currentData, half);
+        if (updated === currentData) {
+            setError('得点者が記録されている点は、得点者名をタップして削除してください。');
+            setPendingCorrection(null);
+            return;
+        }
+        setError(null);
         formDataRef.current = updated;
         setFormData(updated);
-        setLastGoalSnapshot(null);
+        setLastGoalSnapshot(currentData.matchPhase === 'pre-game' && correction.kind === 'goal' ? currentData : null);
         setPendingCorrection(null);
     };
 
@@ -441,6 +379,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
         const updated = { ...formDataRef.current, matchPhase, isLive };
         formDataRef.current = updated;
         setFormData(updated);
+        setLastGoalSnapshot(null);
         flushLiveSave(updated);
     };
 
@@ -495,14 +434,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const canEditScore = formData.matchPhase !== 'halftime';
     const canAddScorer = formData.matchPhase !== 'halftime';
     const canUndoGoal = formData.matchPhase === 'pre-game' || formData.matchPhase === '1H' || formData.matchPhase === '2H';
-    const scorerEntries = (formData.scorers || '')
-        .split(',')
-        .map(entry => entry.trim())
-        .filter(Boolean)
-        .map(entry => {
-            const matched = entry.match(/^(.+)\((\d+)\)$/);
-            return matched ? { name: matched[1].trim(), goals: parseInt(matched[2]) } : { name: entry, goals: 1 };
-        });
+    const scorerEntries = parseScorers(formData.scorers);
 
     if (lockInfo?.locked) {
         return (
@@ -629,7 +561,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchFormat: 'one_game' }))}
+                                    onClick={() => setFormData(p => ({ ...p, matchFormat: 'one_game', scorers1H: '', scorers2H: '' }))}
                                     className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.matchFormat === 'one_game' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
                                 >
                                     1本
@@ -769,6 +701,8 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 <span className="text-[13px] font-black text-slate-800 leading-tight truncate block">{formData.opponentName || 'OPPONENT'}</span>
                             </div>
                         </div>
+
+                        <ScorerBreakdown match={formData} />
 
                         {/* この試合で記録済みの得点者 */}
                         <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3">
@@ -1120,14 +1054,34 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
 
 
                 {!formData.isLive && formData.matchPhase === 'pre-game' && (
-                    <Autocomplete
-                        label="得点者 (自チーム)"
-                        value={formData.scorers || ''}
-                        onChange={(val) => setFormData(p => ({ ...p, scorers: val }))}
-                        options={players}
-                        placeholder="例: 佐藤(2), 田中"
-                        showNumber={true}
-                    />
+                    formData.matchFormat === 'halves' ? (
+                        <div className="space-y-3">
+                            {(['1H', '2H'] as const).map(half => (
+                                <Autocomplete
+                                    key={half}
+                                    label={half === '1H' ? '前半の得点者' : '後半の得点者'}
+                                    value={(half === '1H' ? formData.scorers1H : formData.scorers2H) || ''}
+                                    onChange={value => setFormData(current => setHalfScorers(current, half, value))}
+                                    options={players}
+                                    placeholder="例: 佐藤(2), 田中"
+                                    showNumber={true}
+                                />
+                            ))}
+                            <ScorerBreakdown match={formData} />
+                            {getUnassignedScorers(formData).length > 0 && (
+                                <p className="text-xs text-slate-500">過去の得点は内訳未記録として保持しています。</p>
+                            )}
+                        </div>
+                    ) : (
+                        <Autocomplete
+                            label="得点者 (自チーム)"
+                            value={formData.scorers || ''}
+                            onChange={value => setFormData(current => ({ ...current, scorers: value }))}
+                            options={players}
+                            placeholder="例: 佐藤(2), 田中"
+                            showNumber={true}
+                        />
+                    )
                 )}
 
 
@@ -1188,7 +1142,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         ? `${pendingCorrection.side === 'our' ? teamName : '相手'} のスコアを ${pendingCorrection.amount > 0 ? '+' : '−'}1`
                         : ''}
             >
-                <p className="mb-5 text-sm leading-relaxed text-slate-600">訂正する前半・後半を選択してください。</p>
+                <p className="mb-5 text-sm leading-relaxed text-slate-600">反映する前半・後半を選択してください。</p>
                 <div className="flex flex-col gap-3">
                     {(['1H', '2H'] as const).map(half => {
                         const selectedHalfScore = pendingCorrection?.kind === 'score'
@@ -1235,7 +1189,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             <button
                                 type="button"
                                 onClick={() => handleRemoveScorer('1H')}
-                                disabled={(formData.ourScore1H || 0) === 0}
+                                disabled={!scorerToRemove || !canRemoveScorer(scorerToRemove, '1H', formData)}
                                 className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-200"
                             >
                                 前半の得点を削除
@@ -1243,7 +1197,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             <button
                                 type="button"
                                 onClick={() => handleRemoveScorer('2H')}
-                                disabled={(formData.ourScore2H || 0) === 0}
+                                disabled={!scorerToRemove || !canRemoveScorer(scorerToRemove, '2H', formData)}
                                 className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-200"
                             >
                                 後半の得点を削除

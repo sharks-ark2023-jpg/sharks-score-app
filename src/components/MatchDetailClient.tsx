@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Match } from '@/types';
+import ScorerBreakdown from '@/components/ScorerBreakdown';
 import MatchAnalysis from '@/components/MatchAnalysis';
 
 interface Props {
@@ -10,18 +11,6 @@ interface Props {
   gradeId: string;
   isLoggedIn: boolean;
 }
-
-const parseScorers = (scorers: string): { name: string; goals: number }[] => {
-  if (!scorers) return [];
-  return scorers
-    .split(',')
-    .map(s => {
-      const t = s.trim();
-      const m = t.match(/^(.+)\((\d+)\)$/);
-      return m ? { name: m[1].trim(), goals: parseInt(m[2]) } : { name: t, goals: 1 };
-    })
-    .filter(s => s.name);
-};
 
 export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props) {
   const [activeTab, setActiveTab] = useState<'record' | 'info'>('record');
@@ -47,8 +36,6 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
   };
 
   const canShare = typeof navigator !== 'undefined' && !!navigator.share;
-
-  const scorerList = match.scorers ? parseScorers(match.scorers) : [];
 
   return (
     <main className="flex-grow mx-auto max-w-lg w-full pb-24 bg-[#F5F7FA]">
@@ -197,21 +184,7 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
         {activeTab === 'record' && (
           <div className="px-6 pt-5 pb-6 space-y-4">
             {/* 得点記録 */}
-            {scorerList.length > 0 && (
-              <div className="space-y-4 py-1">
-                {scorerList.map((scorer, i) => (
-                  <div key={i} className="flex items-center gap-3.5 pb-3 border-b border-slate-50 last:border-0 last:pb-0">
-                    <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-sm shrink-0 shadow-sm">
-                      ⚽
-                    </div>
-                    <span className="font-bold text-[13px] flex-1 text-slate-800 tracking-wide">{scorer.name}</span>
-                    <span className="font-black text-sm text-slate-850 shrink-0">
-                      {scorer.goals}<span className="text-[10px] font-bold text-slate-500 ml-0.5">点</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ScorerBreakdown match={match} />
 
             {/* AI分析 */}
             <div className="pt-2 border-t border-slate-50">
