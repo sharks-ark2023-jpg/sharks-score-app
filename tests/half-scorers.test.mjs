@@ -194,3 +194,10 @@ test('既存の得点ランキングは合計得点者から同じ結果を算�
     const { calcTopScorers } = load('src/lib/scoring.ts');
     assert.deepEqual(calcTopScorers([twoHalves]), [{ name: 'A', goals: 2 }, { name: 'B', goals: 1 }]);
 });
+
+test('得点者なしの0点で−を押しても得点者削除エラーの対象にならない', () => {
+    const m = score('our', -1, base, '1H');
+    assert.notEqual(m, base);
+    assert.equal(m.ourScore, 0);
+    assert.equal(m.ourScore1H, 0);
+});

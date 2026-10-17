@@ -88,7 +88,8 @@ export function computeScoreData(side: 'our' | 'opponent', amount: number, curre
             : parseScorers(current.scorers);
         const points = current.matchFormat === 'halves' && phase === '1H' ? current.ourScore1H
             : current.matchFormat === 'halves' && phase === '2H' ? current.ourScore2H : current.ourScore;
-        if ((points || 0) + amount < recorded.reduce((sum, entry) => sum + entry.goals, 0)) return current;
+        const recordedGoals = recorded.reduce((sum, entry) => sum + entry.goals, 0);
+        if (recordedGoals > 0 && (points || 0) + amount < recordedGoals) return current;
     }
     if (side === 'our') {
         updated.ourScore = Math.max(0, (current.ourScore || 0) + amount);
