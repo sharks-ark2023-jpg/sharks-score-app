@@ -232,3 +232,37 @@ test('前後半スコア自体がない旧記録に0-0を作らず、合計得�
     assert.match(html, /得点者（試合全体）.*A\(2\)/);
     assert.doesNotMatch(html, /0-0|記録なし/);
 });
+
+test('合計と片方のハーフから空欄の前後半スコアを確定し、0-—を出さない', () => {
+    const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
+    const match = { matchFormat: 'halves', ourScore: 1, opponentScore: 1, ourScore1H: 1, opponentScore2H: 1, scorers: 'たいせい' };
+    const before = JSON.stringify(match);
+    const html = renderToStaticMarkup(React.createElement(Breakdown, { match }));
+    assert.match(html, /前半.*1-0.*たいせい.*後半.*0-1/);
+    assert.doesNotMatch(html, /—|未入力/);
+    assert.equal(JSON.stringify(match), before);
+});
+
+test('総失点0の旧記録は前後半とも0と確定できる', () => {
+    const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
+    const match = { matchFormat: 'halves', ourScore: 2, opponentScore: 0, ourScore1H: 2, scorers: 'A(2)' };
+    const html = renderToStaticMarkup(React.createElement(Breakdown, { match }));
+    assert.match(html, /前半.*2-0.*A\(2\).*後半.*0-0/);
+    assert.doesNotMatch(html, /—/);
+});
+
+test('両ハーフ空欄で合計だけが正数の場合は勝手に配分しない', () => {
+    const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
+    const match = { matchFormat: 'halves', ourScore: 0, opponentScore: 3, ourScore1H: 0 };
+    const html = renderToStaticMarkup(React.createElement(Breakdown, { match }));
+    assert.doesNotMatch(html, /0-—|0-0|0-3|—/);
+    assert.match(html, /自チーム 0.*相手 未入力/);
+});
+
+test('記録済みの前後半スコアは合計と矛盾しても上書きしない', () => {
+    const { resolveHalfScores } = load('src/lib/half-scores.ts');
+    assert.deepEqual(resolveHalfScores(1, 2, 3), [2, 3]);
+    assert.deepEqual(resolveHalfScores(1, 2, undefined), [2, undefined]);
+    assert.deepEqual(resolveHalfScores(undefined, 1, undefined), [1, undefined]);
+    assert.deepEqual(resolveHalfScores(3, undefined, 1), [2, 1]);
+});
