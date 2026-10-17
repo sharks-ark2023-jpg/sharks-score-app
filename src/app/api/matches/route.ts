@@ -74,7 +74,8 @@ export async function POST(req: NextRequest) {
             !syncMasters &&
             verifiedCursor?.spreadsheetId === spreadsheetId &&
             verifiedCursor.sheetName === sheetName &&
-            verifiedCursor.matchId === match.matchId;
+            verifiedCursor.matchId === match.matchId &&
+            ['scorers1H', 'scorers2H'].every(header => verifiedCursor.headers.includes(header));
 
         const saveResult = canUseDirectUpdate
             ? await updateLiveMatchByCursor(verifiedCursor, match, session.user.email)

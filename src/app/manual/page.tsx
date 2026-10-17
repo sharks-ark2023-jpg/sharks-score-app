@@ -104,6 +104,9 @@ export default function ManualPage() {
                             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
                                 画面に並んだ選手名をタップすると、その選手の得点としてスコアが即時+1され、自動保存されます。
                                 相手チームの得点やスコアの訂正も、＋／−を押した時点で自動保存されます。
+                                前後半制では、得点者を前半・後半別に記録し、試合詳細と記録画面に表示します。
+                                過去の記録で前後半が保存されていない分は「前後半の内訳未記録」と表示します。
+                                Live Recordingをオフにした入力でも、前後半別の得点者欄を利用できます。選手タップや＋／−では反映するハーフを選びます。
                             </p>
                         </div>
                         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
@@ -116,7 +119,7 @@ export default function ManualPage() {
                         <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
                             <h4 className="text-xs font-black text-red-700 uppercase tracking-widest mb-1">得点者を個別に削除するには</h4>
                             <p className="text-xs text-red-700 leading-relaxed">
-                                得点者名をタップして削除する得点を選びます。前後半制では前半・後半のどちらの得点かを選択し、1本制ではそのまま1点を削除します。
+                                得点者名をタップして削除する得点を選びます。前後半制では前半・後半のどちらの得点かを選択し、1本制ではそのまま1点を削除します。得点者付きの点は、スコアの−ではなく得点者名から削除してください。
                             </p>
                         </div>
                         <div className="bg-green-50 p-4 rounded-2xl border border-green-100">

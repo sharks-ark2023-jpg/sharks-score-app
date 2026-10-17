@@ -197,6 +197,8 @@ export async function getMatches(spreadsheetId: string, sheetName: string): Prom
             isLive: data.isLive === 'TRUE' || data.isLive === 'true',
             matchPhase: data.matchPhase as Match['matchPhase'],
             scorers: data.scorers,
+            scorers1H: data.scorers1H,
+            scorers2H: data.scorers2H,
             mvp: data.mvp,
             memo: data.memo,
             lastUpdated: data.lastUpdated,
@@ -237,7 +239,7 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         'venueName', 'matchFormat', 'matchDuration',
         'ourScore', 'ourScore1H', 'ourScore2H',
         'opponentScore', 'opponentScore1H', 'opponentScore2H',
-        'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'mvp', 'memo',
+        'result', 'pkInfo', 'isLive', 'matchPhase', 'scorers', 'scorers1H', 'scorers2H', 'mvp', 'memo',
         'lastUpdated', 'lastUpdatedBy', 'createdAt', 'createdBy',
         'editingBy', 'editingExpires', 'analysis'
     ];
@@ -281,6 +283,8 @@ export async function upsertMatch(spreadsheetId: string, sheetName: string, matc
         opponentScore1H: match.opponentScore1H ?? '',
         opponentScore2H: match.opponentScore2H ?? '',
         scorers: match.scorers || '',
+        scorers1H: match.scorers1H || '',
+        scorers2H: match.scorers2H || '',
         mvp: match.mvp || '',
         memo: match.memo || '',
         analysis: match.analysis || '',
@@ -336,6 +340,8 @@ const LIVE_UPDATE_FIELDS = [
     'isLive',
     'matchPhase',
     'scorers',
+    'scorers1H',
+    'scorers2H',
     'lastUpdated',
     'lastUpdatedBy',
 ] as const;
@@ -373,6 +379,8 @@ export async function updateLiveMatchByCursor(
         isLive: match.isLive ? 'TRUE' : 'FALSE',
         matchPhase: match.matchPhase || '',
         scorers: match.scorers || '',
+        scorers1H: match.scorers1H || '',
+        scorers2H: match.scorers2H || '',
         lastUpdated,
         lastUpdatedBy: userEmail,
     };

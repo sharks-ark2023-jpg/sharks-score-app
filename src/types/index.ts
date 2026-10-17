@@ -43,6 +43,8 @@ export interface Match {
   isLive: boolean;
   matchPhase?: 'pre-game' | '1H' | 'halftime' | '2H' | 'full-time';
   scorers?: string;
+  scorers1H?: string;
+  scorers2H?: string;
   mvp?: string;
   memo?: string;
   lastUpdated: string;
