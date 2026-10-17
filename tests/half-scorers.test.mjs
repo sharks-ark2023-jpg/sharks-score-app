@@ -101,10 +101,10 @@ test('1本制の得点追加削除と相手スコア訂正は従来通り', () =
 test('実表示コンポーネントが前半・後半・内訳未記録を区別する', () => {
     const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
     const html = renderToStaticMarkup(React.createElement(Breakdown, { match: twoHalves }));
-    assert.match(html, /前半の得点者.*A 1点.*後半の得点者.*A 1点、B 1点/);
+    assert.match(html, /前半.*1-0.*A.*後半.*2-0.*A、B/);
     assert.doesNotMatch(html, /内訳未記録/);
     const legacyHtml = renderToStaticMarkup(React.createElement(Breakdown, { match: { ...base, scorers: 'A(2)' } }));
-    assert.match(legacyHtml, /前後半の内訳未記録.*A 2点/);
+    assert.match(legacyHtml, /得点者（試合全体）.*A\(2\)/);
     const oneGame = renderToStaticMarkup(React.createElement(Breakdown, { match: { ...base, matchFormat: 'one_game', scorers: 'A' } }));
     assert.doesNotMatch(oneGame, /前半|後半/);
 });
@@ -183,7 +183,7 @@ test('試合詳細とライブ記録画面の実コンポーネントに内訳�
     const match = { ...twoHalves, matchDate: '2026-10-17', matchPhase: '2H', result: 'win', isLive: true };
     for (const [Component, props] of [[Detail, { match, gradeId: 'U12', isLoggedIn: false }], [Form, { initialMatch: match, gradeId: 'U12' }]]) {
         const html = renderToStaticMarkup(React.createElement(Component, props));
-        assert.match(html, /前半の得点者.*A 1点.*後半の得点者.*A 1点、B 1点/);
+        assert.match(html, /前半.*1-0.*A.*後半.*2-0.*A、B/);
     }
     const offline = renderToStaticMarkup(React.createElement(Form, { gradeId: 'U12', initialMatch: { ...match, matchPhase: 'pre-game', isLive: false } }));
     assert.match(offline, /前半の得点者/);
@@ -200,4 +200,35 @@ test('得点者なしの0点で−を押しても得点者削除エラーの対�
     assert.notEqual(m, base);
     assert.equal(m.ourScore, 0);
     assert.equal(m.ourScore1H, 0);
+});
+
+
+test('希望された前半1-0・後半0-1を得点者と同じ行で表示する', () => {
+    const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
+    const match = { ...base, ourScore: 1, opponentScore: 1, ourScore1H: 1, opponentScore1H: 0, ourScore2H: 0, opponentScore2H: 1, scorers: 'たいせい', scorers1H: 'たいせい' };
+    const html = renderToStaticMarkup(React.createElement(Breakdown, { match }));
+    assert.match(html, /前半.*1-0.*たいせい.*後半.*0-1/);
+    assert.doesNotMatch(html, /記録なし|内訳未記録/);
+});
+
+test('旧記録の得点者はスコアからハーフを特定できる場合のみ併記する', () => {
+    const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
+    const match = { ...base, ourScore: 1, opponentScore: 1, ourScore1H: 1, opponentScore1H: 0, ourScore2H: 0, opponentScore2H: 1, scorers: 'たいせい' };
+    const before = JSON.stringify(match);
+    const html = renderToStaticMarkup(React.createElement(Breakdown, { match }));
+    assert.match(html, /前半.*1-0.*たいせい.*後半.*0-1/);
+    assert.doesNotMatch(html, /試合全体|記録なし/);
+    assert.equal(JSON.stringify(match), before);
+    const ambiguous = { ...match, ourScore: 2, ourScore2H: 1, scorers: 'たいせい, A' };
+    const unknownHtml = renderToStaticMarkup(React.createElement(Breakdown, { match: ambiguous }));
+    assert.match(unknownHtml, /得点者（試合全体）.*たいせい、A/);
+    assert.doesNotMatch(unknownHtml, /記録なし|内訳未記録/);
+});
+
+test('前後半スコア自体がない旧記録に0-0を作らず、合計得点者を保つ', () => {
+    const Breakdown = load('src/components/ScorerBreakdown.tsx').default;
+    const match = { matchFormat: 'halves', ourScore: 2, opponentScore: 1, scorers: 'A(2)' };
+    const html = renderToStaticMarkup(React.createElement(Breakdown, { match }));
+    assert.match(html, /得点者（試合全体）.*A\(2\)/);
+    assert.doesNotMatch(html, /0-0|記録なし/);
 });

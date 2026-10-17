@@ -133,17 +133,6 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
                   PK {match.pkInfo.ourPkScore} - {match.pkInfo.opponentPkScore}
                 </div>
               )}
-              {match.matchFormat === 'halves' &&
-                (match.ourScore1H !== undefined || match.ourScore2H !== undefined) && (
-                  <div className="mt-3 flex gap-3">
-                    <div className="text-[9px] font-black text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100 uppercase tracking-widest">
-                      1H {match.ourScore1H ?? 0}-{match.opponentScore1H ?? 0}
-                    </div>
-                    <div className="text-[9px] font-black text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100 uppercase tracking-widest">
-                      2H {match.ourScore2H ?? 0}-{match.opponentScore2H ?? 0}
-                    </div>
-                  </div>
-                )}
             </div>
             <div className="text-center">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">
@@ -153,6 +142,9 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
                 {match.opponentName}
               </div>
             </div>
+          </div>
+          <div className="mt-4">
+            <ScorerBreakdown match={match} />
           </div>
         </div>
 
@@ -183,9 +175,6 @@ export default function MatchDetailClient({ match, gradeId, isLoggedIn }: Props)
         {/* 試合記録タブ */}
         {activeTab === 'record' && (
           <div className="px-6 pt-5 pb-6 space-y-4">
-            {/* 得点記録 */}
-            <ScorerBreakdown match={match} />
-
             {/* AI分析 */}
             <div className="pt-2 border-t border-slate-50">
               <MatchAnalysis gradeId={gradeId} match={match} />
