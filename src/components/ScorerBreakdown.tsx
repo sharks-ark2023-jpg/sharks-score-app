@@ -1,19 +1,21 @@
 import type { Match } from '@/types';
 import { formatScorers, getUnassignedScorers, parseScorers } from '@/lib/goal-records';
+import { resolveHalfScores } from '@/lib/half-scores';
 
 export default function ScorerBreakdown({ match }: { match: Partial<Match> }) {
     const first = parseScorers(match.scorers1H);
     const second = parseScorers(match.scorers2H);
     let unassigned = getUnassignedScorers(match);
     const count = (entries: typeof first) => entries.reduce((sum, entry) => sum + entry.goals, 0);
-    const halfScoresKnown = match.ourScore1H !== undefined && match.ourScore2H !== undefined;
+    const [ourFirst, ourSecond] = resolveHalfScores(match.ourScore, match.ourScore1H, match.ourScore2H);
+    const [opponentFirst, opponentSecond] = resolveHalfScores(match.opponentScore, match.opponentScore1H, match.opponentScore2H);
 
     // 片方のハーフに得点者の入る余地がない場合だけ、旧記録との対応が確定する。
     // 保存データは変更せず、両ハーフに可能性がある名前は全体の得点者として残す。
-    if (match.matchFormat === 'halves' && halfScoresKnown &&
-        (match.ourScore1H || 0) + (match.ourScore2H || 0) === match.ourScore) {
-        const remainingFirst = (match.ourScore1H || 0) - count(first);
-        const remainingSecond = (match.ourScore2H || 0) - count(second);
+    if (match.matchFormat === 'halves' && ourFirst !== undefined && ourSecond !== undefined &&
+        ourFirst + ourSecond === match.ourScore) {
+        const remainingFirst = ourFirst - count(first);
+        const remainingSecond = ourSecond - count(second);
         const unknownGoals = count(unassigned);
         if (remainingFirst > 0 && remainingSecond === 0 && unknownGoals <= remainingFirst) {
             first.push(...unassigned);
@@ -25,8 +27,11 @@ export default function ScorerBreakdown({ match }: { match: Partial<Match> }) {
     }
 
     const names = (entries: typeof first) => formatScorers(parseScorers(formatScorers(entries))).replace(/, /g, '、');
-    const score = (our: number | undefined, opponent: number | undefined) =>
-        `${our ?? (match.ourScore === 0 ? 0 : '—')}-${opponent ?? (match.opponentScore === 0 ? 0 : '—')}`;
+    const score = (our: number | undefined, opponent: number | undefined) => {
+        if (our !== undefined && opponent !== undefined) return `${our}-${opponent}`;
+        if (our === undefined && opponent === undefined) return '内訳未入力';
+        return `自チーム ${our ?? '未入力'} / 相手 ${opponent ?? '未入力'}`;
+    };
     const hasHalves = match.matchFormat === 'halves' && (
         match.ourScore1H !== undefined || match.ourScore2H !== undefined ||
         match.opponentScore1H !== undefined || match.opponentScore2H !== undefined || first.length > 0 || second.length > 0
@@ -40,12 +45,12 @@ export default function ScorerBreakdown({ match }: { match: Partial<Match> }) {
                 <>
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-slate-100 py-2">
                         <span className="font-bold text-slate-500">前半</span>
-                        <span className="font-black tabular-nums text-slate-900">{score(match.ourScore1H, match.opponentScore1H)}</span>
+                        <span className="font-black tabular-nums text-slate-900">{score(ourFirst, opponentFirst)}</span>
                         {first.length > 0 && <span className="font-bold text-slate-800">{names(first)}</span>}
                     </div>
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-slate-100 py-2">
                         <span className="font-bold text-slate-500">後半</span>
-                        <span className="font-black tabular-nums text-slate-900">{score(match.ourScore2H, match.opponentScore2H)}</span>
+                        <span className="font-black tabular-nums text-slate-900">{score(ourSecond, opponentSecond)}</span>
                         {second.length > 0 && <span className="font-bold text-slate-800">{names(second)}</span>}
                     </div>
                 </>

@@ -58,3 +58,22 @@ test('検索は空白・全角半角を吸収し、BAND出力の対象を変更�
     const textarea = collect(h.tree, node => node.type === 'textarea')[0];
     assert.match(textarea.props.value, /2-1/); // 今日の試合結果は検索に左右されない。
 });
+
+
+test('検索欄は初期状態で隠れ、アイコンで開き、閉じると絞込を解除する', async () => {
+    const changes = [];
+    const h = harness(null, undefined, { file: 'src/components/OpponentSearch.tsx', props: { value: 'blue', resultCount: 2, onChange: value => changes.push(value) } });
+    assert.equal(collect(h.tree, node => node.type === 'input').length, 0);
+    const button = collect(h.tree, node => node.type === 'button' && node.props['aria-label'] === '対戦相手を検索')[0];
+    assert.ok(button);
+    assert.equal(button.props['aria-expanded'], false);
+    button.props.onClick();
+    h.render();
+    assert.equal(collect(h.tree, node => node.type === 'input').length, 1);
+    const close = collect(h.tree, node => node.type === 'button' && node.props['aria-label'] === '検索を閉じる')[0];
+    assert.equal(close.props['aria-expanded'], true);
+    close.props.onClick();
+    h.render();
+    assert.equal(collect(h.tree, node => node.type === 'input').length, 0);
+    assert.deepEqual(changes, ['']);
+});

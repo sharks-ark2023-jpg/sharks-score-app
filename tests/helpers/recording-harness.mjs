@@ -44,7 +44,7 @@ export function harness(_ref, initialMatch, options = {}) {
     }
     const Component = load(options.file || 'src/components/MatchForm.tsx').default;
     let tree;
-    function render() { cursor = 0; refCursor = 0; effects = []; tree = Component({ gradeId: 'U12', initialMatch }); effects.forEach(fn => fn()); return tree; }
+    function render() { cursor = 0; refCursor = 0; effects = []; tree = Component({ gradeId: 'U12', initialMatch, ...options.props }); effects.forEach(fn => fn()); return tree; }
     function buttons(part, scope = tree) { return collect(scope, n => n.type === 'button' && text(n).includes(part)); }
     function button(part, scope = tree) { let bs = buttons(part, scope); const exact = bs.filter(b => text(b).trim() === part); if (exact.length)
         bs = exact; assert.equal(bs.length, 1, 'button ' + part); return bs[0]; }
