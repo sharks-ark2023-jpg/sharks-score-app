@@ -8,7 +8,7 @@ import useSWR from 'swr';
 import Autocomplete from './Autocomplete';
 import Modal from './Modal';
 import ScorerBreakdown from './ScorerBreakdown';
-import { calculateResult, computeGoalData, computeRemoveGoalData, computeScoreData, getUnassignedScorers, parseScorers, setHalfScorers, canRemoveScorer } from '@/lib/goal-records';
+import { calculateResult, computeGoalData, computeRemoveGoalData, computeScoreData, getUnassignedScorers, parseScorers, setHalfScorers, canRemoveScorer, formatScorers, setUnassignedScorers, setTotalScorers } from '@/lib/goal-records';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -45,6 +45,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
             matchDuration: 15,
         }
     );
+    const [unassignedDraft, setUnassignedDraft] = useState<{ source: string; value: string } | null>(null);
     const [showAdvanced, setShowAdvanced] = useState(initialMatch?.matchPhase === 'full-time');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -260,6 +261,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                             memo: '',
                             pkInfo: undefined,
                         }));
+                        setUnassignedDraft(null);
                         saveTokenRef.current = null;
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
@@ -435,6 +437,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
     const canAddScorer = formData.matchPhase !== 'halftime';
     const canUndoGoal = formData.matchPhase === 'pre-game' || formData.matchPhase === '1H' || formData.matchPhase === '2H';
     const scorerEntries = parseScorers(formData.scorers);
+    const unassignedSource = formatScorers(getUnassignedScorers(formData));
 
     if (lockInfo?.locked) {
         return (
@@ -561,7 +564,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData(p => ({ ...p, matchFormat: 'one_game', scorers1H: '', scorers2H: '' }))}
+                                    onClick={() => setFormData(p => ({ ...p, matchFormat: 'one_game' }))}
                                     className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.matchFormat === 'one_game' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
                                 >
                                     1本
@@ -1067,6 +1070,19 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                                     showNumber={true}
                                 />
                             ))}
+                            <Autocomplete
+                                label="内訳未記録の得点者"
+                                value={unassignedDraft?.source === unassignedSource ? unassignedDraft.value : unassignedSource}
+                                onChange={value => {
+                                    const updated = setUnassignedScorers(formDataRef.current, value);
+                                    setUnassignedDraft({ source: formatScorers(getUnassignedScorers(updated)), value });
+                                    formDataRef.current = updated;
+                                    setFormData(updated);
+                                }}
+                                options={players}
+                                placeholder="例: 佐藤(2), 田中"
+                                showNumber={true}
+                            />
                             <ScorerBreakdown match={formData} />
                             {getUnassignedScorers(formData).length > 0 && (
                                 <p className="text-xs text-slate-500">過去の得点は内訳未記録として保持しています。</p>
@@ -1076,7 +1092,7 @@ export default function MatchForm({ gradeId, initialMatch, onSaved }: MatchFormP
                         <Autocomplete
                             label="得点者 (自チーム)"
                             value={formData.scorers || ''}
-                            onChange={value => setFormData(current => ({ ...current, scorers: value }))}
+                            onChange={value => setFormData(current => setTotalScorers(current, value))}
                             options={players}
                             placeholder="例: 佐藤(2), 田中"
                             showNumber={true}

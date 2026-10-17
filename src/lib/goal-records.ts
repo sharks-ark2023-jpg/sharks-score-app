@@ -52,6 +52,33 @@ export function setHalfScorers(match: Partial<Match>, half: Half, value: string)
     return updated;
 }
 
+export function setUnassignedScorers(match: Partial<Match>, value: string): Partial<Match> {
+    return {
+        ...match,
+        scorers: formatScorers(parseScorers(formatScorers([
+            ...parseScorers(value),
+            ...parseScorers(match.scorers1H),
+            ...parseScorers(match.scorers2H),
+        ]))),
+    };
+}
+
+/** 1本制で訂正された選手は、確定できなくなったハーフの割当を推測しない。 */
+export function setTotalScorers(match: Partial<Match>, value: string): Partial<Match> {
+    const totals = new Map(parseScorers(value).map(entry => [entry.name, entry.goals]));
+    const assigned = new Map<string, number>();
+    [...parseScorers(match.scorers1H), ...parseScorers(match.scorers2H)].forEach(({ name, goals }) => {
+        assigned.set(name, (assigned.get(name) || 0) + goals);
+    });
+    const retain = ({ name }: Scorer) => (totals.get(name) || 0) >= (assigned.get(name) || 0);
+    return {
+        ...match,
+        scorers: value,
+        scorers1H: match.scorers1H === undefined ? undefined : formatScorers(parseScorers(match.scorers1H).filter(retain)),
+        scorers2H: match.scorers2H === undefined ? undefined : formatScorers(parseScorers(match.scorers2H).filter(retain)),
+    };
+}
+
 export function canRemoveScorer(name: string, half: Half, match: Partial<Match>): boolean {
     if (!parseScorers(match.scorers).some(entry => entry.name === name)) return false;
     if (match.matchFormat !== 'halves') return (match.ourScore || 0) > 0;
@@ -66,7 +93,8 @@ export function canRemoveScorer(name: string, half: Half, match: Partial<Match>)
 
 export function computeRemoveGoalData(playerName: string, half: Half, current: Partial<Match>): Partial<Match> {
     if (!canRemoveScorer(playerName, half, current)) return current;
-    const updated = { ...current, scorers: changeScorer(current.scorers, playerName, -1) };
+    const scorers = changeScorer(current.scorers, playerName, -1);
+    const updated = current.matchFormat === 'halves' ? { ...current, scorers } : setTotalScorers(current, scorers);
     if (current.matchFormat === 'halves') {
         const key = half === '1H' ? 'scorers1H' : 'scorers2H';
         updated[key] = changeScorer(current[key], playerName, -1);
