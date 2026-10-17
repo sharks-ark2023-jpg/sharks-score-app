@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Match, GlobalSettings } from '@/types';
+import OpponentSearch from '@/components/OpponentSearch';
+import { matchesOpponent, normalizeOpponentName } from '@/lib/match-search';
 import MatchList from '@/components/MatchList';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
@@ -19,6 +21,7 @@ const fetcher = async (url: string) => {
 
 export default function GradeDashboard() {
     const { gradeId } = useParams() as { gradeId: string };
+    const [opponentQuery, setOpponentQuery] = useState('');
     const [filterType, setFilterType] = useState<string>('all');
     const [isBandModalOpen, setIsBandModalOpen] = useState(false);
     const [bandDate, setBandDate] = useState('');
@@ -96,9 +99,10 @@ export default function GradeDashboard() {
 
     const activeMatches = allMatches.filter(m => isActiveMonth(m.matchDate));
 
-    const filteredMatches = activeMatches.filter(m => {
+    const searchActive = normalizeOpponentName(opponentQuery).length > 0;
+    const filteredMatches = (searchActive ? allMatches : activeMatches).filter(m => {
         const typeMatch = filterType === 'all' || m.matchType === filterType;
-        return typeMatch;
+        return !m.isLive && typeMatch && matchesOpponent(m, opponentQuery);
     });
 
     const hasArchive = allMatches.some(m => !isActiveMonth(m.matchDate));
@@ -226,15 +230,22 @@ export default function GradeDashboard() {
                         </div>
                     </div>
 
+                    <OpponentSearch
+                        value={opponentQuery}
+                        onChange={setOpponentQuery}
+                        resultCount={filteredMatches.length}
+                        hint="対戦相手名を入力すると、過去の試合も含めて検索できます。"
+                    />
+
                     {filteredMatches.length === 0 && !isLoading ? (
                         <div className="p-20 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-100">
-                            <p className="text-gray-300 font-black text-[10px] uppercase tracking-widest">No Matches Found</p>
-                            <p className="mt-4 text-[10px] font-black text-blue-500">
-                                START RECORDING →
-                            </p>
+                            <p className="text-gray-300 font-black text-[10px] uppercase tracking-widest">{searchActive ? '一致する試合がありません' : 'No Matches Found'}</p>
+                            {!searchActive && (
+                                <p className="mt-4 text-[10px] font-black text-blue-500">START RECORDING →</p>
+                            )}
                         </div>
                     ) : (
-                        <MatchList matches={filteredMatches.filter(m => !m.isLive)} gradeId={gradeId} teamName={teamName} />
+                        <MatchList matches={filteredMatches} gradeId={gradeId} teamName={teamName} />
                     )}
 
                     {hasArchive && (

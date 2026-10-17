@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import OpponentSearch from '@/components/OpponentSearch';
+import { matchesOpponent, normalizeOpponentName } from '@/lib/match-search';
 import { useParams } from 'next/navigation';
 import { Match } from '@/types';
 import Link from 'next/link';
@@ -28,6 +31,7 @@ const isActiveMonth = (dateStr: string) => {
 
 export default function ArchivePage() {
     const { gradeId } = useParams() as { gradeId: string };
+    const [opponentQuery, setOpponentQuery] = useState('');
 
     const { data: matchesRes, isLoading, error } = useSWR<{ matches: Match[] }>(
         `/api/matches?grade=${gradeId}`,
@@ -36,7 +40,7 @@ export default function ArchivePage() {
     );
 
     const allMatches = matchesRes?.matches || [];
-    const archivedMatches = allMatches.filter(m => !m.isLive && !isActiveMonth(m.matchDate));
+    const archivedMatches = allMatches.filter(m => !m.isLive && !isActiveMonth(m.matchDate) && matchesOpponent(m, opponentQuery));
 
     // 月別グループ化 (YYYY-MM)
     const grouped = archivedMatches.reduce<Record<string, Match[]>>((acc, m) => {
@@ -75,6 +79,10 @@ export default function ArchivePage() {
                 </div>
             </header>
 
+            {!isLoading && !error && (
+                <OpponentSearch value={opponentQuery} onChange={setOpponentQuery} resultCount={archivedMatches.length} />
+            )}
+
             {isLoading && (
                 <div className="flex justify-center p-12">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
@@ -87,9 +95,9 @@ export default function ArchivePage() {
                 </div>
             )}
 
-            {!isLoading && sortedMonths.length === 0 && (
+            {!isLoading && !error && sortedMonths.length === 0 && (
                 <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-100">
-                    <p className="text-slate-300 font-black text-[10px] uppercase tracking-widest">No archived matches</p>
+                    <p className="text-slate-300 font-black text-[10px] uppercase tracking-widest">{normalizeOpponentName(opponentQuery) ? '一致する試合がありません' : '過去の試合記録はありません'}</p>
                 </div>
             )}
 

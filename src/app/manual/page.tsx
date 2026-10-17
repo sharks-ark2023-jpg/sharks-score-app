@@ -65,6 +65,8 @@ export default function ManualPage() {
                             <p className="text-sm text-gray-600 leading-relaxed">
                                 試合形式（前後半 / 15分マッチなど）、スコア、得点者、PK戦、MVP、会場、メモを入力して保存します。
                                 公式戦の場合は試合種別で「公式戦・大会」を選択してください。
+                                前後半の分からない旧記録の得点者は、Live Recordingをオフにした入力画面の「内訳未記録の得点者」で訂正できます。
+                                試合形式を切り替えるだけでは前後半の得点者内訳は消えません。1本制に切り替えて得点者を変更した場合は、割り当てが確定できなくなった選手の分を内訳未記録として扱います。
                             </p>
                         </div>
                         <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
@@ -75,6 +77,16 @@ export default function ManualPage() {
                             </p>
                         </div>
                     </div>
+                </section>
+
+                <section className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                    <h2 className="mb-2 text-lg font-black text-slate-800">対戦相手で試合結果を探す</h2>
+                    <p className="text-sm leading-relaxed text-slate-600">
+                        試合履歴と「過去の試合を見る」の画面にある「対戦相手で検索」に、チーム名の一部を入力します。
+                        試合履歴で検索すると過去の試合も対象になります。全角・半角や英字の大小文字は区別しません。
+                        「クリア」で元の一覧に戻ります。公式戦・練習試合の絞り込みも併用できます。
+                        BAND書き出しは検索結果に関係なく、選択した日付の結果を書き出します。
+                    </p>
                 </section>
 
                 {/* Section 3: ライブ配信 */}
